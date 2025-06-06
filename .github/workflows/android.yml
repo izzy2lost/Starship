@@ -1,0 +1,18 @@
+
+name: Android Build
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {submodules: 'recursive'}
+      - uses: actions/setup-java@v3
+        with: {java-version: '17', distribution: 'temurin'}
+      - name: Build
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Starship-APK
+          path: android/app/build/outputs/apk/debug/*.apk
