@@ -25,7 +25,7 @@ The supported ROMs are US 1.0 and US 1.1 Rev A versions. You can verify you have
 
 Starship also supports voice language replacement use from both EU (Lylat) and JP (Japanese) when used in conjunction with an US ROM.
 
-Note: JP and EU versions of the game are not supported for the base asset O2R creation, a US ROM must be used for it.
+Note: JP and EU versions of the game are not supported for the base asset O2R creation, a US ROM must be used for it, and you can only use one voice language replacement at a time (Either EU or JP).
 
 ### 2. Verify your ROM is in .z64 format
 Your ROM needs to be in .z64 format. If it's in .n64 format, use the following to convert it to a .z64: https://hack64.net/tools/swapper.php
