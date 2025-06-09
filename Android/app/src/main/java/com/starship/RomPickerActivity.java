@@ -69,7 +69,9 @@ public class RomPickerActivity extends Activity {
                     inputStream.close();
                     outputStream.close();
 
-                    nativeInit(romFile.getAbsolutePath());
+                    Intent intent = new Intent(this, RomVersionSelectorActivity.class);
+intent.putExtra("romPath", romFile.getAbsolutePath());
+startActivity(intent);
 
                 } catch (Exception e) {
                     e.printStackTrace();

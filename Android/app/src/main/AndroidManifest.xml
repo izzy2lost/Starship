@@ -7,6 +7,8 @@
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round">
+
+        <activity android:name=".RomVersionSelectorActivity" />
         <activity android:name=".RomPickerActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
