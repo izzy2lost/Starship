@@ -13,7 +13,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        submodules: true
+        submodules: recursive
+    
+    - name: Fix broken Torch submodule
+      run: |
+        git config -f .gitmodules --remove-section submodule.tools/Torch || true
+        git submodule sync
+        git submodule update --init --recursive
+
 
     - name: Set up JDK
       uses: actions/setup-java@v3
@@ -24,6 +31,9 @@ jobs:
 
     - name: Grant execute permission for gradlew
       run: chmod +x ./gradlew
+
+    - name: Clean build cache (optional)
+      run: ./gradlew clean
 
     - name: Build Debug APK
       working-directory: android
