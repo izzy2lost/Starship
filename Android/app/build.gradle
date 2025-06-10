@@ -1,51 +1,65 @@
-// App-level build.gradle
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+}
 
 android {
-    compileSdkVersion 34
-    ndkVersion "25.2.9519653"
+    compileSdkVersion rootProject.ext.compileSdkVersion
+    ndkVersion rootProject.ext.ndkVersion
 
     defaultConfig {
-        applicationId "com.starship"
-        minSdkVersion 24
-        targetSdkVersion 34
+        applicationId "com.starship.android"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
-
+        versionName "0.1-alpha"
+        
         externalNativeBuild {
             cmake {
-                cppFlags ""
+                arguments "-DANDROID_STL=c++_shared",
+                          "-DSTARSHIP_BUILD_ANDROID=ON",
+                          "-DANDROID_PLATFORM=android-24"
+                cppFlags "-std=c++17 -frtti -fexceptions"
+                abiFilters 'armeabi-v7a', 'arm64-v8a'
             }
-        }
-
-        ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a"
         }
     }
 
     buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
         debug {
             debuggable true
+            jniDebuggable true
         }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildFeatures {
+        prefab true
     }
 
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
+            version rootProject.ext.cmakeVersion
         }
     }
 
     packagingOptions {
-        jniLibs.useLegacyPackaging true
+        jniLibs {
+            useLegacyPackaging = true
+        }
+        resources {
+            excludes += ['META-INF/*']
+        }
     }
-
-    namespace 'com.starship'
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation "com.github.Waterdish:libultraship:$rootProject.ext.libultrashipVersion"
+    implementation "org.joml:joml-android:$rootProject.ext.jomlVersion"
+    implementation "androidx.games:games-activity:$rootProject.ext.glesVersion"
+    implementation 'androidx.core:core:1.10.1'
+    implementation 'com.google.android.gms:play-services-games:23.1.0'
 }

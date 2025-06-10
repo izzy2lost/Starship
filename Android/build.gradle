@@ -1,17 +1,35 @@
-// Top-level build.gradle
 buildscript {
     repositories {
-        google()
         mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.0'
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.google.gms:google-services:4.3.15'
     }
 }
 
 allprojects {
     repositories {
-        google()
         mavenCentral()
+        google()
+        maven { url 'https://jitpack.io' }
+        maven { url 'https://maven.google.com' }
     }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+
+ext {
+    ndkVersion = "25.1.8937393"
+    cmakeVersion = "3.22.1"
+    libultrashipVersion = "1.0.0"
+    glesVersion = "3.2.0"
+    jomlVersion = "1.10.5"
+    compileSdkVersion = 33
+    minSdkVersion = 24
+    targetSdkVersion = 33
 }
