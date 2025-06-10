@@ -1,3 +1,4 @@
-[submodule "libultraship"]
-	path = libultraship
+[submodule "path/to/libultraship"]
+	path = path/to/libultraship
 	url = https://github.com/izzy2lost/libultraship.git
+	branch = main
