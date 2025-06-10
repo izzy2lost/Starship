@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace "com.starship.android"
     compileSdkVersion rootProject.ext.compileSdkVersion
     ndkVersion rootProject.ext.ndkVersion
 
