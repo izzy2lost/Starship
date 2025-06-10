@@ -21,14 +21,13 @@ jobs:
         java-version: '17'
         distribution: 'zulu'
         cache: gradle
-        
-    - name: Move to Android folder
-      run: cd Android
-      
+
     - name: Grant execute permission for gradlew
+      working-directory: Android
       run: chmod +x ./gradlew
 
     - name: Clean build cache (optional)
+      working-directory: android
       run: ./gradlew clean
 
     - name: Build Debug APK
