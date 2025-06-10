@@ -27,7 +27,7 @@ jobs:
       run: chmod +x ./gradlew
 
     - name: Clean build cache (optional)
-      working-directory: android
+      working-directory: Android
       run: ./gradlew clean
 
     - name: Build Debug APK
