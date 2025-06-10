@@ -1,4 +1,4 @@
 [submodule "libultraship"]
-    path = libultraship
-    url = https://github.com/izzy2lost/libultraship.git
-    branch = main
+	path = libultraship
+	url = https://github.com/izzy2lost/libultraship.git
+	branch = main
