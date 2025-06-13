@@ -16,17 +16,16 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev wget unzip libsdl2-dev libtinyxml2-dev curl
+          sudo apt-get install -y python3-pip ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev wget unzip libsdl2-dev libtinyxml2-dev git
 
-      - name: Download nlohmann_json header
+      - name: Clone Waterdish's libultraship and overwrite
         run: |
-          mkdir -p external/nlohmann_json/include/nlohmann
-          curl -L https://raw.githubusercontent.com/nlohmann/json/v3.11.3/single_include/nlohmann/json.hpp \
-            -o external/nlohmann_json/include/nlohmann/json.hpp
+          rm -rf libultraship
+          git clone https://github.com/Waterdish/libultraship.git libultraship
 
       - name: Build libultraship (for OTR/data)
         run: |
-          cmake -H. -Bbuild-libultra -DCMAKE_INCLUDE_PATH=${GITHUB_WORKSPACE}/external/nlohmann_json/include
+          cmake -H. -Bbuild-libultra
           cmake --build build-libultra -- -j$(nproc)
 
       - name: Build asset tools (mio0, recomp)
