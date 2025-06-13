@@ -50,23 +50,30 @@ public class MainActivity extends SDLActivity {
     private View overlayView;
     boolean TouchAreaEnabled = true;
 
+    private boolean permissionPopupIsOpen = false;
+    private boolean permissionPopupWasDeclined = false;
+    private boolean hasInstalledExternalAssetFiles = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         preferences = getSharedPreferences("com.starship.prefs", Context.MODE_PRIVATE);
 
+        doVersionCheck();
         setupControllerOverlay();
 
-        if (hasStoragePermission()) {
-            setupFiles();
-            doVersionCheck();
-            pickRomIfNeeded();
-        } else {
-            requestStoragePermission();
+        if (!hasSpecialExternalStoragePermission()) {
+            requestSpecialExternalStoragePermission();
         }
 
         attachController();
+
+        // After permission, copy assets if needed and pick ROM
+        if (hasSpecialExternalStoragePermission()) {
+            setupFiles(getExternalAssetsPath());
+            pickRomIfNeeded();
+        }
     }
 
     private void doVersionCheck(){
@@ -79,7 +86,7 @@ public class MainActivity extends SDLActivity {
     }
 
     private void deleteOutdatedAssets() {
-        File rootFolder = new File(Environment.getExternalStorageDirectory(), "Starship");
+        File rootFolder = new File(getExternalAssetsPath());
         File romFile = new File(rootFolder, "baserom.z64");
         romFile.delete();
         File assetsFolder = new File(rootFolder, "assets");
@@ -97,26 +104,32 @@ public class MainActivity extends SDLActivity {
         }
     }
 
-    private boolean hasStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            return Environment.isExternalStorageManager();
+    // Gets the external Starship path if possible, else fallback to internal
+    private String getExternalAssetsPath() {
+        String packageRoot = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Starship";
+        if (hasSpecialExternalStoragePermission()) {
+            File dir = new File(packageRoot);
+            if (!dir.exists()) dir.mkdirs();
+            return dir.getAbsolutePath();
+        } else {
+            // fallback to internal app dir
+            return getFilesDir().getAbsolutePath();
         }
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void requestStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager()) {
-                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                startActivityForResult(intent, STORAGE_PERMISSION_REQUEST_CODE);
-            } else {
-                setupFiles();
-                pickRomIfNeeded();
-            }
+    private boolean hasSpecialExternalStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+            return Environment.isExternalStorageManager();
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestSpecialExternalStoragePermission() {
+        // Android 11+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, STORAGE_PERMISSION_REQUEST_CODE);
+            permissionPopupIsOpen = true;
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             ActivityCompat.requestPermissions(this,
                     new String[]{
@@ -124,28 +137,28 @@ public class MainActivity extends SDLActivity {
                             Manifest.permission.WRITE_EXTERNAL_STORAGE
                     },
                     STORAGE_PERMISSION_REQUEST_CODE);
-        } else {
-            setupFiles();
-            pickRomIfNeeded();
+            permissionPopupIsOpen = true;
         }
     }
 
-    private void setupFiles() {
-        File targetRootFolder = new File(Environment.getExternalStorageDirectory(), "Starship");
+    private void setupFiles(String assetsPath) {
+        // This could copy default assets or ensure the directory exists
+        File targetRootFolder = new File(assetsPath);
         if (!targetRootFolder.exists()) {
             boolean created = targetRootFolder.mkdirs();
             if (!created) {
-                Log.e("setupFiles", "Failed to create Starship folder");
+                Log.e("setupFiles", "Failed to create Starship folder: " + assetsPath);
                 return;
             }
-            Toast.makeText(this, "Setting up files in /storage/emulated/0/Starship...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Setting up files in " + assetsPath, Toast.LENGTH_SHORT).show();
         } else {
-            Log.i("setupFiles", "Starship folder already exists.");
+            Log.i("setupFiles", "Starship folder already exists: " + assetsPath);
         }
+        hasInstalledExternalAssetFiles = true;
     }
 
     private void pickRomIfNeeded() {
-        File romFile = new File(getFilesDir(), "baserom.z64");
+        File romFile = new File(getExternalAssetsPath(), "baserom.z64");
         if (!romFile.exists()) {
             pickRom();
         } else {
@@ -168,7 +181,7 @@ public class MainActivity extends SDLActivity {
             Uri uri = data.getData();
             try {
                 InputStream inputStream = getContentResolver().openInputStream(uri);
-                File romFile = new File(getFilesDir(), "baserom.z64");
+                File romFile = new File(getExternalAssetsPath(), "baserom.z64");
                 FileOutputStream outputStream = new FileOutputStream(romFile);
 
                 byte[] buffer = new byte[4096];
@@ -187,12 +200,13 @@ public class MainActivity extends SDLActivity {
                 Toast.makeText(this, "Failed to load ROM", Toast.LENGTH_LONG).show();
             }
         } else if (requestCode == STORAGE_PERMISSION_REQUEST_CODE) {
-            if (hasStoragePermission()) {
-                setupFiles();
+            if (hasSpecialExternalStoragePermission()) {
+                setupFiles(getExternalAssetsPath());
                 pickRomIfNeeded();
             } else {
                 Toast.makeText(this, "Storage permission is required to access files.", Toast.LENGTH_LONG).show();
             }
+            permissionPopupIsOpen = false;
         }
     }
 
@@ -267,7 +281,7 @@ public class MainActivity extends SDLActivity {
     }
 
     private void setupToggleButton(Button button, ViewGroup uiGroup){
-        boolean isHidden = preferences.getBoolean("controlsVisible", false); // Default to 'false' (visible)
+        boolean isHidden = preferences.getBoolean("controlsVisible", false);
         uiGroup.setVisibility(isHidden ? View.INVISIBLE : View.VISIBLE);
         button.setOnClickListener(new View.OnClickListener() {
             boolean isHidden = false;
