@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Checkout libultraship
         run: |
-          git clone --depth=1 https://github.com/Waterdish/libultraship.git
+          git clone --depth=1 https://github.com/robertkirkman/libultraship.git
 
       - name: Install dependencies
         run: |
