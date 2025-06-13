@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
 
-project(Ship VERSION 8.0.6 LANGUAGES C CXX)
-set(PROJECT_BUILD_NAME "MacReady Golf" CACHE STRING "" FORCE)
+project(Ship VERSION 2.0.0 LANGUAGES C CXX)
+set(PROJECT_BUILD_NAME "Barnard Alfa" CACHE STRING "" FORCE)
 set(PROJECT_TEAM "github.com/harbourmasters" CACHE STRING "" FORCE)
 
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT soh)
