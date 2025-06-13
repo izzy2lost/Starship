@@ -13,16 +13,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y python3-pip unzip ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev libsdl2-dev libtinyxml2-dev curl
-          pip install gdown
 
       - name: Build asset tools (mio0, recomp)
         run: |
-          cd Starship
           make -C tools mio0 recomp
 
       - name: Build Torch
         run: |
-          cd Starship
           cmake -S tools/Torch -B tools/Torch/cmake-build-release -GNinja -DCMAKE_BUILD_TYPE=Release
           cmake --build tools/Torch/cmake-build-release --target torch -j$(nproc)
 
