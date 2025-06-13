@@ -36,6 +36,9 @@ public class MainActivity extends SDLActivity {
         System.loadLibrary("native-lib");
     }
 
+    // Native extraction bridge: JNI function
+    public native boolean extractAssets(String romPath, String outDir, String yamlDir);
+
     private static final int PICK_ROM_REQUEST = 1;
     private static final int STORAGE_PERMISSION_REQUEST_CODE = 2296;
 
@@ -69,7 +72,6 @@ public class MainActivity extends SDLActivity {
 
         attachController();
 
-        // After permission, copy assets if needed and pick ROM
         if (hasSpecialExternalStoragePermission()) {
             setupFiles(getExternalAssetsPath());
             pickRomIfNeeded();
@@ -142,7 +144,6 @@ public class MainActivity extends SDLActivity {
     }
 
     private void setupFiles(String assetsPath) {
-        // This could copy default assets or ensure the directory exists
         File targetRootFolder = new File(assetsPath);
         if (!targetRootFolder.exists()) {
             boolean created = targetRootFolder.mkdirs();
@@ -162,7 +163,13 @@ public class MainActivity extends SDLActivity {
         if (!romFile.exists()) {
             pickRom();
         } else {
-            nativeInit(romFile.getAbsolutePath());
+            // If assets don't exist, extract them now
+            File assetsDir = new File(getExternalAssetsPath(), "assets");
+            if (!assetsDir.exists() || assetsDir.list().length == 0) {
+                extractAssetsAfterRom(romFile.getAbsolutePath());
+            } else {
+                nativeInit(romFile.getAbsolutePath());
+            }
         }
     }
 
@@ -173,6 +180,48 @@ public class MainActivity extends SDLActivity {
         startActivityForResult(intent, PICK_ROM_REQUEST);
     }
 
+    // NEW: Copy YAMLs from assets/yamls/ to internal storage for extraction
+    private String copyYamlAssetsToInternal() {
+        try {
+            String yamlFolderName = "yamls";
+            String[] yamlFiles = getAssets().list(yamlFolderName);
+            File yamlDir = new File(getFilesDir(), yamlFolderName);
+            if (!yamlDir.exists()) yamlDir.mkdirs();
+            for (String yaml : yamlFiles) {
+                File outFile = new File(yamlDir, yaml);
+                if (outFile.exists()) continue;
+                InputStream in = getAssets().open(yamlFolderName + "/" + yaml);
+                OutputStream out = new FileOutputStream(outFile);
+                byte[] buffer = new byte[4096];
+                int len;
+                while ((len = in.read(buffer)) > 0) out.write(buffer, 0, len);
+                in.close();
+                out.close();
+            }
+            return yamlDir.getAbsolutePath();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // NEW: Call extraction, then nativeInit if successful
+    private void extractAssetsAfterRom(String romPath) {
+        String yamlDir = copyYamlAssetsToInternal();
+        if (yamlDir == null) {
+            Toast.makeText(this, "Failed to copy YAMLs.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        String outputDir = new File(getExternalAssetsPath(), "assets").getAbsolutePath();
+        boolean ok = extractAssets(romPath, outputDir, yamlDir);
+        if (ok) {
+            Toast.makeText(this, "Asset extraction complete!", Toast.LENGTH_SHORT).show();
+            nativeInit(romPath);
+        } else {
+            Toast.makeText(this, "Asset extraction failed (bad ROM?)", Toast.LENGTH_LONG).show();
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -180,8 +229,9 @@ public class MainActivity extends SDLActivity {
         if (requestCode == PICK_ROM_REQUEST && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             try {
-                InputStream inputStream = getContentResolver().openInputStream(uri);
+                // Copy ROM to Starship directory
                 File romFile = new File(getExternalAssetsPath(), "baserom.z64");
+                InputStream inputStream = getContentResolver().openInputStream(uri);
                 FileOutputStream outputStream = new FileOutputStream(romFile);
 
                 byte[] buffer = new byte[4096];
@@ -193,7 +243,8 @@ public class MainActivity extends SDLActivity {
                 inputStream.close();
                 outputStream.close();
 
-                nativeInit(romFile.getAbsolutePath());
+                // Extract assets, then launch game
+                extractAssetsAfterRom(romFile.getAbsolutePath());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -212,6 +263,7 @@ public class MainActivity extends SDLActivity {
 
     // --- Controller overlay methods below this line ---
 
+    public native void nativeInit(String romPath);
     public native void attachController();
     public native void detachController();
     public native void setButton(int button, boolean value);
@@ -434,11 +486,4 @@ public class MainActivity extends SDLActivity {
                             setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, (short) 0);
                             break;
                     }
-                    return true;
-                }
-            });
-        });
-    }
-
-    public native void nativeInit(String romPath);
-}
+                    
