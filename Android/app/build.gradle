@@ -58,7 +58,7 @@ android {
         }
         externalNativeBuild {
             cmake {
-                path 'jni/CMakeLists.txt'   // <- just like SOH
+                path 'CMakeLists.txt'
                 version "3.31.5"
             }
         }
