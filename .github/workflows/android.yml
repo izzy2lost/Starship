@@ -19,6 +19,7 @@ jobs:
 
       - name: Build Starship APK
         run: |
+          cd Android
           ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
           mv app/build/outputs/apk/debug/app-debug.apk starship.apk
 
