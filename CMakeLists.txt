@@ -240,101 +240,90 @@ FetchContent_MakeAvailable(dr_libs)
 # Libultraship Integration                                                     #
 #==============================================================================#
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    set(LIBUTRASHIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Android/app/jni/src/libultraship)
+else()
+    set(LIBUTRASHIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+endif()
+
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include/libultraship
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/log
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/debug
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/menu
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/utils
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/utils/binarytools
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/config
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/resource
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/resource/type
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/resource/factory
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/audio
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/window
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/window/gui
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/config
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/libultra
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/bridge
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern/tinyxml2
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/libjpeg/include/
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/spdlog/include/
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic/Fast3D/U64/PR
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic
-  ${SDL2_INCLUDE_DIRS}
-  ${GLEW_INCLUDE_DIRS}
-  ${dr_libs_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${LIBUTRASHIP_DIR}/include
+    ${LIBUTRASHIP_DIR}/include/libultraship
+    ${LIBUTRASHIP_DIR}/src
+    ${LIBUTRASHIP_DIR}/src/log
+    ${LIBUTRASHIP_DIR}/src/debug
+    ${LIBUTRASHIP_DIR}/src/menu
+    ${LIBUTRASHIP_DIR}/src/utils
+    ${LIBUTRASHIP_DIR}/src/utils/binarytools
+    ${LIBUTRASHIP_DIR}/src/config
+    ${LIBUTRASHIP_DIR}/src/resource
+    ${LIBUTRASHIP_DIR}/src/resource/type
+    ${LIBUTRASHIP_DIR}/src/resource/factory
+    ${LIBUTRASHIP_DIR}/src/audio
+    ${LIBUTRASHIP_DIR}/src/window
+    ${LIBUTRASHIP_DIR}/src/window/gui
+    ${LIBUTRASHIP_DIR}/src/public
+    ${LIBUTRASHIP_DIR}/src/public/libultra
+    ${LIBUTRASHIP_DIR}/src/public/bridge
+    ${LIBUTRASHIP_DIR}/extern
+    ${LIBUTRASHIP_DIR}/extern/tinyxml2
+    ${LIBUTRASHIP_DIR}/libultraship/Lib/
+    ${LIBUTRASHIP_DIR}/libultraship/Lib/libjpeg/include/
+    ${LIBUTRASHIP_DIR}/libultraship/Lib/spdlog/include/
+    ${LIBUTRASHIP_DIR}/src/graphic/Fast3D/U64/PR
+    ${LIBUTRASHIP_DIR}/src/graphic
+    ${SDL2_INCLUDE_DIRS}
+    ${GLEW_INCLUDE_DIRS}
+    ${dr_libs_SOURCE_DIR}
 )
 
-add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+# ---- libultraship Directory Handling ----
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    set(LIBUTRASHIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Android/app/jni/src/libultraship)
+else()
+    set(LIBUTRASHIP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+endif()
+
+# ---- libultraship Add Subdirectory ----
+add_subdirectory(${LIBUTRASHIP_DIR} ${CMAKE_BINARY_DIR}/libultraship)
 add_dependencies(${PROJECT_NAME} libultraship)
 target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
 
+# ---- Per-platform Defines and Extra Link Dependencies ----
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
-        "$<$<CONFIG:Debug>:"
-            "_DEBUG;"
-            "_CRT_SECURE_NO_WARNINGS;"
-            "ENABLE_DX11;"
-        ">"
-        "$<$<CONFIG:Release>:"
-            "NDEBUG"
-        ">"
-        "INCLUDE_GAME_PRINTF;"
-        "UNICODE;"
-        "_UNICODE;"
-        "_CRT_SECURE_NO_WARNINGS;"
-        "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;"
+        "$<$<CONFIG:Debug>:_DEBUG;_CRT_SECURE_NO_WARNINGS;ENABLE_DX11;>"
+        "$<$<CONFIG:Release>:NDEBUG>"
+        "INCLUDE_GAME_PRINTF;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;"
     )
     add_compile_definitions(STORMLIB_NO_AUTO_LINK)
-	set(STORMLIB_NO_AUTO_LINK ON)
+    set(STORMLIB_NO_AUTO_LINK ON)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		"$<$<CONFIG:Debug>:"
-			"_DEBUG"
-		">"
-		"$<$<CONFIG:Release>:"
-			"NDEBUG"
-		">"
-        "SPDLOG_ACTIVE_LEVEL=3;"
-		"SPDLOG_NO_THREAD_ID;"
-        "SPDLOG_NO_TLS;"
-		"STBI_NO_THREAD_LOCALS;"
-	)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "$<$<CONFIG:Debug>:_DEBUG>"
+        "$<$<CONFIG:Release>:NDEBUG>"
+        "SPDLOG_ACTIVE_LEVEL=3;SPDLOG_NO_THREAD_ID;SPDLOG_NO_TLS;STBI_NO_THREAD_LOCALS;"
+    )
+    target_include_directories(${PROJECT_NAME} PRIVATE ${DEVKITPRO}/portlibs/wiiu/include/)
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		"$<$<CONFIG:Debug>:"
-			"_DEBUG"
-		">"
-		"$<$<CONFIG:Release>:"
-			"NDEBUG"
-		">"
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "$<$<CONFIG:Debug>:_DEBUG>"
+        "$<$<CONFIG:Release>:NDEBUG>"
         "$<$<BOOL:${BUILD_CROWD_CONTROL}>:ENABLE_CROWD_CONTROL>"
-		"SPDLOG_ACTIVE_LEVEL=0;"
-		"_CONSOLE;"
-		"_CRT_SECURE_NO_WARNINGS;"
-		"UNICODE;"
-		"_UNICODE"
-	)
+        "SPDLOG_ACTIVE_LEVEL=0;_CONSOLE;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE"
+    )
 endif()
 
-
+# ---- Find and Link Extra Libraries Per Platform ----
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     find_package(Ogg CONFIG REQUIRED)
     link_libraries(Ogg::ogg)
-
     find_package(Vorbis CONFIG REQUIRED)
     link_libraries(Vorbis::vorbisfile)
-	set(ADDITIONAL_LIBRARY_DEPENDENCIES
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net-static>"
         "Ogg::ogg"
         "Vorbis::vorbis"
@@ -343,10 +332,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(SDL2)
-	find_package(Vorbis REQUIRED)
-	link_libraries(Vorbis::vorbisfile)
-	find_package(Ogg REQUIRED)
-	link_libraries(Ogg::ogg)
+    find_package(Vorbis REQUIRED)
+    link_libraries(Vorbis::vorbisfile)
+    find_package(Ogg REQUIRED)
+    link_libraries(Ogg::ogg)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         -lglad
         SDL2::SDL2
@@ -357,21 +346,19 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<CONFIG:Debug>:-Wl,--wrap=abort>"
     )
-    target_include_directories(${PROJECT_NAME} PRIVATE
-        ${DEVKITPRO}/portlibs/wiiu/include/
-    )
-else()
+else() # Unix/Linux/Android/Other
     find_package(Ogg REQUIRED)
     find_package(Vorbis REQUIRED)
- 	set(ADDITIONAL_LIBRARY_DEPENDENCIES
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net>"
         "Ogg::ogg"
         "Vorbis::vorbis"
         "Vorbis::vorbisenc"
         "Vorbis::vorbisfile"
-	)
+    )
 endif()
 
+# ---- Networking Option ----
 if(USE_NETWORKING)
     if(MSVC)
         vcpkg_install_packages(sdl2-net)
@@ -382,30 +369,31 @@ if(USE_NETWORKING)
     target_compile_definitions(${PROJECT_NAME} PRIVATE USE_NETWORKING)
 endif()
 
-option(USE_STANDALONE "Build as a standalone executable" OFF)
-option(BUILD_STORMLIB "Build with StormLib support" OFF)
-
-option(BUILD_SM64 "Build with Super Mario 64 support" OFF)
-option(BUILD_MK64 "Build with Mario Kart 64 support" OFF)
-option(BUILD_FZERO "Build with F-Zero X support" OFF)
-add_subdirectory(libultraship ${CMAKE_BINARY_DIR}/libultraship)
+# ---- Target Link Libraries ----
 target_link_libraries(${PROJECT_NAME} PRIVATE libultraship ${ADDITIONAL_LIBRARY_DEPENDENCIES})
 add_dependencies(${PROJECT_NAME} libultraship)
 
+# ---- Build Feature Toggles (keep as options for GUI etc) ----
+option(USE_STANDALONE "Build as a standalone executable" OFF)
+option(BUILD_STORMLIB "Build with StormLib support" OFF)
+option(BUILD_SM64 "Build with Super Mario 64 support" OFF)
+option(BUILD_MK64 "Build with Mario Kart 64 support" OFF)
+option(BUILD_FZERO "Build with F-Zero X support" OFF)
+
+# ---- NintendoSwitch Only: NRO/NACP ----
 if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
+    nx_generate_nacp(${PROJECT_NAME}.nacp
+        NAME "${PROJECT_NAME}"
+        AUTHOR "${PROJECT_TEAM}"
+        VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+    )
 
-nx_generate_nacp(${PROJECT_NAME}.nacp
-   NAME "${PROJECT_NAME}"
-   AUTHOR "${PROJECT_TEAM}"
-   VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-)
+    nx_create_nro(${PROJECT_NAME}
+        NACP ${PROJECT_NAME}.nacp
+        ICON ${CMAKE_CURRENT_SOURCE_DIR}/nx-logo.jpg
+    )
 
-nx_create_nro(${PROJECT_NAME}
-    NACP ${PROJECT_NAME}.nacp
-    ICON ${CMAKE_CURRENT_SOURCE_DIR}/nx-logo.jpg
-)
-
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.nro DESTINATION . COMPONENT ${PROJECT_NAME})
+    INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.nro DESTINATION . COMPONENT ${PROJECT_NAME})
 endif()
 
 ################################################################################
