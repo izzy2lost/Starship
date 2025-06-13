@@ -23,7 +23,7 @@ jobs:
 
       - name: Download and extract libultraship contents
         run: |
-          gdown '1HKs0oYKJ8pBTseu15HnP3TYnbLbdevAI' -O libultraship.zip
+          gdown '1HO8wJSPoyvpxGULGq9rBR7WDzposvUvc' -O libultraship.zip
           rm -rf libultraship/*
           unzip -o libultraship.zip -d libultraship
 
