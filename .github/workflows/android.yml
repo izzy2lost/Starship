@@ -6,32 +6,76 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  generate-starship-o2r:
+    runs-on: ubuntu-22.04
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        submodules: recursive
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install dependencies
+        run: sudo apt-get install gcc g++ git cmake ninja-build lsb-release
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.13
+        with:
+          key: ${{ runner.os }}-o2r-ccache-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-o2r-ccache-${{ github.ref }}
+            ${{ runner.os }}-o2r-ccache-
+      - name: Cache build folders
+        uses: actions/cache@v4
+        with:
+          key: ${{ runner.os }}-o2r-build-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-o2r-build-${{ github.ref }}
+            ${{ runner.os }}-o2r-build-
+          path: |
+            tools/Torch/cmake-build-release
+      - name: Generate starship.o2r
+        run: |
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          make -C tools/Torch type=release -j3
+          tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
+      - uses: actions/upload-artifact@v4
+        with:
+          name: starship.o2r
+          path: starship.o2r
+          retention-days: 1
 
-    - name: Set up JDK
-      uses: actions/setup-java@v3
-      with:
-        java-version: '17'
-        distribution: 'zulu'
-        cache: gradle
+  build-android:
+    needs: generate-starship-o2r
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    - name: Grant execute permission for gradlew
-      working-directory: Android
-      run: chmod +x ./gradlew
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: gradle
 
-    - name: Build Debug APK
-      working-directory: Android
-      run: ./gradlew assembleDebug
+      - name: Install ninja-build
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
 
-    - name: Upload Debug APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: Starship-Debug-APK
-        path: Android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Download starship.o2r
+        uses: actions/download-artifact@v4
+        with:
+          name: starship.o2r
+          path: Android/app/src/main/assets
+
+      - name: Grant execute permission for gradlew
+        working-directory: Android
+        run: chmod +x ./gradlew
+
+      - name: Build Debug APK
+        working-directory: Android
+        run: ./gradlew assembleDebug
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Starship-Debug-APK
+          path: Android/app/build/outputs/apk/debug/app-debug.apk
