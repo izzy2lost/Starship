@@ -23,14 +23,13 @@ jobs:
       - name: Give gradlew permissions
         run: chmod +x Android/gradlew
 
-      - name: Build Starship APK
+      - name: Build SoH APK
         run: |
-          cd Android
-          ./gradlew assembleRelease -P elfBuildType=Release
-          mv app/build/outputs/apk/release/app-release.apk starship.apk
-
+          ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
+          mv app/build/outputs/apk/debug/app-debug.apk starship.apk
+          
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: starship-apk
-          path: Android/starship.apk
+          path: starship.apk
