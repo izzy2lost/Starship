@@ -1,9 +1,6 @@
 name: Android Build
 
-on:
-  push:
-  pull_request:
-  workflow_dispatch:
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build-android:
@@ -14,20 +11,23 @@ jobs:
         with:
           submodules: true
 
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
       - name: Install dependencies
         run: sudo apt-get install -y ninja-build
-
-      - name: Give gradlew permissions
-        run: chmod +x Android/gradlew
 
       - name: Build Starship APK
         run: |
           cd Android
-          ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
-          mv app/build/outputs/apk/debug/app-debug.apk starship.apk
+          ./gradlew assembleRelease -P elfBuildType=Release
+          mv app/build/outputs/apk/release/app-release.apk starship.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: starship-apk
-          path: starship.apk
+          path: Android/starship.apk
