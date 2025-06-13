@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20 ")
 
 project(Game VERSION 8.0.6 LANGUAGES C CXX)
+set(PROJECT_BUILD_NAME "MacReady Golf" CACHE STRING "")
+set(PROJECT_TEAM "github.com/harbourmasters" CACHE STRING "")
 
 add_subdirectory(src)
-
