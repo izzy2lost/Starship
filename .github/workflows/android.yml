@@ -13,7 +13,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool
+          sudo apt-get install -y ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev
       - name: Install latest SDL
         run: |
           if [ ! -d "SDL2-2.28.5" ]; then
