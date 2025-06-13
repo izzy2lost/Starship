@@ -18,16 +18,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y python3-pip ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev wget unzip libsdl2-dev libtinyxml2-dev curl
 
-      - name: Install gdown
-        run: pip3 install gdown
-
-      - name: Download and extract libultraship contents
-        run: |
-          gdown '1HO8wJSPoyvpxGULGq9rBR7WDzposvUvc' -O libultraship.zip
-          rm -rf libultraship
-          unzip -o libultraship.zip -d .
-          ls -l libultraship
-
       - name: Download nlohmann_json header
         run: |
           mkdir -p external/nlohmann_json/include/nlohmann
