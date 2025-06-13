@@ -1,49 +1,78 @@
-plugins {
-    id 'com.android.application'
+def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY')
+def buildAsApplication = !buildAsLibrary
+if (buildAsApplication) {
+    apply plugin: 'com.android.application'
+} else {
+    apply plugin: 'com.android.library'
 }
 
 android {
-    namespace "com.starship.android"
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    ndkVersion rootProject.ext.ndkVersion
+    ndkVersion '27.2.12479018'
+    compileSdkVersion 34
 
     defaultConfig {
-        applicationId "com.starship.android"
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        if (buildAsApplication) {
+            applicationId "com.starship.android"
+        }
+        minSdkVersion 21
+        targetSdkVersion 34
         versionCode 1
         versionName "0.1-alpha"
-
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_STL=c++_shared",
-                          "-DSTARSHIP_BUILD_ANDROID=ON",
-                          "-DANDROID_PLATFORM=android-24"
-                cppFlags "-std=c++17 -frtti -fexceptions"
-                abiFilters 'armeabi-v7a', 'arm64-v8a'
+                arguments "-DANDROID_APPNAME=${applicationId}", "-DANDROID_APP_PLATFORM=android-21", "-DANDROID_STL=c++_static", "-DHAVE_LD_VERSION_SCRIPT=OFF", "-DUSE_OPENGLES=ON", "-DCMAKE_BUILD_TYPE=$elfBuildType"
+                abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
     }
 
     buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
         debug {
             debuggable true
             jniDebuggable true
         }
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
     }
 
     buildFeatures {
-        prefab false
+        buildConfig = true
     }
 
-    externalNativeBuild {
-        cmake {
-            path "src/main/cpp/CMakeLists.txt"
-            version rootProject.ext.cmakeVersion
+    namespace 'com.starship.android'
+
+    lint {
+        abortOnError false
+    }
+
+    applicationVariants.configureEach { variant ->
+        tasks["merge${variant.name.capitalize()}Assets"]
+            .dependsOn("externalNativeBuild${variant.name.capitalize()}")
+    }
+
+    if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
+        sourceSets.main {
+            jniLibs.srcDir 'libs'
+        }
+        externalNativeBuild {
+            cmake {
+                path 'jni/CMakeLists.txt'   // <- just like SOH
+                version "3.31.5"
+            }
+        }
+    }
+
+    if (buildAsLibrary) {
+        libraryVariants.all { variant ->
+            variant.outputs.each { output ->
+                def outputFile = output.outputFile
+                if (outputFile != null && outputFile.name.endsWith(".aar")) {
+                    def fileName = "com.starship.android.aar"
+                    output.outputFile = new File(outputFile.parent, fileName)
+                }
+            }
         }
     }
 
@@ -55,4 +84,17 @@ android {
             excludes += ['META-INF/*']
         }
     }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.0'
+}
+
+tasks.register('wrapper', Wrapper) {
+    gradleVersion = '8.10.2'
+}
+
+tasks.register('prepareKotlinBuildScriptModel') {
 }
