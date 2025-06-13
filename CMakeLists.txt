@@ -119,7 +119,7 @@ add_compile_definitions(
 )
 
 # Find necessary libraries
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT (CMAKE_SYSTEM_NAME STREQUAL "Android"))
 find_package(OpenGL REQUIRED)
 endif()
 
