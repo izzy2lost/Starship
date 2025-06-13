@@ -18,8 +18,7 @@ jobs:
       - name: Download and extract Starship archive
         run: |
           gdown --fuzzy "https://drive.google.com/file/d/1HOyJWSGvbajB9jALHu8V2LtaZecL-LVZ/view?usp=drivesdk"
-          unzip -q 1HOyJWSGvbajB9jALHu8V2LtaZecL-LVZ.zip
-          mv Starship-main Starship  # Adjust if folder is named differently
+          unzip -q Starship.zip
 
       - name: Build libultraship (CMake)
         run: |
