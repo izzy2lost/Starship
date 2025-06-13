@@ -16,35 +16,20 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev wget
+          sudo apt-get install -y ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev wget libsdl2-dev libtinyxml2-dev
 
-      - name: Install latest SDL
+      - name: Build libultraship (for OTR/data)
         run: |
-          if [ ! -d "SDL2-2.28.5" ]; then
-            wget https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-2.28.5.tar.gz
-            tar -xzf SDL2-2.28.5.tar.gz
-          fi
-          cd SDL2-2.28.5
-          ./configure --enable-hidapi-libusb
-          make -j 10
-          sudo make install
+          cmake -H. -Bbuild-libultra
+          cmake --build build-libultra -- -j$(nproc)
 
-      - name: Install latest tinyxml2
+      - name: Build asset tools (mio0, recomp)
+        run: make -C tools mio0 recomp
+
+      - name: Build Torch (CMake)
         run: |
-          sudo apt-get remove libtinyxml2-dev
-          if [ ! -d "tinyxml2-10.0.0" ]; then
-            wget https://github.com/leethomason/tinyxml2/archive/refs/tags/10.0.0.tar.gz
-            tar -xzf 10.0.0.tar.gz
-          fi
-          cd tinyxml2-10.0.0
-          mkdir -p build
-          cd build
-          cmake ..
-          make
-          sudo make install
-
-      - name: Build asset tools (mio0, torch, recomp)
-        run: make -C tools
+          cmake -S tools/Torch -B tools/Torch/cmake-build-release -GNinja -DCMAKE_BUILD_TYPE=Release
+          cmake --build tools/Torch/cmake-build-release --target torch -j$(nproc)
 
       - name: Generate starship.o2r
         run: tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
