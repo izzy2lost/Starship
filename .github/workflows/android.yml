@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev
+          sudo apt-get install -y ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev wget
 
       - name: Install latest SDL
         run: |
@@ -43,10 +43,11 @@ jobs:
           make
           sudo make install
 
+      - name: Build asset tools (mio0, torch, recomp)
+        run: make -C tools
+
       - name: Generate starship.o2r
-        run: |
-          cmake --no-warn-unused-cli -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release
-          cmake --build build-cmake --config Release --target GenerateStarshipOtr -j3
+        run: tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
 
       - uses: actions/upload-artifact@v4
         with:
