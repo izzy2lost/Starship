@@ -9,71 +9,79 @@ jobs:
   generate-starship-otr:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev wget unzip libsdl2-dev libtinyxml2-dev git
+          sudo apt-get install -y python3-pip unzip ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev libsdl2-dev libtinyxml2-dev curl
+          pip install gdown
 
-      - name: Overwrite libultraship with Waterdish version
+      - name: Download and extract Starship archive
         run: |
-          rm -rf temp-ultra
-          git clone --depth=1 https://github.com/Waterdish/libultraship.git temp-ultra
-          rm -rf libultraship
-          mv temp-ultra libultraship
-          
-      - name: Build libultraship (for OTR/data)
+          gdown --fuzzy "https://drive.google.com/file/d/1HOyJWSGvbajB9jALHu8V2LtaZecL-LVZ/view?usp=drivesdk"
+          unzip -q 1HOyJWSGvbajB9jALHu8V2LtaZecL-LVZ.zip
+          mv Starship-main Starship  # Adjust if folder is named differently
+
+      - name: Build libultraship (CMake)
         run: |
-          cmake -H. -Bbuild-libultra
-          cmake --build build-libultra -- -j$(nproc)
+          cd Starship
+          cmake -H. -Bbuild
+          cmake --build build -- -j$(nproc)
 
       - name: Build asset tools (mio0, recomp)
-        run: make -C tools mio0 recomp
-
-      - name: Build Torch (CMake)
         run: |
+          cd Starship
+          make -C tools mio0 recomp
+
+      - name: Build Torch
+        run: |
+          cd Starship
           cmake -S tools/Torch -B tools/Torch/cmake-build-release -GNinja -DCMAKE_BUILD_TYPE=Release
           cmake --build tools/Torch/cmake-build-release --target torch -j$(nproc)
 
       - name: Generate starship.o2r
-        run: tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
+        run: |
+          cd Starship
+          tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload starship.o2r
+        uses: actions/upload-artifact@v4
         with:
           name: starship.o2r
-          path: starship.o2r
+          path: Starship/starship.o2r
           retention-days: 1
 
   build-android:
     needs: generate-starship-otr
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip unzip ninja-build
+          pip install gdown
 
-      - name: Install ninja-build
-        run: sudo apt-get install -y ninja-build
+      - name: Download and extract Starship archive
+        run: |
+          gdown --fuzzy "https://drive.google.com/file/d/1HOyJWSGvbajB9jALHu8V2LtaZecL-LVZ/view?usp=drivesdk"
+          unzip -q 1HOyJWSGvbajB9jALHu8V2LtaZecL-LVZ.zip
+          mv Starship-main Starship  # Adjust if folder is named differently
 
       - name: Download starship.o2r
         uses: actions/download-artifact@v4
         with:
           name: starship.o2r
-          path: Android/app/src/main/assets
+          path: Starship/Android/app/src/main/assets
 
-      - name: Grant execute permission for gradlew
-        working-directory: Android
+      - name: Grant execute permission for Gradle
+        working-directory: Starship/Android
         run: chmod +x ./gradlew
 
       - name: Build Starship APK
-        working-directory: Android
+        working-directory: Starship/Android
         run: ./gradlew assembleDebug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: starship-apk
-          path: Android/app/build/outputs/apk/debug/app-debug.apk
+          path: Starship/Android/app/build/outputs/apk/debug/app-debug.apk
