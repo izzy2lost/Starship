@@ -1,6 +1,8 @@
-name: generate-android-apk
+name: Android CI
 
 on:
+  push:
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -10,10 +12,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y ninja-build cmake g++ gcc libzip-dev zipcmp zipmerge ziptool libgl1-mesa-dev
+
       - name: Install latest SDL
         run: |
           if [ ! -d "SDL2-2.28.5" ]; then
@@ -24,7 +28,7 @@ jobs:
           ./configure --enable-hidapi-libusb
           make -j 10
           sudo make install
-          sudo cp -av /usr/local/lib/libSDL* /lib/x86_64-linux-gnu/
+
       - name: Install latest tinyxml2
         run: |
           sudo apt-get remove libtinyxml2-dev
@@ -38,10 +42,12 @@ jobs:
           cmake ..
           make
           sudo make install
+
       - name: Generate starship.o2r
         run: |
           cmake --no-warn-unused-cli -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release
           cmake --build build-cmake --config Release --target GenerateStarshipOtr -j3
+
       - uses: actions/upload-artifact@v4
         with:
           name: starship.o2r
@@ -50,25 +56,31 @@ jobs:
 
   build-android:
     needs: generate-starship-otr
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Install dependencies
+
+      - name: Install ninja-build
         run: sudo apt-get install -y ninja-build
+
       - name: Download starship.o2r
         uses: actions/download-artifact@v4
         with:
           name: starship.o2r
           path: Android/app/src/main/assets
+
+      - name: Grant execute permission for gradlew
+        working-directory: Android
+        run: chmod +x ./gradlew
+
       - name: Build Starship APK
-        run: |
-          cd Android/
-          ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
-          mv app/build/outputs/apk/debug/app-debug.apk ../starship.apk
+        working-directory: Android
+        run: ./gradlew assembleDebug
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: starship-apk
-          path: starship.apk
+          path: Android/app/build/outputs/apk/debug/app-debug.apk
