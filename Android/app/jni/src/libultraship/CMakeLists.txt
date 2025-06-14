@@ -1,35 +1,42 @@
-cmake_minimum_required(VERSION 3.16.0)
-
-option(NON_PORTABLE "Build a non-portable version" OFF)
+cmake_minimum_required(VERSION 3.16)
 
 project(libultraship LANGUAGES C CXX)
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_STANDARD 11)
+
+option(USE_OPENGLES "Enable GLES3" OFF)
+# Add any other top-level options here.
+
+# macOS/ObjC++
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     enable_language(OBJCXX)
     set(CMAKE_OBJC_FLAGS "${CMAKE_OBJC_FLAGS} -fobjc-arc")
     set(CMAKE_OBJCXX_FLAGS "${CMAKE_OBJCXX_FLAGS} -fobjc-arc")
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+# MSVC runtime (static CRT)
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-include(cmake/Utils.cmake)
-
+# Optionally: VCPKG auto-deps for Windows if desired
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows" AND USE_AUTO_VCPKG)
     include(cmake/automate-vcpkg.cmake)
-
-	if ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
-		set(VCPKG_TRIPLET x86-windows-static)
-		set(VCPKG_TARGET_TRIPLET x86-windows-static)
-	elseif ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
-		set(VCPKG_TRIPLET x64-windows-static)
-		set(VCPKG_TARGET_TRIPLET x64-windows-static)
-	endif()
-
+    if ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
+        set(VCPKG_TRIPLET x86-windows-static)
+        set(VCPKG_TARGET_TRIPLET x86-windows-static)
+    elseif ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
+        set(VCPKG_TRIPLET x64-windows-static)
+        set(VCPKG_TARGET_TRIPLET x64-windows-static)
+    endif()
     vcpkg_bootstrap()
     vcpkg_install_packages(zlib bzip2 sdl2 glew)
 endif()
 
-add_subdirectory("extern")
-add_subdirectory("src")
+add_subdirectory(extern)
+add_subdirectory(src)
 
+# Optionally, add packaging/install logic here
+# install(TARGETS libultraship DESTINATION lib)
+# install(DIRECTORY src/ DESTINATION include FILES_MATCHING PATTERN "*.h")
