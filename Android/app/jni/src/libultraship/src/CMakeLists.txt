@@ -1,11 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(libultraship LANGUAGES C CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_C_STANDARD 11)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-option(USE_OPENGLES "Enable GLES3" OFF)
 
 # ========== Platform-specific sources ===========
 set(LIBUTRASHIP_PORT_SOURCES "")
@@ -303,6 +298,3 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang")
         $<$<COMPILE_LANGUAGE:C,OBJC>:-Wno-int-conversion>
     )
 endif()
-
-# Example for additional libraries:
-# target_link_libraries(libultraship PRIVATE StrHash64 ZAPDUtils ImGui storm tinyxml2 nlohmann_json::nlohmann_json)
