@@ -22,9 +22,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
     set(LIBUTRASHIP_PORT_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/android/AndroidImpl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/android/AndroidImpl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/android/os_stub.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/os_stub.c
     )
 endif()
 
