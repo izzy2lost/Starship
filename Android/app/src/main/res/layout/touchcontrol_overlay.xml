@@ -198,70 +198,7 @@
         app:layout_constraintStart_toStartOf="parent"
         android:textColor="#25FFFFFF"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
-^
-  symbol:   variable touchcontrol_overlay
-  location: class layout
-> Task :app:compileDebugJavaWithJavac
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:285: error: cannot find symbol
-        final ViewGroup buttonGroup = overlayView.findViewById(R.id.button_group);
-                                                                   ^
-  symbol:   variable button_group
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:287: error: cannot find symbol
-        buttonA = overlayView.findViewById(R.id.buttonA);
-                                               ^
-  symbol:   variable buttonA
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:288: error: cannot find symbol
-        buttonB = overlayView.findViewById(R.id.buttonB);
-                                               ^
-  symbol:   variable buttonB
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:289: error: cannot find symbol
-        buttonX = overlayView.findViewById(R.id.buttonX);
-                                               ^
-  symbol:   variable buttonX
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:290: error: cannot find symbol
-        buttonY = overlayView.findViewById(R.id.buttonY);
-                                               ^
-  symbol:   variable buttonY
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:292: error: cannot find symbol
-        buttonDpadUp = overlayView.findViewById(R.id.buttonDpadUp);
-                                                    ^
-  symbol:   variable buttonDpadUp
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:293: error: cannot find symbol
-        buttonDpadDown = overlayView.findViewById(R.id.buttonDpadDown);
-                                                      ^
-  symbol:   variable buttonDpadDown
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:294: error: cannot find symbol
-        buttonDpadLeft = overlayView.findViewById(R.id.buttonDpadLeft);
-                                                      ^
-  symbol:   variable buttonDpadLeft
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:295: error: cannot find symbol
-        buttonDpadRight = overlayView.findViewById(R.id.buttonDpadRight);
-                                                       ^
-  symbol:   variable buttonDpadRight
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:297: error: cannot find symbol
-        buttonLB = overlayView.findViewById(R.id.buttonLB);
-                                                ^
-  symbol:   variable buttonLB
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:298: error: cannot find symbol
-        buttonRB = overlayView.findViewById(R.id.buttonRB);
-                                                ^
-  symbol:   variable buttonRB
-  location: class id
-/home/runner/work/Starship/Starship/Android/app/src/main/java/com/starship/MainActivity.java:299: error: cannot find symbol
-        buttonZ = overlayView.findViewById(R.id.buttonZ);
-                                               ^
-  symbol:   variable buttonZ
-  location: class id
+
     <!-- Toggle Button -->
 <Button
 android:id="@+id/buttonToggle"
