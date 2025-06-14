@@ -1,51 +1,54 @@
-add_library(libultraship STATIC)
-set_target_properties(libultraship PROPERTIES PREFIX "")
-set_property(TARGET libultraship PROPERTY CXX_STANDARD 20)
+cmake_minimum_required(VERSION 3.16)
+
+project(libultraship LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_STANDARD 11)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 option(USE_OPENGLES "Enable GLES3" OFF)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    target_sources(libultraship PRIVATE src/port/android/os_stub.c)
+add_library(libultraship STATIC)
+set_target_properties(libultraship PROPERTIES PREFIX "")
+
+# ========== Platform-specific port sources ===========
+set(LIBUTRASHIP_PORT_SOURCES "")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
+    set(LIBUTRASHIP_PORT_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUController.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUController.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUGamepad.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUGamepad.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUImpl.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUImpl.cpp
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+    set(LIBUTRASHIP_PORT_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/switch/SwitchImpl.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/switch/SwitchImpl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/switch/SwitchPerformanceProfiles.h
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    set(LIBUTRASHIP_PORT_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/os_stub.c
+    )
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
-endif()
-
-#=================== Top-Level ===================
-
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/install_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/install_config.h @ONLY)
-
+# =========== Core sources (add/remove as needed) ===========
 set(Source_Files__TopLevel
     ${CMAKE_CURRENT_SOURCE_DIR}/Context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Context.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/install_config.h
 )
-
-source_group("" FILES ${Source_Files__TopLevel})
-target_sources(libultraship PRIVATE ${Source_Files__TopLevel})
-
-#=================== Audio ===================
-
 set(Source_Files__Audio
     ${CMAKE_CURRENT_SOURCE_DIR}/audio/Audio.h
     ${CMAKE_CURRENT_SOURCE_DIR}/audio/Audio.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioPlayer.h
-	${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioPlayer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioPlayer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/audio/SDLAudioPlayer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/audio/SDLAudioPlayer.cpp
 )
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    list(APPEND Source_Files__Audio ${CMAKE_CURRENT_SOURCE_DIR}/audio/WasapiAudioPlayer.h)
-    list(APPEND Source_Files__Audio ${CMAKE_CURRENT_SOURCE_DIR}/audio/WasapiAudioPlayer.cpp)
-endif()
-
-source_group("audio" FILES ${Source_Files__Audio})
-target_sources(libultraship PRIVATE ${Source_Files__Audio})
-
-#=================== Controller ===================
-
 set(Source_Files__Controller
     ${CMAKE_CURRENT_SOURCE_DIR}/controller/ControlDeck.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/controller/ControlDeck.h
@@ -56,40 +59,22 @@ set(Source_Files__Controller
     ${CMAKE_CURRENT_SOURCE_DIR}/controller/KeyboardController.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/controller/KeyboardController.h
 )
-
 if (NOT CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     list(APPEND Source_Files__Controller
         ${CMAKE_CURRENT_SOURCE_DIR}/controller/SDLController.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/controller/SDLController.h
     )
 endif()
-
-source_group("controller" FILES ${Source_Files__Controller})
-target_sources(libultraship PRIVATE ${Source_Files__Controller})
-
-#=================== Config ===================
-
 set(Source_Files__Config
     ${CMAKE_CURRENT_SOURCE_DIR}/config/ConsoleVariable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/config/ConsoleVariable.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/config/Config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/config/Config.cpp
 )
-
-source_group("config" FILES ${Source_Files__Config})
-target_sources(libultraship PRIVATE ${Source_Files__Config})
-
-#=================== Public ===================
-
-source_group("public")
-
 set(Source_Files__Public__Libultra
     ${CMAKE_CURRENT_SOURCE_DIR}/public/libultra/os.h
     ${CMAKE_CURRENT_SOURCE_DIR}/public/libultra/os.cpp
 )
- 
-source_group("public/libultra" FILES ${Source_Files__Public__Libultra})
-
 set(Source_Files__Public__Bridge
     ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/resourcebridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/resourcebridge.cpp
@@ -104,44 +89,20 @@ set(Source_Files__Public__Bridge
     ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/crashhandlerbridge.h
     ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/crashhandlerbridge.cpp
 )
- 
-source_group("public/bridge" FILES ${Source_Files__Public__Bridge})
-target_sources(libultraship PRIVATE ${Source_Files__Public__Libultra} ${Source_Files__Public__Bridge})
-
-#=================== Debug ===================
-
 set(Source_Files__Debug
     ${CMAKE_CURRENT_SOURCE_DIR}/debug/CrashHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/debug/CrashHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug/Console.h
     ${CMAKE_CURRENT_SOURCE_DIR}/debug/Console.cpp
 )
-
-source_group("debug" FILES ${Source_Files__Debug})
-target_sources(libultraship PRIVATE ${Source_Files__Debug})
-
-#=================== Log ===================
-
 set(Source_Files__Log
     ${CMAKE_CURRENT_SOURCE_DIR}/log/luslog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/log/luslog.cpp
 )
-
-source_group("log" FILES ${Source_Files__Log})
-
-target_sources(libultraship PRIVATE ${Source_Files__Log} ${Source_Files__Log__SPDLog})
-
-#=================== Window ===================
 set(Source_Files__Window
     ${CMAKE_CURRENT_SOURCE_DIR}/window/Window.h
     ${CMAKE_CURRENT_SOURCE_DIR}/window/Window.cpp
 )
-
-source_group("window" FILES ${Source_Files__Window})
-target_sources(libultraship PRIVATE ${Source_Files__Window})
-
-#=================== Gui ===================
-
 set(Source_Files__Window__Gui
     ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/ConsoleWindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/ConsoleWindow.cpp
@@ -164,33 +125,12 @@ set(Source_Files__Window__Gui
     ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/GuiMenuBar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/GuiMenuBar.cpp
 )
-
-source_group("window/gui" FILES ${Source_Files__Window__Gui})
-target_sources(libultraship PRIVATE ${Source_Files__Window__Gui})
-
-#=================== Utils ===================
-
 set(Source_Files__Utils
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/stox.h
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/stox.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/Utils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/Utils.cpp
 )
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    list(APPEND Source_Files__Utils
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils/OSXFolderManager.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/utils/OSXFolderManager.mm
-    )
-
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/utils/OSXFolderManager.mm PROPERTIES COMPILE_FLAGS -fno-objc-arc)
-endif()
-
-source_group("utils" FILES ${Source_Files__Utils})
-target_sources(libultraship PRIVATE ${Source_Files__Utils})
-
-#=================== BinaryTools ==================
-
 set(Source_Files__Utils__BinaryTools
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/BinaryReader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/BinaryReader.cpp
@@ -202,39 +142,6 @@ set(Source_Files__Utils__BinaryTools
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/Stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/Stream.cpp
 )
-
-source_group("utils/binarytools" FILES ${Source_Files__Utils__BinaryTools})
-target_sources(libultraship PRIVATE ${Source_Files__Utils__BinaryTools})
-
-#=================== Port ===================
-
-if (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    set(Source_Files__Port
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUController.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUController.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUGamepad.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUGamepad.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUImpl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUImpl.cpp
-    )
-elseif (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-    set(Source_Files__Port
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/switch/SwitchImpl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/switch/SwitchImpl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/switch/SwitchPerformanceProfiles.h
-    )
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
-    set(Source_Files__Port
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.cpp
-    )
-endif()
-
-source_group("port" FILES ${Source_Files__Port})
-target_sources(libultraship PRIVATE ${Source_Files__Port})
-
-#=================== Resource ===================
-
 set(Source_Files__Resource
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/Archive.h
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/Archive.cpp
@@ -249,8 +156,6 @@ set(Source_Files__Resource
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/ResourceFactory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/ResourceFactory.cpp
 )
-source_group("resource" FILES ${Source_Files__Resource})
-
 set(Source_Files__Resource__Types
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Array.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Array.h
@@ -265,8 +170,6 @@ set(Source_Files__Resource__Types
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Vertex.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Vertex.h
 )
-source_group("resource/type" FILES ${Source_Files__Resource__Types})
-
 set(Source_Files__Resource__Factories
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/ArrayFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/ArrayFactory.h
@@ -281,113 +184,77 @@ set(Source_Files__Resource__Factories
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/VertexFactory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/VertexFactory.h
 )
-source_group("resource/factory" FILES ${Source_Files__Resource__Factories})
-target_sources(libultraship PRIVATE ${Source_Files__Resource} ${Source_Files__Resource__Types} ${Source_Files__Resource__Factories})
-
-#=================== Graphic ===================
-
 set(Source_Files__Graphic
     ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_cc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_cc.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_pc.h
     ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_pc.cpp
 )
-
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    list(APPEND Source_Files__Graphic
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_opengl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_opengl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_sdl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_sdl2.cpp
-    )
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    list(APPEND Source_Files__Graphic
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_dxgi.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_dxgi.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_direct3d11.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_direct3d11.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_direct3d12.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_direct3d12.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_direct3d_common.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_direct3d_common.cpp
-    )
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    list(APPEND Source_Files__Graphic
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_metal.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_metal.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_metal_shader.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_metal_shader.h
-    )
-elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    list(APPEND Source_Files__Graphic
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_wiiu.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_wiiu.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_gx2.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_gx2.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gx2_shader_gen.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gx2_shader_gen.c
-    )
-endif()
-
-source_group("graphic" FILES ${Source_Files__Graphic})
-target_sources(libultraship PRIVATE ${Source_Files__Graphic})
-
-#=================== STB ===================
-
 set(Source_Files__Lib__stb
     "${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb/stb_image.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb/stb_image_write.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb/stb_impl.c"
 )
-source_group("extern/stb" FILES ${Source_Files__Lib__stb})
-target_sources(libultraship PRIVATE ${Source_Files__Lib__stb})
 
-#=================== metal-cpp ===================
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    target_include_directories(libultraship PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../extern/metal-cpp)
+# ============ Always have a dummy file for empty builds ============
+if(LIBUTRASHIP_PORT_SOURCES STREQUAL "")
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.c "// dummy for libultraship")
+    set(LIBUTRASHIP_PORT_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dummy.c)
 endif()
 
-
-#=================== Packages & Includes ===================
-
-target_include_directories(libultraship
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../extern ${CMAKE_CURRENT_BINARY_DIR}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../extern/spdlog/include ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
+# ============ Add all sources to the target ============
+target_sources(libultraship PRIVATE
+    ${Source_Files__TopLevel}
+    ${Source_Files__Audio}
+    ${Source_Files__Controller}
+    ${Source_Files__Config}
+    ${Source_Files__Public__Libultra}
+    ${Source_Files__Public__Bridge}
+    ${Source_Files__Debug}
+    ${Source_Files__Log}
+    ${Source_Files__Window}
+    ${Source_Files__Window__Gui}
+    ${Source_Files__Utils}
+    ${Source_Files__Utils__BinaryTools}
+    ${LIBUTRASHIP_PORT_SOURCES}
+    ${Source_Files__Resource}
+    ${Source_Files__Resource__Types}
+    ${Source_Files__Resource__Factories}
+    ${Source_Files__Graphic}
+    ${Source_Files__Lib__stb}
 )
+
+# ================== Include directories ==================
+target_include_directories(libultraship
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../extern
+    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+    PUBLIC ${INCLUDE_DIR}
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/spdlog/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
+)
+
+# ========== Platform-specific compile defs & links ==========
 
 if (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    target_include_directories(${PROJECT_NAME} PRIVATE
+    target_include_directories(libultraship PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/
     )
-endif()
-
-#=================== Linking ===================
-
-target_link_libraries(libultraship
-    PRIVATE StrHash64
-    PUBLIC ZAPDUtils ImGui storm tinyxml2 nlohmann_json::nlohmann_json
-)
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
-    target_link_libraries(libultraship PRIVATE Threads::Threads)
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    find_Library(OSX_FOUNDATION Foundation)
-    find_Library(OSX_AVFOUNDATION AVFoundation)
-    find_library(METAL Metal)
-    find_library(QUARTZCORE QuartzCore)
-    target_link_libraries(libultraship PRIVATE ${OSX_FOUNDATION} ${OSX_AVFOUNDATION} ${METAL} ${QUARTZCORE} ${CMAKE_DL_LIBS})
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    find_package(PulseAudio)
-    target_link_libraries(libultraship PRIVATE ${PULSEAUDIO_LIBRARY})
+    target_compile_definitions(libultraship PRIVATE
+        SPDLOG_NO_THREAD_ID SPDLOG_NO_TLS STBI_NO_THREAD_LOCALS SPDLOG_ACTIVE_LEVEL=3
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
+    )
+elseif (NOT CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
+    target_compile_definitions(libultraship PRIVATE
+        ENABLE_OPENGL
+        $<$<CONFIG:Debug>:_DEBUG>
+        $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
+        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=0>
+        $<$<NOT:$<CONFIG:Debug>>:SPDLOG_ACTIVE_LEVEL=1>
+        $<$<BOOL:${USE_OPENGLES}>:USE_OPENGLES>
+        "-DANDROID_APPNAME=\"${ANDROID_APPNAME}\""
+    )
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
@@ -399,81 +266,48 @@ if (USE_OPENGLES)
     target_link_libraries(libultraship PRIVATE GLESv3)
 endif()
 
-#=================== Compile Options & Defs ===================
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE
-        WIN32
-        _CONSOLE
-        _CRT_SECURE_NO_WARNINGS
-        ENABLE_DX11
-    )
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    target_link_libraries(libultraship PRIVATE Threads::Threads)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-        XCODE_ATTRIBUTE_CLANG_ENABLE_OBJC_ARC YES 
-    )
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    find_library(OSX_FOUNDATION Foundation)
+    find_library(OSX_AVFOUNDATION AVFoundation)
+    find_library(METAL Metal)
+    find_library(QUARTZCORE QuartzCore)
+    target_link_libraries(libultraship PRIVATE ${OSX_FOUNDATION} ${OSX_AVFOUNDATION} ${METAL} ${QUARTZCORE} ${CMAKE_DL_LIBS})
 endif()
 
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    target_compile_definitions(libultraship PRIVATE
-        ENABLE_OPENGL
-        $<$<CONFIG:Debug>:_DEBUG>
-        $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=0>
-        $<$<NOT:$<CONFIG:Debug>>:SPDLOG_ACTIVE_LEVEL=1>
-        $<$<BOOL:${USE_OPENGLES}>:USE_OPENGLES>
-        "-DANDROID_APPNAME=\"${ANDROID_APPNAME}\""
-    )
-else ()
-    target_compile_definitions(libultraship PRIVATE
-        $<$<CONFIG:Debug>:_DEBUG>
-        $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
-        SPDLOG_NO_THREAD_ID
-        SPDLOG_NO_TLS
-        STBI_NO_THREAD_LOCALS
-        SPDLOG_ACTIVE_LEVEL=3
-    )
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(PulseAudio)
+    if(PULSEAUDIO_LIBRARY)
+        target_link_libraries(libultraship PRIVATE ${PULSEAUDIO_LIBRARY})
+    endif()
 endif()
 
-if(MSVC)
+if (MSVC)
     target_compile_options(libultraship PRIVATE
-        $<$<CONFIG:Debug>:
-            /Od;
-            /Oi-
-        >
-        $<$<CONFIG:Release>:
-            /Oi;
-            /Gy
-        >
-        /permissive-;
-        /MP;
-        /sdl;
-        /W3;
-        ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
-        ${DEFAULT_CXX_EXCEPTION_HANDLING};
+        $<$<CONFIG:Debug>:/Od;/Oi->
+        $<$<CONFIG:Release>:/Oi;/Gy>
+        /permissive-;/MP;/sdl;/W3;
     )
     target_link_options(libultraship PRIVATE
-        $<$<CONFIG:Release>:
-            /OPT:REF;
-            /OPT:ICF
-        >
+        $<$<CONFIG:Release>:/OPT:REF;/OPT:ICF>
         /SUBSYSTEM:CONSOLE
     )
 endif()
 
 if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang")
-	target_compile_options(libultraship PRIVATE
-		-Wall
-		-Wextra
-		-Wno-error
-		-Wno-unused-variable
-		-Wno-unused-parameter
-		-Wno-unused-function
-		-Wno-parentheses
-		-Wno-narrowing
-		-Wno-missing-field-initializers
+    target_compile_options(libultraship PRIVATE
+        -Wall -Wextra -Wno-error -Wno-unused-variable -Wno-unused-parameter
+        -Wno-unused-function -Wno-parentheses -Wno-narrowing -Wno-missing-field-initializers
         $<$<COMPILE_LANGUAGE:C,OBJC>:-Wno-int-conversion>
-	)
+    )
 endif()
+
+# ========= Example: link third-party or custom libs =========
+# target_link_libraries(libultraship PRIVATE StrHash64 ZAPDUtils ImGui storm tinyxml2 nlohmann_json::nlohmann_json)
+
+# ========== END ==========
