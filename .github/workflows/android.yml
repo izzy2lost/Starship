@@ -37,8 +37,10 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk starship-debug.apk
           cp app/build/outputs/apk/release/app-release-unsigned.apk starship-release-unsigned.apk
 
-      - name: Upload APK artifact
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: starship-apk
-          path: starship.apk
+          name: starship-apks
+          path: |
+            Android/starship-debug.apk
+            Android/starship-release-unsigned.apk
