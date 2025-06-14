@@ -7,8 +7,24 @@ set(CMAKE_C_STANDARD 11)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 option(USE_OPENGLES "Enable GLES3" OFF)
 
-add_library(libultraship STATIC)
+# Collect all your regular sources in this list (fill this in as usual)
+set(LIBUTRASHIP_SOURCES
+    # ... your regular .cpp/.c/.h files ...
+)
+
+# Add Android stub for N64 OS functions if building for Android
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(APPEND LIBUTRASHIP_SOURCES src/port/android/os_stub.c)
+endif()
+
+add_library(libultraship STATIC ${LIBUTRASHIP_SOURCES})
 set_target_properties(libultraship PROPERTIES PREFIX "")
+
+target_include_directories(libultraship
+    PUBLIC
+        ${INCLUDE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 # ========== Platform-specific port sources ===========
 set(LIBUTRASHIP_PORT_SOURCES "")
