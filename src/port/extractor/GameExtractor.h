@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Companion.h"
 #include <filesystem>
 #include <vector>
 #include <cstdint>
