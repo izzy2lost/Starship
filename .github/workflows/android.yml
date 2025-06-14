@@ -23,7 +23,7 @@ jobs:
       - name: Give gradlew permissions
         run: chmod +x Android/gradlew
 
-      - name: Build SoH APK
+      - name: Build Starship APK
         run: |
           cd Android
           ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
