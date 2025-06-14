@@ -115,32 +115,40 @@ include_directories(
 
 # Gather source files
 file(GLOB_RECURSE ALL_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
-  "src/audio/*.c" "src/audio/*.h"
-  "src/engine/*.c" "src/engine/*.h"
-  "src/libultra/io/aisetfreq.c"
-  "src/libultra/gu/sqrtf.c"
-  "src/libultra/gu/mtxutil.c"
-  "src/libultra/gu/ortho.c"
-  "src/overlays/*.c" "src/overlays/*.h"
-  "src/port/*.h" "src/port/*.c" "src/port/*.cpp"
-  "src/sys/*.c" "src/sys/*.h"
-  "src/1FA60.c"
-  "src/buffers.c"
-  "src/dmatable.c"
-  "src/libc_math64.c"
-  "src/libc_sprintf.c"
-  "Resource.rc"
+    "src/audio/*.c"      "src/audio/*.h"
+    "src/engine/*.c"     "src/engine/*.h"
+    "src/libultra/io/aisetfreq.c"
+    "src/libultra/gu/sqrtf.c"
+    "src/libultra/gu/mtxutil.c"
+    "src/libultra/gu/ortho.c"
+    "src/overlays/*.c"   "src/overlays/*.h"
+    "src/port/*.h"       "src/port/*.c"   "src/port/*.cpp"
+    "src/sys/*.c"        "src/sys/*.h"
+    "src/1FA60.c"
+    "src/buffers.c"
+    "src/dmatable.c"
+    "src/libc_math64.c"
+    "src/libc_sprintf.c"
+    "Resource.rc"
 )
+
 # Exclude specific files
-list(FILTER ALL_FILES EXCLUDE REGEX ".*.inc.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_colheaders.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_edata_info.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_rcp_setup.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_load_inits.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/overlays/ovl_ending/fox_end2_data.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
-list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
+list(FILTER ALL_FILES EXCLUDE REGEX ".*\\.inc\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_colheaders\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_edata_info\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_rcp_setup\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_load_inits\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/overlays/ovl_ending/fox_end2_data\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault\\.c$")
+list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram\\.c$")
+
+# Exclude extractor files for mobile/console builds
+if(CMAKE_SYSTEM_NAME STREQUAL "Android" OR
+   CMAKE_SYSTEM_NAME STREQUAL "iOS" OR
+   CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+    list(FILTER ALL_FILES EXCLUDE REGEX "src/port/extractor/.*")
+endif()
 
 # iOS bundle target, else regular target
 if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
