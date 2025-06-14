@@ -26,9 +26,10 @@ jobs:
       - name: Build Starship APK
         run: |
           cd Android
-          ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
-          mv app/build/outputs/apk/debug/app-debug.apk starship.apk
-          
+          ./gradlew assembleDebug assembleRelease -P elfBuildType=RelWithDebInfo
+          cp app/build/outputs/apk/debug/app-debug.apk starship-debug.apk
+          cp app/build/outputs/apk/release/app-release-unsigned.apk starship-release-unsigned.apk
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
