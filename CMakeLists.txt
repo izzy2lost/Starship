@@ -22,7 +22,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 # =========== Sources =============
-add_subdirectory("src")
+add_subdirectory(src) # This will look for src/CMakeLists.txt
 
 # ----------- Android: logcat support -----------
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
