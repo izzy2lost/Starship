@@ -491,3 +491,4 @@ public class MainActivity extends SDLActivity {
         });
     });
     }
+}
