@@ -1,234 +1,92 @@
-cmake_minimum_required(VERSION 3.16...3.31.5)
+cmake_minimum_required(VERSION 3.31.5)
 
-set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+option(NON_PORTABLE "Build a non-portable version" OFF)
 
-# ========== Platform-specific sources ===========
-set(LIBUTRASHIP_PORT_SOURCES "")
-
-if(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    set(LIBUTRASHIP_PORT_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUController.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUGamepad.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/wiiu/WiiUImpl.cpp
-    )
-elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-    set(LIBUTRASHIP_PORT_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/switch/SwitchImpl.cpp
-        # SwitchPerformanceProfiles.h is a header, omit here
-    )
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    set(LIBUTRASHIP_PORT_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/os_stub.c
-    )
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    option(SIGN_LIBRARY "Enable xcode signing" OFF)
+    option(BUNDLE_ID "Bundle ID for xcode signing" "com.example.libultraship")
+    set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 endif()
 
-# Always have a dummy file for empty builds
-if(LIBUTRASHIP_PORT_SOURCES STREQUAL "")
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.c "// dummy for libultraship")
-    set(LIBUTRASHIP_PORT_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dummy.c)
+project(libultraship LANGUAGES C CXX)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    enable_language(OBJCXX)
+    set(CMAKE_OBJC_FLAGS "${CMAKE_OBJC_FLAGS} -fobjc-arc")
+    set(CMAKE_OBJCXX_FLAGS "${CMAKE_OBJCXX_FLAGS} -fobjc-arc")
 endif()
 
-# =========== Main source file sets ===========
-set(Source_Files__TopLevel
-    ${CMAKE_CURRENT_SOURCE_DIR}/Context.cpp
-)
-set(Source_Files__Audio
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/Audio.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/AudioPlayer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/audio/SDLAudioPlayer.cpp
-)
-set(Source_Files__Controller
-    ${CMAKE_CURRENT_SOURCE_DIR}/controller/ControlDeck.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/controller/Controller.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/controller/DummyController.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/controller/KeyboardController.cpp
-)
-if (NOT CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    list(APPEND Source_Files__Controller
-        ${CMAKE_CURRENT_SOURCE_DIR}/controller/SDLController.cpp
-    )
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
-set(Source_Files__Config
-    ${CMAKE_CURRENT_SOURCE_DIR}/config/ConsoleVariable.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/config/Config.cpp
-)
-set(Source_Files__Public__Libultra
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/libultra/os.cpp
-)
-set(Source_Files__Public__Bridge
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/resourcebridge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/windowbridge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/audiobridge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/controllerbridge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/consolevariablebridge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/public/bridge/crashhandlerbridge.cpp
-)
-set(Source_Files__Debug
-    ${CMAKE_CURRENT_SOURCE_DIR}/debug/CrashHandler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/debug/Console.cpp
-)
-set(Source_Files__Log
-    ${CMAKE_CURRENT_SOURCE_DIR}/log/luslog.cpp
-)
-set(Source_Files__Window
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/Window.cpp
-)
-set(Source_Files__Window__Gui
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/ConsoleWindow.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/Gui.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/InputEditorWindow.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/InputViewer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/GameOverlay.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/StatsWindow.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/GuiWindow.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/GuiElement.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window/gui/GuiMenuBar.cpp
-)
-set(Source_Files__Utils
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/stox.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/Utils.cpp
-)
-set(Source_Files__Utils__BinaryTools
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/BinaryReader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/BinaryWriter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/MemoryStream.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/binarytools/Stream.cpp
-)
-set(Source_Files__Resource
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/Archive.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/Resource.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/ResourceManager.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/ResourceLoader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/ResourceFactory.cpp
-)
-set(Source_Files__Resource__Types
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Array.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Blob.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/DisplayList.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Matrix.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Texture.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/type/Vertex.cpp
-)
-set(Source_Files__Resource__Factories
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/ArrayFactory.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/BlobFactory.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/DisplayListFactory.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/MatrixFactory.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/TextureFactory.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/resource/factory/VertexFactory.cpp
-)
-set(Source_Files__Graphic
-    ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_cc.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/graphic/Fast3D/gfx_pc.cpp
-)
-set(Source_Files__Lib__stb
-    "${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb/stb_impl.c"
-)
 
-# ============ Add all sources to the target ============
-add_library(libultraship STATIC
-    ${Source_Files__TopLevel}
-    ${Source_Files__Audio}
-    ${Source_Files__Controller}
-    ${Source_Files__Config}
-    ${Source_Files__Public__Libultra}
-    ${Source_Files__Public__Bridge}
-    ${Source_Files__Debug}
-    ${Source_Files__Log}
-    ${Source_Files__Window}
-    ${Source_Files__Window__Gui}
-    ${Source_Files__Utils}
-    ${Source_Files__Utils__BinaryTools}
-    ${LIBUTRASHIP_PORT_SOURCES}
-    ${Source_Files__Resource}
-    ${Source_Files__Resource__Types}
-    ${Source_Files__Resource__Factories}
-    ${Source_Files__Graphic}
-    ${Source_Files__Lib__stb}
-)
-set_target_properties(libultraship PROPERTIES PREFIX "")
+include(cmake/Utils.cmake)
+set(ADDITIONAL_LIB_INCLUDES "")
 
-# ================== Include directories ==================
-target_include_directories(libultraship
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../extern
-    PRIVATE ${CMAKE_CURRENT_BINARY_DIR}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    PUBLIC ${INCLUDE_DIR}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/spdlog/include
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/nlohmann-json/include
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/nlohmann-json/single_include
-)
-
-# ========== Platform-specific compile defs & links ==========
-if (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    target_include_directories(libultraship PRIVATE
-        ${DEVKITPRO}/portlibs/wiiu/include/
-    )
-    target_compile_definitions(libultraship PRIVATE
-        SPDLOG_NO_THREAD_ID SPDLOG_NO_TLS STBI_NO_THREAD_LOCALS SPDLOG_ACTIVE_LEVEL=3
-        $<$<CONFIG:Debug>:_DEBUG>
-        $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
-    )
-elseif (NOT CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-    target_compile_definitions(libultraship PRIVATE
-        ENABLE_OPENGL
-        $<$<CONFIG:Debug>:_DEBUG>
-        $<$<NOT:$<CONFIG:Debug>>:NDEBUG>
-        $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=0>
-        $<$<NOT:$<CONFIG:Debug>>:SPDLOG_ACTIVE_LEVEL=1>
-        $<$<BOOL:${USE_OPENGLES}>:USE_OPENGLES>
-        "-DANDROID_APPNAME=\"${ANDROID_APPNAME}\""
-    )
+# ========= Configuration Options =========
+set(EXCLUDE_MPQ_SUPPORT FALSE CACHE BOOL "Exclude StormLib and MPQ archive support")
+if(EXCLUDE_MPQ_SUPPORT)
+    add_compile_definitions(EXCLUDE_MPQ_SUPPORT)
 endif()
+option(USE_OPENGLES "Enable GLES3" OFF)
+option(GBI_UCODE "Specify the GBI ucode version" F3DEX_GBI_2)
+
+# =========== Dependencies =============
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    include(cmake/dependencies/windows-vcpkg.cmake)
+endif()
+
+include(cmake/dependencies/common.cmake)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
-    target_link_libraries(libultraship PRIVATE log)
-endif()
-
-if (USE_OPENGLES)
-    find_library(OPENGLES_LIBRARY GLESv3)
-    target_link_libraries(libultraship PRIVATE GLESv3)
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-    find_package(Threads REQUIRED)
-    target_link_libraries(libultraship PRIVATE Threads::Threads)
+    include(cmake/dependencies/android.cmake)
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    find_library(OSX_FOUNDATION Foundation)
-    find_library(OSX_AVFOUNDATION AVFoundation)
-    find_library(METAL Metal)
-    find_library(QUARTZCORE QuartzCore)
-    target_link_libraries(libultraship PRIVATE ${OSX_FOUNDATION} ${OSX_AVFOUNDATION} ${METAL} ${QUARTZCORE} ${CMAKE_DL_LIBS})
+    include(cmake/dependencies/mac.cmake)
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    find_package(PulseAudio)
-    if(PULSEAUDIO_LIBRARY)
-        target_link_libraries(libultraship PRIVATE ${PULSEAUDIO_LIBRARY})
+if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    include(cmake/dependencies/ios.cmake)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    include(cmake/dependencies/linux.cmake)
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    include(cmake/dependencies/windows.cmake)
+endif()
+
+# === Platform Specific Configuration ===
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    include(cmake/ios-toolchain-populate.cmake)
+endif()
+
+# =========== Sources =============
+add_subdirectory("src")
+
+# ----------- Android: logcat support -----------
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # Find the liblog library for logcat
+    find_library(ANDROID_LOG_LIB log)
+    if (ANDROID_LOG_LIB)
+        # "libultraship" target is created in src/CMakeLists.txt, so only append if it exists
+        set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${ANDROID_LOG_LIB})
     endif()
 endif()
 
-if (MSVC)
-    target_compile_options(libultraship PRIVATE
-        $<$<CONFIG:Debug>:/Od;/Oi->
-        $<$<CONFIG:Release>:/Oi;/Gy>
-        /permissive-;/MP;/sdl;/W3;
-    )
-    target_link_options(libultraship PRIVATE
-        $<$<CONFIG:Release>:/OPT:REF;/OPT:ICF>
-        /SUBSYSTEM:CONSOLE
-    )
-endif()
-
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang")
-    target_compile_options(libultraship PRIVATE
-        -Wall -Wextra -Wno-error -Wno-unused-variable -Wno-unused-parameter
-        -Wno-unused-function -Wno-parentheses -Wno-narrowing -Wno-missing-field-initializers
-        $<$<COMPILE_LANGUAGE:C,OBJC>:-Wno-int-conversion>
-    )
+# ----------- GLES3 Support (optional, for Android) -----------
+if (USE_OPENGLES)
+    if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+        find_library(OPENGLES_LIBRARY GLESv3)
+        if(OPENGLES_LIBRARY)
+            set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${OPENGLES_LIBRARY})
+        endif()
+    else()
+        find_library(OPENGLES_LIBRARY GLESv2)
+        if(OPENGLES_LIBRARY)
+            set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${OPENGLES_LIBRARY})
+        endif()
+    endif()
 endif()
