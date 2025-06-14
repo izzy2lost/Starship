@@ -346,7 +346,10 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<CONFIG:Debug>:-Wl,--wrap=abort>"
     )
-else() # Unix/Linux/Android/Other
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # Do not require or link Ogg/Vorbis on Android
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES "")
+else() # Unix/Linux/Other
     find_package(Ogg REQUIRED)
     find_package(Vorbis REQUIRED)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
