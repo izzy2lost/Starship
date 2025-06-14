@@ -225,6 +225,8 @@ target_include_directories(libultraship
     PUBLIC ${INCLUDE_DIR}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/spdlog/include
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/nlohmann-json/include
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../extern/nlohmann-json/single_include
 )
 
 # ========== Platform-specific compile defs & links ==========
