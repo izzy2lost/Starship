@@ -22,13 +22,21 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 # =========== Sources =============
-add_subdirectory(src) # This will look for src/CMakeLists.txt
+
+file(GLOB_RECURSE LIBULTRASHIP_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+)
+
+add_library(libultraship STATIC ${LIBULTRASHIP_SOURCES})
+set_target_properties(libultraship PROPERTIES PREFIX "")
 
 # ----------- Android: logcat support -----------
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_library(ANDROID_LOG_LIB log)
     if (ANDROID_LOG_LIB)
-        set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${ANDROID_LOG_LIB})
+        target_link_libraries(libultraship PRIVATE ${ANDROID_LOG_LIB})
     endif()
 endif()
 
@@ -37,12 +45,19 @@ if (USE_OPENGLES)
     if (CMAKE_SYSTEM_NAME STREQUAL "Android")
         find_library(OPENGLES_LIBRARY GLESv3)
         if(OPENGLES_LIBRARY)
-            set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${OPENGLES_LIBRARY})
+            target_link_libraries(libultraship PRIVATE ${OPENGLES_LIBRARY})
         endif()
     else()
         find_library(OPENGLES_LIBRARY GLESv2)
         if(OPENGLES_LIBRARY)
-            set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${OPENGLES_LIBRARY})
+            target_link_libraries(libultraship PRIVATE ${OPENGLES_LIBRARY})
         endif()
     endif()
 endif()
+
+# ----------- Include Directories (add more as needed) -----------
+target_include_directories(libultraship
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        # add more include dirs here if needed, like "include", "extern", etc.
+)
