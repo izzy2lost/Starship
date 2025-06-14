@@ -4,8 +4,12 @@ set_property(TARGET libultraship PROPERTY CXX_STANDARD 20)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 option(USE_OPENGLES "Enable GLES3" OFF)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_sources(libultraship PRIVATE src/port/android/os_stub.c)
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
+    use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
 endif()
 
 #=================== Top-Level ===================
