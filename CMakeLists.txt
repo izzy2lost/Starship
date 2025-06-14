@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.5)
+cmake_minimum_required(VERSION 3.24.0)
 
 project(libultraship LANGUAGES C CXX)
 
