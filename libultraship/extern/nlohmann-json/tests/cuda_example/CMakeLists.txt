@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16...3.31.5)
 project(json_cuda LANGUAGES CUDA)
 
 add_executable(json_cuda json_cuda.cu)

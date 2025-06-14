@@ -1,5 +1,5 @@
 project(json_example)
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.16...3.31.5)
 add_definitions("-std=c++11")
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)

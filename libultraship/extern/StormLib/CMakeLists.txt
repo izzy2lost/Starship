@@ -1,5 +1,5 @@
 project(StormLib)
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16...3.31.5)
 
 set(LIBRARY_NAME storm)
 set(CMAKE_CXX_STANDARD 11)

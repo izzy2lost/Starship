@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...3.31 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.16...3.31.5)
 
 # Main Project Info
 project(Starship VERSION 2.0.0 LANGUAGES C CXX ASM)
