@@ -21,13 +21,26 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-# =========== Sources =============
-
+# =========== SMART SOURCE COLLECTION =============
+# Collect all .c/.cpp files, but exclude extern, third_party, and test dirs
 file(GLOB_RECURSE LIBULTRASHIP_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
+
+# Filter out unwanted directories
+foreach(file ${LIBULTRASHIP_SOURCES})
+    if (
+        file MATCHES "/third[_-]?party/"
+        OR file MATCHES "/test/"
+        OR file MATCHES "/build/"
+        OR file MATCHES "/\\.git/"
+        OR file MATCHES "/docs/"
+        OR file MATCHES "~$"
+    )
+        list(REMOVE_ITEM LIBULTRASHIP_SOURCES "${file}")
+    endif()
+endforeach()
 
 add_library(libultraship STATIC ${LIBULTRASHIP_SOURCES})
 set_target_properties(libultraship PROPERTIES PREFIX "")
@@ -55,9 +68,9 @@ if (USE_OPENGLES)
     endif()
 endif()
 
-# ----------- Include Directories (add more as needed) -----------
+# ----------- Include Directories -----------
 target_include_directories(libultraship
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
-        # add more include dirs here if needed, like "include", "extern", etc.
+        # add more include dirs here if needed
 )
