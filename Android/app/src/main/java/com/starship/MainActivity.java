@@ -446,44 +446,48 @@ public class MainActivity extends SDLActivity {
     }
 
     private void setupJoystick(FrameLayout joystickLayout, ImageView joystickKnob, boolean isLeft) {
-        joystickLayout.post(() -> {
-            final float joystickCenterX = joystickLayout.getWidth() / 2f;
-            final float joystickCenterY = joystickLayout.getHeight() / 2f;
+    joystickLayout.post(() -> {
+        final float joystickCenterX = joystickLayout.getWidth() / 2f;
+        final float joystickCenterY = joystickLayout.getHeight() / 2f;
 
-            joystickLayout.setOnTouchListener(new View.OnTouchListener() {
-                @Override
-                public boolean onTouch(View v, MotionEvent event) {
-                    switch (event.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                        case MotionEvent.ACTION_MOVE:
-                            float deltaX = event.getX() - joystickCenterX;
-                            float deltaY = event.getY() - joystickCenterY;
+        joystickLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                    case MotionEvent.ACTION_MOVE:
+                        float deltaX = event.getX() - joystickCenterX;
+                        float deltaY = event.getY() - joystickCenterY;
 
-                            float maxRadius = joystickLayout.getWidth() / 2f - joystickKnob.getWidth() / 2f;
-                            float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                            if (distance > maxRadius) {
-                                float scale = maxRadius / distance;
-                                deltaX *= scale;
-                                deltaY *= scale;
-                            }
+                        float maxRadius = joystickLayout.getWidth() / 2f - joystickKnob.getWidth() / 2f;
+                        float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                        if (distance > maxRadius) {
+                            float scale = maxRadius / distance;
+                            deltaX *= scale;
+                            deltaY *= scale;
+                        }
 
-                            joystickKnob.setX(joystickCenterX + deltaX - joystickKnob.getWidth() / 2f);
-                            joystickKnob.setY(joystickCenterY + deltaY - joystickKnob.getHeight() / 2f);
+                        joystickKnob.setX(joystickCenterX + deltaX - joystickKnob.getWidth() / 2f);
+                        joystickKnob.setY(joystickCenterY + deltaY - joystickKnob.getHeight() / 2f);
 
-                            short x = (short) (deltaX / maxRadius * Short.MAX_VALUE);
-                            short y = (short) (deltaY / maxRadius * Short.MAX_VALUE);
+                        short x = (short) (deltaX / maxRadius * Short.MAX_VALUE);
+                        short y = (short) (deltaY / maxRadius * Short.MAX_VALUE);
 
-                            setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, x);
-                            setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, y);
-                            break;
+                        setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, x);
+                        setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, y);
+                        break;
 
-                        case MotionEvent.ACTION_UP:
-                        case MotionEvent.ACTION_CANCEL:
-                            joystickKnob.setX(joystickCenterX - joystickKnob.getWidth() / 2f);
-                            joystickKnob.setY(joystickCenterY - joystickKnob.getHeight() / 2f);
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        joystickKnob.setX(joystickCenterX - joystickKnob.getWidth() / 2f);
+                        joystickKnob.setY(joystickCenterY - joystickKnob.getHeight() / 2f);
 
-                            setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, (short) 0);
-                            setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, (short) 0);
-                            break;
-                    }
-                    
+                        setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, (short) 0);
+                        setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, (short) 0);
+                        break;
+                }
+                return true; // <--- You should return a value for onTouch!
+            }
+        });
+    });
+    }
