@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 11)
 
 option(USE_OPENGLES "Enable GLES3" OFF)
-# Add any other top-level options here.
 
 # macOS/ObjC++
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
@@ -37,6 +36,40 @@ endif()
 add_subdirectory(extern)
 add_subdirectory(src)
 
-# Optionally, add packaging/install logic here
-# install(TARGETS libultraship DESTINATION lib)
-# install(DIRECTORY src/ DESTINATION include FILES_MATCHING PATTERN "*.h")
+# --------- Platform-specific sources (for Android stub) ---------
+set(LIBUTRASHIP_PLATFORM_SOURCES "")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # Make sure this matches the location of your stub
+    set(LIBUTRASHIP_PLATFORM_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/android/os_stub.c
+    )
+endif()
+
+# ----------------- libultraship library target -----------------
+# Collect ALL your libultraship sources here, for example:
+set(LIBUTRASHIP_SOURCES
+    # src/your_file1.cpp
+    # src/your_file2.cpp
+    # src/...
+    # src/public/libultra/os.cpp
+    # Add the rest of your sources here!
+    ${LIBUTRASHIP_PLATFORM_SOURCES}
+)
+
+add_library(libultraship STATIC ${LIBUTRASHIP_SOURCES})
+set_target_properties(libultraship PROPERTIES PREFIX "")
+
+# --------------- INCLUDE DIRECTORIES -----------------
+target_include_directories(libultraship
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../include/libultraship
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/public/libultra
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/nlohmann-json/single_include
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/nlohmann-json/include
+        # add other include dirs as needed
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/spdlog/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/extern/stb
+        ${CMAKE_CURRENT_SOURCE_DIR}/src # (if your headers are here)
+)
