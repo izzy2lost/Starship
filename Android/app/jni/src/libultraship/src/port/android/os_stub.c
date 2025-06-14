@@ -1,33 +1,18 @@
-// os_stub.c -- Platform stub implementations for N64 OS functions
-
 #include "os.h"
 
-void osInvalDCache(void* addr, int32_t size) {
-    // No-op for non-N64 targets
-    (void)addr; (void)size;
+int GetNumAudioChannels(void) {
+    // Stub: Always return 2 (stereo) or 1 as default
+    return 2;
 }
 
-void osInvalICache(void* addr, int32_t size) {
-    (void)addr; (void)size;
-}
-
-void osWritebackDCache(void* addr, int32_t size) {
-    (void)addr; (void)size;
+s32 osAiSetFrequency(u32 frequency) {
+    // Stub: pretend to set frequency, return a fake previous value
+    (void)frequency;
+    return 32000; // e.g. N64 default
 }
 
 void osWritebackDCacheAll(void) {
-    // Nothing to do
-}
-
-void osCreateMesgQueue(OSMesgQueue* mq, OSMesg* msg, int count) {
-    // No actual message queues on PC/Android; stub
-    (void)mq; (void)msg; (void)count;
-}
-
-int osRecvMesg(OSMesgQueue* mq, OSMesg* msg, int flag) {
-    // Always succeed or return "no message" (customize as needed)
-    (void)mq; (void)msg; (void)flag;
-    return 0;
+    // No cache to write back
 }
 
 int osSendMesg(OSMesgQueue* mq, OSMesg msg, int flag) {
@@ -35,4 +20,15 @@ int osSendMesg(OSMesgQueue* mq, OSMesg msg, int flag) {
     return 0;
 }
 
-// Add any other os* functions your build may complain about here, as empty stubs.
+void osInvalDCache(void* addr, s32 size) {
+    (void)addr; (void)size;
+}
+
+int osRecvMesg(OSMesgQueue* mq, OSMesg* msg, int flag) {
+    (void)mq; (void)msg; (void)flag;
+    return 0;
+}
+
+void osCreateMesgQueue(OSMesgQueue* mq, OSMesg* msg, int count) {
+    (void)mq; (void)msg; (void)count;
+}
