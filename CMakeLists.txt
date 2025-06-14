@@ -507,76 +507,9 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
             >
             -pthread
         )
+        target_link_options(${PROJECT_NAME} PRIVATE -pthread)
 
-        target_link_options(${PROJECT_NAME} PRIVATE
-            -pthread
-        )
     elseif (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          -Wall -Wextra -Wno-error
-          -Wno-return-type
-          -Wno-unused-parameter
-          -Wno-unused-function
-          -Wno-unused-variable
-          -Wno-missing-field-initializers
-          -Wno-parentheses
-          -Wno-narrowing
-          -Wno-missing-braces
-          -Wno-int-conversion
-          $<$<COMPILE_LANGUAGE:C>:
-              -Werror-implicit-function-declaration
-              -Wno-incompatible-pointer-types
-              -fpermissive
-          >
-          $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
-          $<$<COMPILE_LANGUAGE:CXX>:
-              -Wno-c++11-narrowing
-              -Wno-deprecated-enum-enum-conversion
-          >
-          -pthread
-      )
-
-      target_link_options(${PROJECT_NAME} PRIVATE
-          -pthread
-      )
-  elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          -O2
-
-          # disable some warnings to not clutter output
-          -Wno-multichar
-          -Wno-return-type
-          -Wno-narrowing
-          -Wno-switch-outside-range
-          $<$<COMPILE_LANGUAGE:C>:
-              -Werror-implicit-function-declaration
-              -Wno-incompatible-pointer-types
-              -Wno-discarded-array-qualifiers
-              -Wno-discarded-qualifiers
-              -Wno-int-conversion
-              -Wno-builtin-declaration-mismatch
-              -Wno-switch-unreachable
-              -Wno-stringop-overflow
-          >
-      )
-  else()
-      if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-        set(CPU_OPTION -msse2 -mfpmath=sse)
-      elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-        set(CPU_OPTION -mcpu=native)
-      endif()
-
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          -Wall -Wextra -Wno-error
-          -Wno-unused-parameter
-          -Wno-unused-function
-          -Wno-unused-variable
-          -Wno-missing-field-initializers
-          -Wno-parentheses
-          -Wno-narrowing
-	  
-if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-    if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
         target_compile_options(${PROJECT_NAME} PRIVATE
             -Wall -Wextra -Wno-error
             -Wno-return-type
@@ -600,43 +533,11 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
             >
             -pthread
         )
+        target_link_options(${PROJECT_NAME} PRIVATE -pthread)
 
-        target_link_options(${PROJECT_NAME} PRIVATE
-            -pthread
-        )
-    elseif (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-        # ... (no change in this block)
-        target_compile_options(${PROJECT_NAME} PRIVATE
-            -Wall -Wextra -Wno-error
-            -Wno-return-type
-            -Wno-unused-parameter
-            -Wno-unused-function
-            -Wno-unused-variable
-            -Wno-missing-field-initializers
-            -Wno-parentheses
-            -Wno-narrowing
-            -Wno-missing-braces
-            -Wno-int-conversion
-            $<$<COMPILE_LANGUAGE:C>:
-                -Werror-implicit-function-declaration
-                -Wno-incompatible-pointer-types
-                -fpermissive
-            >
-            $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
-            $<$<COMPILE_LANGUAGE:CXX>:
-                -Wno-c++11-narrowing
-                -Wno-deprecated-enum-enum-conversion
-            >
-            -pthread
-        )
-        target_link_options(${PROJECT_NAME} PRIVATE
-            -pthread
-        )
     elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-        # ... (no change in this block)
         target_compile_options(${PROJECT_NAME} PRIVATE
             -O2
-            # disable some warnings to not clutter output
             -Wno-multichar
             -Wno-return-type
             -Wno-narrowing
@@ -652,13 +553,14 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                 -Wno-stringop-overflow
             >
         )
-    else()
+
+    else() # Linux, Android, others
+        unset(CPU_OPTION)
         if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
             set(CPU_OPTION -msse2 -mfpmath=sse)
         elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-            if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-                set(CPU_OPTION "")
-            else()
+            # Only set -mcpu=native if NOT Android!
+            if(NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
                 set(CPU_OPTION -mcpu=native)
             endif()
         endif()
@@ -683,16 +585,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
             -pthread
             ${CPU_OPTION}
         )
-
-        target_link_options(${PROJECT_NAME} PRIVATE
-            -pthread
-            -Wl,-export-dynamic
-        )
+        target_link_options(${PROJECT_NAME} PRIVATE -pthread -Wl,-export-dynamic)
     endif()
 endif()
 
+# ----------------- Torch/O2R Extraction Only For Non-Android -------------------
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-
     include(ExternalProject)
     ExternalProject_Add(TorchExternal
         PREFIX TorchExternal
@@ -750,9 +648,9 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch" AND NOT CMAKE_SYSTEM_NAME STR
     set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
     set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE "${CMAKE_SOURCE_DIR}/Starship.desktop")
     set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_ICON_FILE "${CMAKE_SOURCE_DIR}/logo.png")
-
 endif()
 
+# ---- Packaging (skip for Android) ----
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_GENERATOR "External")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
