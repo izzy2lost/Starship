@@ -7,26 +7,7 @@ set(CMAKE_C_STANDARD 11)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 option(USE_OPENGLES "Enable GLES3" OFF)
 
-# Collect all your regular sources in this list (fill this in as usual)
-set(LIBUTRASHIP_SOURCES
-    # ... your regular .cpp/.c/.h files ...
-)
-
-# Add Android stub for N64 OS functions if building for Android
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    list(APPEND LIBUTRASHIP_SOURCES src/port/android/os_stub.c)
-endif()
-
-add_library(libultraship STATIC ${LIBUTRASHIP_SOURCES})
-set_target_properties(libultraship PROPERTIES PREFIX "")
-
-target_include_directories(libultraship
-    PUBLIC
-        ${INCLUDE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-# ========== Platform-specific port sources ===========
+# ========== Platform-specific sources ===========
 set(LIBUTRASHIP_PORT_SOURCES "")
 
 if(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
@@ -52,7 +33,13 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
     )
 endif()
 
-# =========== Core sources (add/remove as needed) ===========
+# Always have a dummy file for empty builds
+if(LIBUTRASHIP_PORT_SOURCES STREQUAL "")
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.c "// dummy for libultraship")
+    set(LIBUTRASHIP_PORT_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dummy.c)
+endif()
+
+# =========== Main source file sets ===========
 set(Source_Files__TopLevel
     ${CMAKE_CURRENT_SOURCE_DIR}/Context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Context.cpp
@@ -212,14 +199,8 @@ set(Source_Files__Lib__stb
     "${CMAKE_CURRENT_SOURCE_DIR}/../extern/stb/stb_impl.c"
 )
 
-# ============ Always have a dummy file for empty builds ============
-if(LIBUTRASHIP_PORT_SOURCES STREQUAL "")
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.c "// dummy for libultraship")
-    set(LIBUTRASHIP_PORT_SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dummy.c)
-endif()
-
 # ============ Add all sources to the target ============
-target_sources(libultraship PRIVATE
+add_library(libultraship STATIC
     ${Source_Files__TopLevel}
     ${Source_Files__Audio}
     ${Source_Files__Controller}
@@ -239,6 +220,7 @@ target_sources(libultraship PRIVATE
     ${Source_Files__Graphic}
     ${Source_Files__Lib__stb}
 )
+set_target_properties(libultraship PROPERTIES PREFIX "")
 
 # ================== Include directories ==================
 target_include_directories(libultraship
@@ -251,7 +233,6 @@ target_include_directories(libultraship
 )
 
 # ========== Platform-specific compile defs & links ==========
-
 if (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     target_include_directories(libultraship PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/
@@ -323,7 +304,5 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang")
     )
 endif()
 
-# ========= Example: link third-party or custom libs =========
+# Example for additional libraries:
 # target_link_libraries(libultraship PRIVATE StrHash64 ZAPDUtils ImGui storm tinyxml2 nlohmann_json::nlohmann_json)
-
-# ========== END ==========
