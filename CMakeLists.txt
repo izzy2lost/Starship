@@ -200,11 +200,7 @@ FetchContent_MakeAvailable(dr_libs)
 #==============================================================================#
 # Libultraship Integration                                                     #
 #==============================================================================#
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    set(LIBUTRASHIP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Android/app/jni/src/libultraship")
-else()
-    set(LIBUTRASHIP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libultraship")
-endif()
+set(LIBUTRASHIP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libultraship")
 
 include_directories(
     "${CMAKE_CURRENT_SOURCE_DIR}"
