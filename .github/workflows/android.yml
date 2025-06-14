@@ -19,7 +19,14 @@ jobs:
 
       - name: Install dependencies
         run: sudo apt-get install -y ninja-build
-
+        
+      - name: Install CMake 3.24.0
+        run: |
+          wget https://github.com/Kitware/CMake/releases/download/v3.24.0/cmake-3.24.0-linux-x86_64.tar.gz
+          tar -xzvf cmake-3.24.0-linux-x86_64.tar.gz
+          sudo ln -sf $PWD/cmake-3.24.0-linux-x86_64/bin/cmake /usr/local/bin/cmake
+          cmake --version
+          
       - name: Give gradlew permissions
         run: chmod +x Android/gradlew
 
