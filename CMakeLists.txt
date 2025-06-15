@@ -69,11 +69,10 @@ if (USE_OPENGLES)
 endif()
 
 # ======= Include directories =======
+# ----------- Include Directories -----------
 target_include_directories(libultraship
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/sys
         ${CMAKE_CURRENT_SOURCE_DIR}
-        # Add more include directories here if you add more folders
 )
-
-# ======= Any extra options can be added below =======
