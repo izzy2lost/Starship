@@ -73,7 +73,13 @@ endif()
 target_include_directories(libultraship
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include/libultraship
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/sys
         ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include/libultraship
+        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public
+        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/bridge
+        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/libultra
 )
