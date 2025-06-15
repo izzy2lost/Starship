@@ -17,15 +17,6 @@ endif()
 option(USE_OPENGLES "Enable GLES3" OFF)
 option(GBI_UCODE "Specify the GBI ucode version" F3DEX_GBI_2)
 
-# --- SDL2 include dir for Android ---
-if (CMAKE_SYSTEM_NAME STREQUAL "Android" AND NOT SDL2_INCLUDE_DIR)
-    if(EXISTS "${CMAKE_BINARY_DIR}/_deps/sdl2-src/include")
-        set(SDL2_INCLUDE_DIR "${CMAKE_BINARY_DIR}/_deps/sdl2-src/include")
-    elseif(EXISTS "${SDL2_SOURCE_DIR}/include")
-        set(SDL2_INCLUDE_DIR "${SDL2_SOURCE_DIR}/include")
-    endif()
-endif()
-
 file(GLOB_RECURSE LIBULTRASHIP_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
