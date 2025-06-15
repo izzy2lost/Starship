@@ -294,36 +294,92 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
 		"$<$<CONFIG:Release>:"
 			"NDEBUG"
 		">"
-        "SPDLOG_ACTIVE_LEVEL=3;"
-		"SPDLOG_NO_THREAD_ID;"
-        "SPDLOG_NO_TLS;"
-		"STBI_NO_THREAD_LOCALS;"
-	)
+#=================== SSE2NEON ===================
+set(SSE2NEON_DIR ${CMAKE_BINARY_DIR}/_deps/sse2neon)
+file(DOWNLOAD "https://raw.githubusercontent.com/DLTcollab/sse2neon/refs/heads/master/sse2neon.h"
+    "${SSE2NEON_DIR}/sse2neon.h")
+include_directories(${SSE2NEON_DIR})
+
+FetchContent_Declare(
+    dr_libs
+    GIT_REPOSITORY https://github.com/mackron/dr_libs.git
+    GIT_TAG da35f9d6c7374a95353fd1df1d394d44ab66cf01
+)
+FetchContent_MakeAvailable(dr_libs)
+
+#==============================================================================#
+# Libultraship Integration                                                     #
+#==============================================================================#
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include/libultraship
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/log
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/debug
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/menu
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/utils
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/utils/binarytools
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/config
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/resource
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/resource/type
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/resource/factory
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/audio
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/window
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/window/gui
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/libultra
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/bridge
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern/tinyxml2
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/libjpeg/include/
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/spdlog/include/
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic/Fast3D/U64/PR
+  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic
+  ${SDL2_INCLUDE_DIRS}
+  ${GLEW_INCLUDE_DIRS}
+  ${dr_libs_SOURCE_DIR}
+)
+
+add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+add_dependencies(${PROJECT_NAME} libultraship)
+target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
+
+# ---- Platform-specific compile definitions ----
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "$<$<CONFIG:Debug>:_DEBUG;_CRT_SECURE_NO_WARNINGS;ENABLE_DX11;>"
+        "$<$<CONFIG:Release>:NDEBUG>"
+        "INCLUDE_GAME_PRINTF;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;"
+    )
+    add_compile_definitions(STORMLIB_NO_AUTO_LINK)
+    set(STORMLIB_NO_AUTO_LINK ON)
+elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "$<$<CONFIG:Debug>:_DEBUG>"
+        "$<$<CONFIG:Release>:NDEBUG>"
+        "SPDLOG_ACTIVE_LEVEL=3;SPDLOG_NO_THREAD_ID;SPDLOG_NO_TLS;STBI_NO_THREAD_LOCALS;"
+    )
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		"$<$<CONFIG:Debug>:"
-			"_DEBUG"
-		">"
-		"$<$<CONFIG:Release>:"
-			"NDEBUG"
-		">"
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "$<$<CONFIG:Debug>:_DEBUG>"
+        "$<$<CONFIG:Release>:NDEBUG>"
         "$<$<BOOL:${BUILD_CROWD_CONTROL}>:ENABLE_CROWD_CONTROL>"
-		"SPDLOG_ACTIVE_LEVEL=0;"
-		"_CONSOLE;"
-		"_CRT_SECURE_NO_WARNINGS;"
-		"UNICODE;"
-		"_UNICODE"
-	)
+        "SPDLOG_ACTIVE_LEVEL=0;_CONSOLE;_CRT_SECURE_NO_WARNINGS;UNICODE;_UNICODE"
+    )
 endif()
 
-
+# ---- Platform-specific link libraries ----
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     find_package(Ogg CONFIG REQUIRED)
     link_libraries(Ogg::ogg)
 
     find_package(Vorbis CONFIG REQUIRED)
     link_libraries(Vorbis::vorbisfile)
-	set(ADDITIONAL_LIBRARY_DEPENDENCIES
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net-static>"
         "Ogg::ogg"
         "Vorbis::vorbis"
@@ -332,10 +388,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(SDL2)
-	find_package(Vorbis REQUIRED)
-	link_libraries(Vorbis::vorbisfile)
-	find_package(Ogg REQUIRED)
-	link_libraries(Ogg::ogg)
+    find_package(Vorbis REQUIRED)
+    link_libraries(Vorbis::vorbisfile)
+    find_package(Ogg REQUIRED)
+    link_libraries(Ogg::ogg)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         -lglad
         SDL2::SDL2
@@ -349,16 +405,18 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/
     )
+elseif(ANDROID)
+    # Android does not require these
 else()
     find_package(Ogg REQUIRED)
     find_package(Vorbis REQUIRED)
- 	set(ADDITIONAL_LIBRARY_DEPENDENCIES
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net>"
         "Ogg::ogg"
         "Vorbis::vorbis"
         "Vorbis::vorbisenc"
         "Vorbis::vorbisfile"
-	)
+    )
 endif()
 
 if(USE_NETWORKING)
@@ -377,28 +435,29 @@ option(BUILD_STORMLIB "Build with StormLib support" OFF)
 option(BUILD_SM64 "Build with Super Mario 64 support" OFF)
 option(BUILD_MK64 "Build with Mario Kart 64 support" OFF)
 option(BUILD_FZERO "Build with F-Zero X support" OFF)
-add_subdirectory(tools/Torch)
-target_link_libraries(${PROJECT_NAME} PRIVATE torch "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tools/Torch/CMakeLists.txt")
+    add_subdirectory(tools/Torch)
+    target_link_libraries(${PROJECT_NAME} PRIVATE torch "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
-
-nx_generate_nacp(${PROJECT_NAME}.nacp
-   NAME "${PROJECT_NAME}"
-   AUTHOR "${PROJECT_TEAM}"
-   VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-)
-
-nx_create_nro(${PROJECT_NAME}
-    NACP ${PROJECT_NAME}.nacp
-    ICON ${CMAKE_CURRENT_SOURCE_DIR}/nx-logo.jpg
-)
-
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.nro DESTINATION . COMPONENT ${PROJECT_NAME})
+    nx_generate_nacp(${PROJECT_NAME}.nacp
+        NAME "${PROJECT_NAME}"
+        AUTHOR "${PROJECT_TEAM}"
+        VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+    )
+    nx_create_nro(${PROJECT_NAME}
+        NACP ${PROJECT_NAME}.nacp
+        ICON ${CMAKE_CURRENT_SOURCE_DIR}/nx-logo.jpg
+    )
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.nro DESTINATION . COMPONENT ${PROJECT_NAME})
 endif()
 
 ################################################################################
 # Compile and link options
 ################################################################################
+
 if(MSVC)
   if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
       target_compile_options(${PROJECT_NAME} PRIVATE
@@ -581,7 +640,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
           $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
           $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>
           -pthread
-    ${CPU_OPTION}
+          ${CPU_OPTION}
       )
 
       target_link_options(${PROJECT_NAME} PRIVATE
@@ -591,65 +650,67 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
   endif()
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-include(ExternalProject)
-ExternalProject_Add(TorchExternal
-	PREFIX TorchExternal
-    SOURCE_DIR ${CMAKE_SOURCE_DIR}/tools/Torch
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/Torch
-)
-ExternalProject_Get_Property(TorchExternal install_dir)
-if (MSVC)
-  set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/$<CONFIGURATION>/torch)
-else()
-  set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/torch)
-endif()
-add_custom_target(
-    ExtractAssets
-    DEPENDS TorchExternal
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${TORCH_EXECUTABLE} o2r baserom.z64
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/sf64.o2r" "${CMAKE_BINARY_DIR}/sf64.o2r"
-)
-
-add_custom_target(
-    GeneratePortO2R
-    DEPENDS TorchExternal
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${TORCH_EXECUTABLE} pack port starship.o2r o2r
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/starship.o2r" "${CMAKE_BINARY_DIR}/starship.o2r"
-)
-
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-  install(FILES "${CMAKE_BINARY_DIR}/starship.o2r" DESTINATION . COMPONENT ${PROJECT_NAME})
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-add_custom_target(CreateOSXIcons
-    COMMAND mkdir -p ${CMAKE_BINARY_DIR}/macosx/starship.iconset
-    COMMAND sips -z 16 16     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_16x16.png
-    COMMAND sips -z 32 32     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_16x16@2x.png
-    COMMAND sips -z 32 32     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_32x32.png
-    COMMAND sips -z 64 64     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_32x32@2x.png
-    COMMAND sips -z 128 128   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_128x128.png
-    COMMAND sips -z 256 256   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_128x128@2x.png
-    COMMAND sips -z 256 256   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_256x256.png
-    COMMAND sips -z 512 512   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_256x256@2x.png
-    COMMAND sips -z 512 512   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_512x512.png
-    COMMAND cp                logo.png ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_512x512@2x.png
-    COMMAND iconutil -c icns -o ${CMAKE_BINARY_DIR}/macosx/starship.icns ${CMAKE_BINARY_DIR}/macosx/starship.iconset
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Creating OSX icons ..."
+# ----------- Android: Do not add ExternalProject/Torch/packaging for Android -------
+if(NOT (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch" OR ANDROID))
+    include(ExternalProject)
+    ExternalProject_Add(TorchExternal
+        PREFIX TorchExternal
+        SOURCE_DIR ${CMAKE_SOURCE_DIR}/tools/Torch
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/Torch
     )
-    add_dependencies(${PROJECT_NAME} CreateOSXIcons)
-    configure_file("${CMAKE_SOURCE_DIR}/Info.plist" "${CMAKE_BINARY_DIR}/Info.plist" COPYONLY)
+    ExternalProject_Get_Property(TorchExternal install_dir)
+    if (MSVC)
+      set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/$<CONFIGURATION>/torch)
+    else()
+      set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/torch)
+    endif()
+    add_custom_target(
+        ExtractAssets
+        DEPENDS TorchExternal
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${TORCH_EXECUTABLE} o2r baserom.z64
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/sf64.o2r" "${CMAKE_BINARY_DIR}/sf64.o2r"
+    )
+
+    add_custom_target(
+        GeneratePortO2R
+        DEPENDS TorchExternal
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${TORCH_EXECUTABLE} pack port starship.o2r o2r
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/starship.o2r" "${CMAKE_BINARY_DIR}/starship.o2r"
+    )
+
+    if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+      install(FILES "${CMAKE_BINARY_DIR}/starship.o2r" DESTINATION . COMPONENT ${PROJECT_NAME})
+    endif()
+
+    if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+      add_custom_target(CreateOSXIcons
+          COMMAND mkdir -p ${CMAKE_BINARY_DIR}/macosx/starship.iconset
+          COMMAND sips -z 16 16     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_16x16.png
+          COMMAND sips -z 32 32     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_16x16@2x.png
+          COMMAND sips -z 32 32     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_32x32.png
+          COMMAND sips -z 64 64     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_32x32@2x.png
+          COMMAND sips -z 128 128   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_128x128.png
+          COMMAND sips -z 256 256   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_128x128@2x.png
+          COMMAND sips -z 256 256   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_256x256.png
+          COMMAND sips -z 512 512   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_256x256@2x.png
+          COMMAND sips -z 512 512   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_512x512.png
+          COMMAND cp                logo.png ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_512x512@2x.png
+          COMMAND iconutil -c icns -o ${CMAKE_BINARY_DIR}/macosx/starship.icns ${CMAKE_BINARY_DIR}/macosx/starship.iconset
+          WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+          COMMENT "Creating OSX icons ..."
+      )
+      add_dependencies(${PROJECT_NAME} CreateOSXIcons)
+      configure_file("${CMAKE_SOURCE_DIR}/Info.plist" "${CMAKE_BINARY_DIR}/Info.plist" COPYONLY)
+    endif()
+
+    set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE "${CMAKE_SOURCE_DIR}/Starship.desktop")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_ICON_FILE "${CMAKE_SOURCE_DIR}/logo.png")
 endif()
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
-set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE "${CMAKE_SOURCE_DIR}/Starship.desktop")
-set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_ICON_FILE "${CMAKE_SOURCE_DIR}/logo.png")
-endif()
-
+# ----------- Packaging Type by Platform -----------
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_GENERATOR "External")
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
