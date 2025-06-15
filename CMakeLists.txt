@@ -20,6 +20,15 @@ list(GET NATO_PHONETIC_ALPHABET ${PATCH_INDEX} PROJECT_PATCH_WORD)
 set(PROJECT_BUILD_NAME "Barnard ${PROJECT_PATCH_WORD}" CACHE STRING "" FORCE)
 set(PROJECT_TEAM "SonicDcer & Lywx" CACHE STRING "" FORCE)
 
+Android-specific setupAdd commentMore actions
+if(ANDROID)
+    set(ANDROID_STL c++_shared)
+    set(ANDROID_PLATFORM android-24)
+    add_definitions(-DANDROID -DPLATFORM_ANDROID=1)
+
+    # Android requires shared library
+    add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
+
 if(APPLE)
   enable_language(OBJCXX)
 endif()
