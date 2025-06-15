@@ -2,12 +2,6 @@ cmake_minimum_required(VERSION 3.24.0)
 
 option(NON_PORTABLE "Build a non-portable version" OFF)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    option(SIGN_LIBRARY "Enable xcode signing" OFF)
-    option(BUNDLE_ID "Bundle ID for xcode signing" "com.example.libultraship")
-    set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-endif()
-
 project(libultraship LANGUAGES C CXX)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
@@ -20,59 +14,24 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-include(cmake/Utils.cmake)
-set(ADDITIONAL_LIB_INCLUDES "")
-
-# ========= Configuration Options =========
-set(EXCLUDE_MPQ_SUPPORT FALSE CACHE BOOL "Exclude StormLib and MPQ archive support")
-if(EXCLUDE_MPQ_SUPPORT)
-    add_compile_definitions(EXCLUDE_MPQ_SUPPORT)
-endif()
+# =========== Configuration Options ============
 option(USE_OPENGLES "Enable GLES3" OFF)
 option(GBI_UCODE "Specify the GBI ucode version" F3DEX_GBI_2)
 
-# =========== Dependencies =============
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    include(cmake/dependencies/windows-vcpkg.cmake)
-endif()
-
-include(cmake/dependencies/common.cmake)
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Android")
-    include(cmake/dependencies/android.cmake)
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    include(cmake/dependencies/mac.cmake)
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    include(cmake/dependencies/ios.cmake)
-endif()
-
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    include(cmake/dependencies/linux.cmake)
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    include(cmake/dependencies/windows.cmake)
-endif()
-
-# === Platform Specific Configuration ===
-if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    include(cmake/ios-toolchain-populate.cmake)
-endif()
-
 # =========== Sources =============
-add_subdirectory("src")
+file(GLOB_RECURSE LIBULTRASHIP_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+)
+
+add_library(libultraship STATIC ${LIBULTRASHIP_SOURCES})
+set_target_properties(libultraship PROPERTIES PREFIX "")
 
 # ----------- Android: logcat support -----------
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
-    # Find the liblog library for logcat
     find_library(ANDROID_LOG_LIB log)
     if (ANDROID_LOG_LIB)
-        # "libultraship" target is created in src/CMakeLists.txt, so only append if it exists
-        set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${ANDROID_LOG_LIB})
+        target_link_libraries(libultraship PRIVATE ${ANDROID_LOG_LIB})
     endif()
 endif()
 
@@ -81,12 +40,20 @@ if (USE_OPENGLES)
     if (CMAKE_SYSTEM_NAME STREQUAL "Android")
         find_library(OPENGLES_LIBRARY GLESv3)
         if(OPENGLES_LIBRARY)
-            set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${OPENGLES_LIBRARY})
+            target_link_libraries(libultraship PRIVATE ${OPENGLES_LIBRARY})
         endif()
     else()
         find_library(OPENGLES_LIBRARY GLESv2)
         if(OPENGLES_LIBRARY)
-            set_property(TARGET libultraship APPEND PROPERTY LINK_LIBRARIES ${OPENGLES_LIBRARY})
+            target_link_libraries(libultraship PRIVATE ${OPENGLES_LIBRARY})
         endif()
     endif()
 endif()
+
+# ----------- Include Directories -----------
+target_include_directories(libultraship
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        # Add more include dirs as needed
+)
