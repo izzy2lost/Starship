@@ -21,14 +21,13 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-# =========== SMART SOURCE COLLECTION =============
-# Collect all .c/.cpp files, but exclude extern, third_party, and test dirs
+# ======= Gather all .c and .cpp files in src/ (recursively) =======
 file(GLOB_RECURSE LIBULTRASHIP_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
-# Filter out unwanted directories
+# ======= Exclude unwanted directories or patterns if needed =======
 foreach(file ${LIBULTRASHIP_SOURCES})
     if (
         file MATCHES "/third[_-]?party/"
@@ -42,10 +41,11 @@ foreach(file ${LIBULTRASHIP_SOURCES})
     endif()
 endforeach()
 
-add_library(libultraship STATIC ${LIBULTRASHIP_SOURCES})
+# ======= Build SHARED library for Android (libultraship.so) =======
+add_library(libultraship SHARED ${LIBULTRASHIP_SOURCES})
 set_target_properties(libultraship PROPERTIES PREFIX "")
 
-# ----------- Android: logcat support -----------
+# ======= Android logcat support =======
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_library(ANDROID_LOG_LIB log)
     if (ANDROID_LOG_LIB)
@@ -53,7 +53,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     endif()
 endif()
 
-# ----------- GLES3 Support (optional, for Android) -----------
+# ======= GLES support (optional, for Android) =======
 if (USE_OPENGLES)
     if (CMAKE_SYSTEM_NAME STREQUAL "Android")
         find_library(OPENGLES_LIBRARY GLESv3)
@@ -68,9 +68,12 @@ if (USE_OPENGLES)
     endif()
 endif()
 
-# ----------- Include Directories -----------
+# ======= Include directories =======
 target_include_directories(libultraship
     PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}
-        # add more include dirs here if needed
+        # Add more include directories here if you add more folders
 )
+
+# ======= Any extra options can be added below =======
