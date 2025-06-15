@@ -104,7 +104,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    # libultraship includes handled below
 )
 
 file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -142,6 +141,25 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
+# ==================== SDL2 Find/FETCH ====================
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    find_package(SDL2 QUIET)
+    if (NOT SDL2_FOUND)
+        include(FetchContent)
+        FetchContent_Declare(
+            SDL2
+            GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+            GIT_TAG release-2.32.0
+        )
+        message("SDL2 not found. Downloading and building SDL2 for Android...")
+        FetchContent_MakeAvailable(SDL2)
+    endif()
+elseif (WIN32)
+    find_package(SDL2 CONFIG REQUIRED)
+else()
+    find_package(SDL2 REQUIRED)
+endif()
+
 # ==================== Build Target ====================
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
@@ -162,7 +180,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(dr_libs)
 
 # ==================== Libultraship Integration ====================
-add_subdirectory(libultraship)  # Only once!
+add_subdirectory(libultraship)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include
@@ -190,12 +208,19 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/spdlog/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic/Fast3D/U64/PR
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic
-    ${SDL2_INCLUDE_DIRS}
-    ${GLEW_INCLUDE_DIRS}
     ${dr_libs_SOURCE_DIR}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
+
+# ===== Link SDL2 as a target =====
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2)
+elseif (WIN32)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2::SDL2main)
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+endif()
 
 # ==================== Platform-specific links/defs ====================
 if(ANDROID)
