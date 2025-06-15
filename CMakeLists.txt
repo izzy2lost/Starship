@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.24.0)
 project(Starship VERSION 2.0.0 LANGUAGES C CXX ASM)
 include(FetchContent)
 
+# ==================== Version/Naming ====================
 set(NATO_PHONETIC_ALPHABET
   "Alfa" "Bravo" "Charlie" "Delta" "Echo" "Foxtrot" "Golf" "Hotel"
   "India" "Juliett" "Kilo" "Lima" "Mike" "November" "Oscar" "Papa"
@@ -11,108 +12,76 @@ set(NATO_PHONETIC_ALPHABET
   "Xray" "Yankee" "Zulu"
 )
 
-# Get the patch version number from the project version
 math(EXPR PATCH_INDEX "${PROJECT_VERSION_PATCH}")
-
-# Use the patch number to select the correct word
 list(GET NATO_PHONETIC_ALPHABET ${PATCH_INDEX} PROJECT_PATCH_WORD)
 
 set(PROJECT_BUILD_NAME "Barnard ${PROJECT_PATCH_WORD}" CACHE STRING "" FORCE)
 set(PROJECT_TEAM "SonicDcer & Lywx" CACHE STRING "" FORCE)
 
+# ==================== Platform-specific ====================
 if(ANDROID)
     set(ANDROID_STL c++_shared)
     set(ANDROID_PLATFORM android-24)
     add_definitions(-DANDROID -DPLATFORM_ANDROID=1)
-
-    # Android requires shared library
-    add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
-
-if(APPLE)
-  enable_language(OBJCXX)
 endif()
 
-# Set the minimum version of CMake and the deployment target for macOS
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.15" CACHE STRING "Minimum OS X deployment version")
+if(APPLE)
+    enable_language(OBJCXX)
+endif()
 
-# Set the C++ standard and enable the MSVC parallel build option
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 set(CMAKE_C_STANDARD 11 CACHE STRING "The C standard to use")
-#add_compile_options(-fsanitize=address)
-#add_link_options(-fsanitize=address)
 
-# Add a custom module path to locate additional CMake modules
+# ==================== Additional modules ====================
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 set(YAML_CPP_STATIC_DEFINE ON)
 add_compile_definitions(YAML_CPP_STATIC_DEFINE)
 
 if (WIN32)
-include(cmake/automate-vcpkg.cmake)
-set(VCPKG_TRIPLET x64-windows-static)
-set(VCPKG_TARGET_TRIPLET x64-windows-static)
-vcpkg_bootstrap()
-vcpkg_install_packages(zlib bzip2 libzip libpng sdl2 glew glfw3 nlohmann-json tinyxml2 spdlog libogg libvorbis)
-
-set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
-set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    include(cmake/automate-vcpkg.cmake)
+    set(VCPKG_TRIPLET x64-windows-static)
+    set(VCPKG_TARGET_TRIPLET x64-windows-static)
+    vcpkg_bootstrap()
+    vcpkg_install_packages(zlib bzip2 libzip libpng sdl2 glew glfw3 nlohmann-json tinyxml2 spdlog libogg libvorbis)
+    set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+    set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
 
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/config.yml)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/config.yml" "${CMAKE_BINARY_DIR}/config.yml")
-	execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets/" "${CMAKE_BINARY_DIR}/assets/")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/config.yml" "${CMAKE_BINARY_DIR}/config.yml")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets/" "${CMAKE_BINARY_DIR}/assets/")
 endif()
 
-if (MSVC)
-set(CPP "${CMAKE_C_COMPILER}" "/EP")
+if(MSVC)
+    set(CPP "${CMAKE_C_COMPILER}" "/EP")
 else()
-set(CPP "${CMAKE_C_COMPILER}" "-E" "-P" "-Wno-trigraphs" "-x" "c")
+    set(CPP "${CMAKE_C_COMPILER}" "-E" "-P" "-Wno-trigraphs" "-x" "c")
 endif()
 
 if(IOS)
-set(PLATFORM "OS64")
-include(cmake/ios.toolchain.cmake)
-add_compile_definitions(
-    PLATFORM_IOS=1
-)
-set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "YOUR_TEAM_ID")
-set(PROJECT_ID "dev.net64.game")
+    set(PLATFORM "OS64")
+    include(cmake/ios.toolchain.cmake)
+    add_compile_definitions(PLATFORM_IOS=1)
+    set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "YOUR_TEAM_ID")
+    set(PROJECT_ID "dev.net64.game")
 endif()
 
-################################################################################
-# Set target arch type if empty. Visual studio solution generator provides it.
-################################################################################
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    if(NOT CMAKE_VS_PLATFORM_NAME)
-        set(CMAKE_VS_PLATFORM_NAME "x64")
-    endif()
-    message("${CMAKE_VS_PLATFORM_NAME} architecture in use")
-
-    if(NOT ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64"
-        OR "${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32"))
-        message(FATAL_ERROR "${CMAKE_VS_PLATFORM_NAME} arch is not supported!")
-    endif()
-endif()
-
-################################################################################
-# Global configuration types
-################################################################################
+# ==================== Compiler/Release Flags ====================
 if (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-set(CMAKE_C_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
+    set(CMAKE_C_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
 else()
-set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
-set(CMAKE_OBJCXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+    set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+    set(CMAKE_OBJCXX_FLAGS_RELEASE "-O2 -DNDEBUG")
 endif()
 
-# Set game compilation version
 set(VERSION us)
 set(USE_NETWORKING OFF)
 set(SKIP_XCODE_VERSION_CHECK ON)
 
-# Add compile definitions for the target
 add_compile_definitions(
     VERSION_US=1
     ENABLE_RUMBLE=1
@@ -122,27 +91,24 @@ add_compile_definitions(
     CIMGUI_DEFINE_ENUMS_AND_STRUCTS
     NON_MATCHING=1
     NON_EQUIVALENT=1
-	AVOID_UB=1
+    AVOID_UB=1
     GBI_FLOATS=1
 )
 
-# Find necessary libraries
 if (UNIX AND NOT APPLE)
-find_package(OpenGL REQUIRED)
+    find_package(OpenGL REQUIRED)
 endif()
 
-configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/properties.h.in ${CMAKE_CURRENT_SOURCE_DIR}/properties.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/properties.h.in ${CMAKE_CURRENT_SOURCE_DIR}/properties.h @ONLY)
 
-# Include directories
+# ==================== Source Files ====================
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-# Collect source files to build the executable
 file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    # "src/assets/*.c"
     "src/audio/*.c"
     "src/audio/*.h"
     "src/engine/*.c"
@@ -163,12 +129,11 @@ file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "src/dmatable.c"
     "src/libc_math64.c"
     "src/libc_sprintf.c"
+    # Comment out if not needed for Android:
     "Resource.rc"
 )
 
-# Exclude specific files from the ALL_FILES list
 list(FILTER ALL_FILES EXCLUDE REGEX ".*.inc.c")
-
 list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_colheaders.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_edata_info.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_rcp_setup.c")
@@ -178,26 +143,42 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
-if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    set(IOS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/ios)
-
-    set(STORYBOARD_FILE ${IOS_DIR}/Launch.storyboard)
-    set(IMAGE_FILES ${IOS_DIR}/PoweredBy.png)
-    set(ICON_FILES ${IOS_DIR}/Icon.png)
-
-    list(APPEND ALL_FILES ${STORYBOARD_FILE} ${IMAGE_FILES} ${ICON_FILES})
-
-    add_executable(${PROJECT_NAME} ${ALL_FILES})
-    set_xcode_property(${PROJECT_NAME} PRODUCT_BUNDLE_IDENTIFIER ${PROJECT_ID} All)
-    set_target_properties(
-        ${PROJECT_NAME}
-        PROPERTIES
-        MACOSX_BUNDLE TRUE
-        MACOSX_BUNDLE_INFO_PLIST ${IOS_DIR}/plist.in
-        RESOURCE "${IMAGE_FILES};${STORYBOARD_FILE};${ICON_FILES}"
-    )
+# ==================== Build Target ====================
+if(ANDROID)
+    # For Android, build shared library for JNI
+    add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 else()
     add_executable(${PROJECT_NAME} ${ALL_FILES})
+endif()
+
+# ==================== Libultraship Integration ====================
+add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include/libultraship
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/libultra
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/bridge
+    # ... add the rest if you use them
+)
+
+if(ANDROID)
+    # Android-specific links (e.g., logcat, GLES)
+    find_library(LOG_LIB log)
+    if(LOG_LIB)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${LOG_LIB})
+    endif()
+    # GLES if needed
+    option(USE_OPENGLES "Enable GLES3" ON)
+    if(USE_OPENGLES)
+        find_library(GLES_LIB GLESv3)
+        if(GLES_LIB)
+            target_link_libraries(${PROJECT_NAME} PRIVATE ${GLES_LIB})
+        endif()
+    endif()
 endif()
 
 ################################################################################
