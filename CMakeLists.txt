@@ -95,7 +95,7 @@ add_compile_definitions(
     GBI_FLOATS=1
 )
 
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT ANDROID)
     find_package(OpenGL REQUIRED)
 endif()
 
