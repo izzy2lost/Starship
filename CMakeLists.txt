@@ -141,7 +141,7 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
-# ==================== SDL2 Find/FETCH ====================
+# Fetch or find SDL2, and set STARSHIP_SDL2_INCLUDE
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_package(SDL2 QUIET)
     if (NOT SDL2_FOUND)
@@ -154,23 +154,21 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
         message("SDL2 not found. Downloading and building SDL2 for Android...")
         FetchContent_MakeAvailable(SDL2)
     endif()
-    # Solution 2: Add the SDL2 source include directory so <SDL2/SDL.h> works
     if (DEFINED SDL2_SOURCE_DIR)
-        include_directories(${SDL2_SOURCE_DIR}/include)
-        # Optional: Add include/SDL2 for compatibility (usually not needed)
-        include_directories(${SDL2_SOURCE_DIR}/include/SDL2)
+        set(STARSHIP_SDL2_INCLUDE "${SDL2_SOURCE_DIR}/include")
     elseif (DEFINED sdl2_SOURCE_DIR)
-        include_directories(${sdl2_SOURCE_DIR}/include)
-        include_directories(${sdl2_SOURCE_DIR}/include/SDL2)
+        set(STARSHIP_SDL2_INCLUDE "${sdl2_SOURCE_DIR}/include")
     else()
-        # Fallback: Try the default FetchContent path if variable isn't set
-        include_directories(${CMAKE_BINARY_DIR}/_deps/sdl2-src/include)
-        include_directories(${CMAKE_BINARY_DIR}/_deps/sdl2-src/include/SDL2)
+        set(STARSHIP_SDL2_INCLUDE "${CMAKE_BINARY_DIR}/_deps/sdl2-src/include")
     endif()
-elseif (WIN32)
-    find_package(SDL2 CONFIG REQUIRED)
 else()
-    find_package(SDL2 REQUIRED)
+    set(STARSHIP_SDL2_INCLUDE "") # Non-Android
+endif()
+
+add_subdirectory(libultraship)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android" AND TARGET libultraship)
+    target_include_directories(libultraship PRIVATE "${STARSHIP_SDL2_INCLUDE}")
 endif()
 
 # ==================== Build Target ====================
