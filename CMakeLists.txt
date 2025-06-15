@@ -285,15 +285,39 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;"
     )
     add_compile_definitions(STORMLIB_NO_AUTO_LINK)
-	set(STORMLIB_NO_AUTO_LINK ON)
+    set(STORMLIB_NO_AUTO_LINK ON)
+
 elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		"$<$<CONFIG:Debug>:"
-			"_DEBUG"
-		">"
-		"$<$<CONFIG:Release>:"
-			"NDEBUG"
-		">"
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "$<$<CONFIG:Debug>:"
+            "_DEBUG"
+        ">"
+        "$<$<CONFIG:Release>:"
+            "NDEBUG"
+        ">"
+        "SPDLOG_ACTIVE_LEVEL=3;"
+        "SPDLOG_NO_THREAD_ID;"
+        "SPDLOG_NO_TLS;"
+        "STBI_NO_THREAD_LOCALS;"
+    ) # <-- This was missing!
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "$<$<CONFIG:Debug>:"
+            "_DEBUG"
+        ">"
+        "$<$<CONFIG:Release>:"
+            "NDEBUG"
+        ">"
+        "$<$<BOOL:${BUILD_CROWD_CONTROL}>:ENABLE_CROWD_CONTROL>"
+        "SPDLOG_ACTIVE_LEVEL=0;"
+        "_CONSOLE;"
+        "_CRT_SECURE_NO_WARNINGS;"
+        "UNICODE;"
+        "_UNICODE"
+    )
+endif()
+
 #=================== SSE2NEON ===================
 set(SSE2NEON_DIR ${CMAKE_BINARY_DIR}/_deps/sse2neon)
 file(DOWNLOAD "https://raw.githubusercontent.com/DLTcollab/sse2neon/refs/heads/master/sse2neon.h"
