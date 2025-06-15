@@ -74,5 +74,6 @@ target_include_directories(libultraship
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/include/libultraship
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
