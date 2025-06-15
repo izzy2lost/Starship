@@ -14,11 +14,18 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-# =========== Configuration Options ============
 option(USE_OPENGLES "Enable GLES3" OFF)
 option(GBI_UCODE "Specify the GBI ucode version" F3DEX_GBI_2)
 
-# =========== Sources =============
+# --- SDL2 include dir for Android ---
+if (CMAKE_SYSTEM_NAME STREQUAL "Android" AND NOT SDL2_INCLUDE_DIR)
+    if(EXISTS "${CMAKE_BINARY_DIR}/_deps/sdl2-src/include")
+        set(SDL2_INCLUDE_DIR "${CMAKE_BINARY_DIR}/_deps/sdl2-src/include")
+    elseif(EXISTS "${SDL2_SOURCE_DIR}/include")
+        set(SDL2_INCLUDE_DIR "${SDL2_SOURCE_DIR}/include")
+    endif()
+endif()
+
 file(GLOB_RECURSE LIBULTRASHIP_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
@@ -27,7 +34,6 @@ file(GLOB_RECURSE LIBULTRASHIP_SOURCES
 add_library(libultraship STATIC ${LIBULTRASHIP_SOURCES})
 set_target_properties(libultraship PROPERTIES PREFIX "")
 
-# ----------- Android: logcat support -----------
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_library(ANDROID_LOG_LIB log)
     if (ANDROID_LOG_LIB)
@@ -35,7 +41,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     endif()
 endif()
 
-# ----------- GLES3 Support (optional, for Android) -----------
 if (USE_OPENGLES)
     if (CMAKE_SYSTEM_NAME STREQUAL "Android")
         find_library(OPENGLES_LIBRARY GLESv3)
@@ -50,10 +55,9 @@ if (USE_OPENGLES)
     endif()
 endif()
 
-# ----------- Include Directories -----------
 target_include_directories(libultraship
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/..
-        # Add more include dirs as needed
+        $<$<STREQUAL:${CMAKE_SYSTEM_NAME},Android>:${SDL2_INCLUDE_DIR}>
 )
