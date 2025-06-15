@@ -61,3 +61,11 @@ target_include_directories(libultraship
         ${CMAKE_CURRENT_SOURCE_DIR}/..
         $<$<STREQUAL:${CMAKE_SYSTEM_NAME},Android>:${SDL2_INCLUDE_DIR}>
 )
+
+target_include_directories(libultraship
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        $<$<AND:$<STREQUAL:${CMAKE_SYSTEM_NAME},Android>,$<BOOL:${SDL2_INCLUDE_DIR}>>:${SDL2_INCLUDE_DIR}>
+        $<$<AND:$<STREQUAL:${CMAKE_SYSTEM_NAME},Android>,$<BOOL:${SDL2_INCLUDE_DIR}>>:${SDL2_INCLUDE_DIR}/SDL2>
+)
