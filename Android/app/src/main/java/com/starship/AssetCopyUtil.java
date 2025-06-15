@@ -1,4 +1,4 @@
-package com.dishii.soh;
+package com.starship.android;
 
 import android.content.Context;
 import android.content.res.AssetManager;
