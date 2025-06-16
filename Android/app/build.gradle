@@ -1,20 +1,27 @@
-apply plugin: 'com.android.application'
+def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY')
+def buildAsApplication = !buildAsLibrary
+
+if (buildAsApplication) {
+    apply plugin: 'com.android.application'
+} else {
+    apply plugin: 'com.android.library'
+}
 
 android {
-    namespace 'com.starship.android'
     ndkVersion '27.2.12479018'
     compileSdkVersion 34
 
     defaultConfig {
-        applicationId "com.starship.android"
+        if (buildAsApplication) {
+            applicationId "com.starship.android"
+        }
         minSdkVersion 21
         targetSdkVersion 34
         versionCode 1
         versionName "0.1-alpha"
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_APPNAME=com.starship.android",
-                          "-DANDROID_APP_PLATFORM=android-21",
+                arguments "-DANDROID_APP_PLATFORM=android-21",
                           "-DANDROID_STL=c++_static",
                           "-DHAVE_LD_VERSION_SCRIPT=OFF",
                           "-DUSE_OPENGLES=ON",
@@ -27,12 +34,28 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.debug // Use debug key for release (like 2soh)
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug // use debug key for CI release, just like 2soh
         }
         debug {
             debuggable true
             jniDebuggable true
         }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    namespace 'com.starship.android'
+
+    lint {
+        abortOnError false
+    }
+
+    applicationVariants.configureEach { variant ->
+        tasks["merge${variant.name.capitalize()}Assets"]
+            .dependsOn("externalNativeBuild${variant.name.capitalize()}")
     }
 
     externalNativeBuild {
@@ -49,10 +72,6 @@ android {
         resources {
             excludes += ['META-INF/*']
         }
-    }
-
-    lint {
-        abortOnError false
     }
 }
 
