@@ -1,3 +1,9 @@
+# Suppress deprecation/dev warnings (including minimum version warnings)
+if(POLICY CMP0066)
+    cmake_policy(SET CMP0066 NEW)
+endif()
+set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE BOOL "Suppress developer warnings including deprecation warnings" FORCE)
+
 cmake_minimum_required(VERSION 3.31.5)
 
 set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
