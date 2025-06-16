@@ -23,13 +23,6 @@ endif()
 include(cmake/Utils.cmake)
 set(ADDITIONAL_LIB_INCLUDES "")
 
-# ========= Configuration Options =========
-set(EXCLUDE_MPQ_SUPPORT FALSE CACHE BOOL "Exclude StormLib and MPQ archive support")
-if(EXCLUDE_MPQ_SUPPORT)
-    add_compile_definitions(EXCLUDE_MPQ_SUPPORT)
-endif()
-option(GBI_UCODE "Specify the GBI ucode version" F3DEX_GBI_2)
-
 # =========== Dependencies =============
 include(cmake/dependencies/common.cmake)
 
