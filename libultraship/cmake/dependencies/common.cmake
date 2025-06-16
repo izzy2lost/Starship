@@ -46,23 +46,6 @@ endif()
 
 target_include_directories(ImGui PUBLIC ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends PRIVATE ${SDL2_INCLUDE_DIRS})
 
-# ========= StormLib =============
-if(NOT EXCLUDE_MPQ_SUPPORT)
-    set(stormlib_patch_file ${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/patches/stormlib-optimizations.patch)
-
-    # Disable the patch for now to avoid FetchContent patch errors
-    # set(stormlib_apply_patch_if_needed git apply --quiet ${stormlib_patch_file} ${git_hide_output} || git apply --reverse --check ${stormlib_patch_file})
-
-    FetchContent_Declare(
-        StormLib
-        GIT_REPOSITORY https://github.com/ladislav-zezula/StormLib.git
-        GIT_TAG v9.25
-        PATCH_COMMAND ""  # <-- No patching!
-    )
-    FetchContent_MakeAvailable(StormLib)
-    list(APPEND ADDITIONAL_LIB_INCLUDES ${stormlib_SOURCE_DIR}/src)
-endif()
-
 #=================== STB ===================
 set(STB_DIR ${CMAKE_BINARY_DIR}/_deps/stb)
 file(DOWNLOAD "https://github.com/nothings/stb/raw/0bc88af4de5fb022db643c2d8e549a0927749354/stb_image.h" "${STB_DIR}/stb_image.h")
