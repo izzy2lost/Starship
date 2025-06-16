@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.31.5)
 
+set(CMAKE_SYSTEM_VERSION 10.0 CACHE STRING "" FORCE)
+set(CMAKE_CXX_STANDARD 20 CACHE STRING "The C++ standard to use")
 # ==================== Project Info ====================
 project(Starship VERSION 2.0.0 LANGUAGES C CXX ASM)
 include(FetchContent)
