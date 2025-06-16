@@ -410,8 +410,11 @@ option(BUILD_SM64 "Build with Super Mario 64 support" OFF)
 option(BUILD_MK64 "Build with Mario Kart 64 support" OFF)
 option(BUILD_FZERO "Build with F-Zero X support" OFF)
 
-add_subdirectory(tools/Torch)
-target_link_libraries(${PROJECT_NAME} PRIVATE torch)
+# ---- Torch Asset Extraction (not for Android) ----
+if(NOT ANDROID)
+    add_subdirectory(tools/Torch)
+    target_link_libraries(${PROJECT_NAME} PRIVATE torch)
+endif()
 
 ################################################################################
 # Compile and link options
@@ -608,58 +611,38 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
   endif()
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-include(ExternalProject)
-ExternalProject_Add(TorchExternal
-	PREFIX TorchExternal
-    SOURCE_DIR ${CMAKE_SOURCE_DIR}/tools/Torch
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/Torch
-)
-ExternalProject_Get_Property(TorchExternal install_dir)
-if (MSVC)
-  set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/$<CONFIGURATION>/torch)
-else()
-  set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/torch)
-endif()
-add_custom_target(
-    ExtractAssets
-    DEPENDS TorchExternal
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${TORCH_EXECUTABLE} o2r baserom.z64
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/sf64.o2r" "${CMAKE_BINARY_DIR}/sf64.o2r"
-)
-
-add_custom_target(
-    GeneratePortO2R
-    DEPENDS TorchExternal
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMAND ${TORCH_EXECUTABLE} pack port starship.o2r o2r
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/starship.o2r" "${CMAKE_BINARY_DIR}/starship.o2r"
-)
-
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-  install(FILES "${CMAKE_BINARY_DIR}/starship.o2r" DESTINATION . COMPONENT ${PROJECT_NAME})
-endif()
-
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-add_custom_target(CreateOSXIcons
-    COMMAND mkdir -p ${CMAKE_BINARY_DIR}/macosx/starship.iconset
-    COMMAND sips -z 16 16     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_16x16.png
-    COMMAND sips -z 32 32     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_16x16@2x.png
-    COMMAND sips -z 32 32     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_32x32.png
-    COMMAND sips -z 64 64     logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_32x32@2x.png
-    COMMAND sips -z 128 128   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_128x128.png
-    COMMAND sips -z 256 256   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_128x128@2x.png
-    COMMAND sips -z 256 256   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_256x256.png
-    COMMAND sips -z 512 512   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_256x256@2x.png
-    COMMAND sips -z 512 512   logo.png --out ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_512x512.png
-    COMMAND cp                logo.png ${CMAKE_BINARY_DIR}/macosx/starship.iconset/icon_512x512@2x.png
-    COMMAND iconutil -c icns -o ${CMAKE_BINARY_DIR}/macosx/starship.icns ${CMAKE_BINARY_DIR}/macosx/starship.iconset
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Creating OSX icons ..."
+if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+    include(ExternalProject)
+    ExternalProject_Add(TorchExternal
+        PREFIX TorchExternal
+        SOURCE_DIR ${CMAKE_SOURCE_DIR}/tools/Torch
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/Torch
     )
-    add_dependencies(${PROJECT_NAME} CreateOSXIcons)
-    configure_file("${CMAKE_SOURCE_DIR}/Info.plist" "${CMAKE_BINARY_DIR}/Info.plist" COPYONLY)
+    ExternalProject_Get_Property(TorchExternal install_dir)
+    if (MSVC)
+      set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/$<CONFIGURATION>/torch)
+    else()
+      set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/torch)
+    endif()
+    add_custom_target(
+        ExtractAssets
+        DEPENDS TorchExternal
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${TORCH_EXECUTABLE} o2r baserom.z64
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/sf64.o2r" "${CMAKE_BINARY_DIR}/sf64.o2r"
+    )
+
+    add_custom_target(
+        GeneratePortO2R
+        DEPENDS TorchExternal
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${TORCH_EXECUTABLE} pack port starship.o2r o2r
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/starship.o2r" "${CMAKE_BINARY_DIR}/starship.o2r"
+    )
+
+    if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+      install(FILES "${CMAKE_BINARY_DIR}/starship.o2r" DESTINATION . COMPONENT ${PROJECT_NAME})
+    endif()
 endif()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
