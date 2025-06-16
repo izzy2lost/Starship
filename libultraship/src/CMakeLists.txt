@@ -68,11 +68,3 @@ if (USE_OPENGLES)
         endif()
     endif()
 endif()
-
-# ========== Include Directories ==========
-target_include_directories(libultraship
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/..
-        ${_EXTRA_SDL2_INCLUDES}
-)
