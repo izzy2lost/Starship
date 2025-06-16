@@ -1,5 +1,5 @@
-// #include "sys.h"
-// #include "sf64audio_provisional.h"
+#include "sys.h"
+#include "sf64audio_provisional.h"
 
 u64 gAudioContextStart[2];
 SynthesisReverb gSynthReverbs[4];
