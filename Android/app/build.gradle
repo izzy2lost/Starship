@@ -21,7 +21,8 @@ android {
         versionName "0.1-alpha"
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_APPNAME=${applicationId}",
+                arguments "-Wno-dev"
+                          "-DANDROID_APPNAME=${applicationId}",
                           "-DANDROID_APP_PLATFORM=android-21",
                           "-DANDROID_STL=c++_static",
                           "-DHAVE_LD_VERSION_SCRIPT=OFF",
