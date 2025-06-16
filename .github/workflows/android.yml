@@ -1,35 +1,30 @@
 name: Android Build
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest   
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
         with:
-          submodules: recursive
-          fetch-depth: 0
+          submodules: true
 
       - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build 
+        run: sudo apt-get update && sudo apt-get install -y ninja-build
 
-      - name: Configure Gradle permissions
-        run: chmod +x Android/gradlew
-
-      - name: Build Starship APK
+      - name: Build APK
         run: |
           cd Android
-          ./gradlew assembleDebug assembleRelease \
-            -P elfBuildType=RelWithDebInfo
+          ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
+          mv app/build/outputs/apk/debug/app-debug.apk ../starship.apk
 
-      - name: Archive APKs
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: starship-apks
-          path: |
-            Android/app/build/outputs/apk/debug/app-debug.apk
-            Android/app/build/outputs/apk/release/app-release-unsigned.apk
+          name: starship-apk
+          path: starship.apk
