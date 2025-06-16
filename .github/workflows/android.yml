@@ -20,7 +20,7 @@ jobs:
       - name: Configure Gradle permissions
         run: chmod +x Android/gradlew
 
-      - name: Build Starship APK with cache
+      - name: Build Starship APK
         run: |
           cd Android
           ./gradlew assembleDebug assembleRelease \
