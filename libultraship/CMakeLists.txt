@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24.0)
+cmake_minimum_required(VERSION 3.31.5)
 
 option(NON_PORTABLE "Build a non-portable version" OFF)
 
