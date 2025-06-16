@@ -165,10 +165,6 @@ else()
     set(STARSHIP_SDL2_INCLUDE "") # Non-Android
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Android" AND TARGET libultraship)
-    target_include_directories(libultraship PRIVATE "${STARSHIP_SDL2_INCLUDE}")
-endif()
-
 # ==================== Build Target ====================
 if(ANDROID)
     add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
