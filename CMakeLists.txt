@@ -142,6 +142,13 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
 # Build SDL2
+if(EXISTS "${CMAKE_BINARY_DIR}/_deps/sdl2-src")
+    file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/_deps/sdl2-src")
+endif()
+if(EXISTS "${CMAKE_BINARY_DIR}/_deps/sdl2-build")
+    file(REMOVE_RECURSE "${CMAKE_BINARY_DIR}/_deps/sdl2-build")
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_package(SDL2 QUIET)
     if (NOT SDL2_FOUND)
