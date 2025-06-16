@@ -1,33 +1,24 @@
-def buildAsLibrary = project.hasProperty('BUILD_AS_LIBRARY')
-def buildAsApplication = !buildAsLibrary
-
-if (buildAsApplication) {
-    apply plugin: 'com.android.application'
-} else {
-    apply plugin: 'com.android.library'
-}
+apply plugin: 'com.android.application'
 
 android {
+    namespace 'com.starship.android'
     ndkVersion '27.2.12479018'
     compileSdkVersion 34
 
     defaultConfig {
-        if (buildAsApplication) {
-            applicationId "com.starship.android"
-        }
+        applicationId "com.starship.android"
         minSdkVersion 21
         targetSdkVersion 34
         versionCode 1
         versionName "0.1-alpha"
         externalNativeBuild {
             cmake {
-                arguments "-Wno-dev",
-                          "-DANDROID_APPNAME=${applicationId}",
+                arguments "-DANDROID_APPNAME=com.starship.android",
                           "-DANDROID_APP_PLATFORM=android-21",
                           "-DANDROID_STL=c++_static",
                           "-DHAVE_LD_VERSION_SCRIPT=OFF",
                           "-DUSE_OPENGLES=ON",
-                          "-DCMAKE_BUILD_TYPE=$elfBuildType"
+                          "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
@@ -36,8 +27,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug // <-- match 2soh if you want debug key for release
+            signingConfig signingConfigs.debug // Use debug key for release (like 2soh)
         }
         debug {
             debuggable true
@@ -45,46 +35,10 @@ android {
         }
     }
 
-    buildFeatures {
-        buildConfig = true
-    }
-
-    namespace 'com.starship.android'
-
-    lint {
-        abortOnError false
-    }
-
-    // Ensure CMake native build is ready before Java packaging
-    applicationVariants.configureEach { variant ->
-        tasks["merge${variant.name.capitalize()}Assets"]
-            .dependsOn("externalNativeBuild${variant.name.capitalize()}")
-    }
-
-    // For prebuilt native .so files in 'libs' (optional, only if you actually use prebuilt .so)
-    if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
-        sourceSets.main {
-            jniLibs.srcDir 'libs'
-        }
-        // Only one externalNativeBuild block allowed, but you can add extra logic here if needed
-        externalNativeBuild {
-            cmake {
-                path '../../CMakeLists.txt'
-                version "3.31.5"
-            }
-        }
-    }
-
-    // Library output (.aar), if you ever need to build as library
-    if (buildAsLibrary) {
-        libraryVariants.all { variant ->
-            variant.outputs.each { output ->
-                def outputFile = output.outputFile
-                if (outputFile != null && outputFile.name.endsWith(".aar")) {
-                    def fileName = "com.starship.android.aar"
-                    output.outputFile = new File(outputFile.parent, fileName)
-                }
-            }
+    externalNativeBuild {
+        cmake {
+            path '../../CMakeLists.txt'
+            version "3.31.5"
         }
     }
 
@@ -96,6 +50,10 @@ android {
             excludes += ['META-INF/*']
         }
     }
+
+    lint {
+        abortOnError false
+    }
 }
 
 dependencies {
@@ -106,7 +64,4 @@ dependencies {
 
 tasks.register('wrapper', Wrapper) {
     gradleVersion = '8.10.2'
-}
-
-tasks.register('prepareKotlinBuildScriptModel') {
 }
