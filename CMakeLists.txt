@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24.0)
+cmake_minimum_required(VERSION 3.31.5)
 
 # ==================== Project Info ====================
 project(Starship VERSION 2.0.0 LANGUAGES C CXX ASM)
