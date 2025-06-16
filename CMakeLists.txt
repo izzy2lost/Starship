@@ -148,6 +148,83 @@ file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "src/port/*.h"
     "src/port/*.c"
     "src/port/*.cpp"
+    
+################################################################################
+# Set target arch type if empty. Visual studio solution generator provides it.
+################################################################################
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    if(NOT CMAKE_VS_PLATFORM_NAME)
+        set(CMAKE_VS_PLATFORM_NAME "x64")
+    endif()
+    message("${CMAKE_VS_PLATFORM_NAME} architecture in use")
+    if(NOT ("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64"
+         OR "${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32"))
+        message(FATAL_ERROR "${CMAKE_VS_PLATFORM_NAME} arch is not supported!")
+    endif()
+endif()
+
+################################################################################
+# Global configuration types
+################################################################################
+if(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+    set(CMAKE_C_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
+else()
+    set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+    set(CMAKE_OBJCXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+endif()
+
+# Set game compilation version
+set(VERSION us)
+set(USE_NETWORKING OFF)
+set(SKIP_XCODE_VERSION_CHECK ON)
+
+# Add compile definitions for the target
+add_compile_definitions(
+    VERSION_US=1
+    ENABLE_RUMBLE=1
+    F3DEX_GBI=1
+    _LANGUAGE_C
+    _USE_MATH_DEFINES
+    CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+    NON_MATCHING=1
+    NON_EQUIVALENT=1
+    AVOID_UB=1
+    GBI_FLOATS=1
+)
+
+# Find necessary libraries
+if(UNIX AND NOT APPLE AND NOT ANDROID)
+    find_package(OpenGL REQUIRED)
+endif()
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/properties.h.in ${CMAKE_CURRENT_SOURCE_DIR}/properties.h @ONLY)
+
+# Include directories
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# Collect source files to build the executable/library
+file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    "src/audio/*.c"
+    "src/audio/*.h"
+    "src/engine/*.c"
+    "src/engine/*.h"
+    "src/libultra/io/aisetfreq.c"
+    "src/libultra/gu/sqrtf.c"
+    "src/libultra/gu/mtxutil.c"
+    "src/libultra/gu/ortho.c"
+    "src/overlays/*.c"
+    "src/overlays/*.h"
+    "src/port/*.h"
+    "src/port/*.c"
+    "src/port/*.cpp"
     "src/sys/*.c"
     "src/sys/*.h"
     "src/1FA60.c"
@@ -155,12 +232,11 @@ file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "src/dmatable.c"
     "src/libc_math64.c"
     "src/libc_sprintf.c"
-    "Resource.rc"
+    # "Resource.rc" # Don't include on Android
 )
 
 # Exclude specific files from the ALL_FILES list
-list(FILTER ALL_FILES EXCLUDE REGEX ".*.inc.c")
-
+list(FILTER ALL_FILES EXCLUDE REGEX ".*\\.inc\\.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_colheaders.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_edata_info.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/engine/fox_rcp_setup.c")
@@ -170,24 +246,9 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
-if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    set(IOS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/ios)
-
-    set(STORYBOARD_FILE ${IOS_DIR}/Launch.storyboard)
-    set(IMAGE_FILES ${IOS_DIR}/PoweredBy.png)
-    set(ICON_FILES ${IOS_DIR}/Icon.png)
-
-    list(APPEND ALL_FILES ${STORYBOARD_FILE} ${IMAGE_FILES} ${ICON_FILES})
-
-    add_executable(${PROJECT_NAME} ${ALL_FILES})
-    set_xcode_property(${PROJECT_NAME} PRODUCT_BUNDLE_IDENTIFIER ${PROJECT_ID} All)
-    set_target_properties(
-        ${PROJECT_NAME}
-        PROPERTIES
-        MACOSX_BUNDLE TRUE
-        MACOSX_BUNDLE_INFO_PLIST ${IOS_DIR}/plist.in
-        RESOURCE "${IMAGE_FILES};${STORYBOARD_FILE};${ICON_FILES}"
-    )
+# Add the correct target type for the platform
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 else()
     add_executable(${PROJECT_NAME} ${ALL_FILES})
 endif()
