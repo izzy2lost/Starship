@@ -197,10 +197,6 @@ add_compile_definitions(
     GBI_FLOATS=1
 )
 
-if(UNIX AND NOT APPLE AND NOT (CMAKE_SYSTEM_NAME STREQUAL "Android"))
-    find_package(OpenGL REQUIRED)
-endif()
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/properties.h.in ${CMAKE_CURRENT_SOURCE_DIR}/properties.h @ONLY)
 
 # Include directories
