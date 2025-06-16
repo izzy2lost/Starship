@@ -17,6 +17,9 @@ jobs:
       - name: Install build dependencies
         run: sudo apt-get update && sudo apt-get install -y ninja-build
 
+      - name: Configure Gradle permissions
+        run: chmod +x Android/gradlew
+
       - name: Build APK
         run: |
           cd Android
