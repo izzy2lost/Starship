@@ -152,6 +152,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
             GIT_TAG release-2.32.0
         )
         message("SDL2 not found. Downloading and building SDL2 for Android...")
+        # Prevents the fseeko64 error on Android
+        set(SDL_FILE_SUPPORTS_LARGE_FILES OFF CACHE BOOL "" FORCE)
         FetchContent_MakeAvailable(SDL2)
     endif()
     if (DEFINED SDL2_SOURCE_DIR)
