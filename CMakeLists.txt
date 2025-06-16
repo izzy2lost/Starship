@@ -141,7 +141,7 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
-# Fetch or find SDL2, and set STARSHIP_SDL2_INCLUDE
+# Build SDL2
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_package(SDL2 QUIET)
     if (NOT SDL2_FOUND)
@@ -150,10 +150,10 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
             SDL2
             GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
             GIT_TAG release-2.32.0
+            # THIS IS THE KEY: set CMake options for the SDL2 build!
+            CMAKE_ARGS -DSDL_FILE_SUPPORTS_LARGE_FILES=OFF
         )
-        message("SDL2 not found. Downloading and building SDL2 for Android...")
-        # Prevents the fseeko64 error on Android
-        set(SDL_FILE_SUPPORTS_LARGE_FILES OFF CACHE BOOL "" FORCE)
+        message("SDL2 not found. Downloading and building SDL2 for Android with large file support OFF...")
         FetchContent_MakeAvailable(SDL2)
     endif()
     if (DEFINED SDL2_SOURCE_DIR)
@@ -164,7 +164,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android")
         set(STARSHIP_SDL2_INCLUDE "${CMAKE_BINARY_DIR}/_deps/sdl2-src/include")
     endif()
 else()
-    set(STARSHIP_SDL2_INCLUDE "") # Non-Android
+    set(STARSHIP_SDL2_INCLUDE "")
 endif()
 
 # ==================== Build Target ====================
