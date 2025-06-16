@@ -419,84 +419,40 @@ endif()
 ################################################################################
 # Compile and link options
 ################################################################################
-if(MSVC)
-  if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          $<$<CONFIG:Debug>:
-              /w;
-              /Od;
-              /MTd
-          >
-          $<$<CONFIG:Release>:
-              /Oi;
-              /Gy;
-              /W3;
-              /MT
-          >
-          /permissive-;
-          /MP;
-          ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
-          ${DEFAULT_CXX_EXCEPTION_HANDLING}
-      )
-      target_compile_options(${PROJECT_NAME} PRIVATE  $<$<CONFIG:Debug>:/ZI;>)
-      target_compile_options(${PROJECT_NAME} PRIVATE  $<$<CONFIG:Release>:/Zi;>)
-  elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          $<$<CONFIG:Debug>:
-              /MTd
-          >
-          $<$<CONFIG:Release>:
-              /O2;
-              /Oi;
-              /Gy;
-              /MT
-          >
-          /permissive-;
-          /MP;
-          /w;
-          ${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};
-          ${DEFAULT_CXX_EXCEPTION_HANDLING}
-      )
-  endif()
-  if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
-      target_link_options(${PROJECT_NAME} PRIVATE
-          $<$<CONFIG:Debug>:
-              /INCREMENTAL
-          >
-          $<$<CONFIG:Release>:
-              /OPT:REF;
-              /OPT:ICF;
-              /INCREMENTAL:NO;
-              /FORCE:MULTIPLE
-          >
-          /MANIFEST:NO;
-          /DEBUG;
-          /SUBSYSTEM:WINDOWS
-      )
-  elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
-      target_link_options(${PROJECT_NAME} PRIVATE
-          $<$<CONFIG:Debug>:
-              /STACK:8777216
-          >
-          $<$<CONFIG:Release>:
-              /OPT:REF;
-              /OPT:ICF;
-              /INCREMENTAL:NO;
-              /FORCE:MULTIPLE
-          >
-          /MANIFEST:NO;
-          /DEBUG;
-          /SUBSYSTEM:WINDOWS
-      )
-  endif()
 
-  # Remove /RTC from msvc flags
-  foreach (fentry
-    CMAKE_C_FLAGS
-    CMAKE_CXX_FLAGS
-  )
-    string (REGEX REPLACE "/RTC(su|[1su])" "" ${fentry} "${${fentry}}")
-  endforeach(fentry)
+if(MSVC)
+    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Debug>:/w;/Od;/MTd>
+            $<$<CONFIG:Release>:/Oi;/Gy;/W3;/MT>
+            /permissive-;/MP;${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};${DEFAULT_CXX_EXCEPTION_HANDLING}
+        )
+        target_compile_options(${PROJECT_NAME} PRIVATE  $<$<CONFIG:Debug>:/ZI;>)
+        target_compile_options(${PROJECT_NAME} PRIVATE  $<$<CONFIG:Release>:/Zi;>)
+    elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Debug>:/MTd>
+            $<$<CONFIG:Release>:/O2;/Oi;/Gy;/MT>
+            /permissive-;/MP;/w;${DEFAULT_CXX_DEBUG_INFORMATION_FORMAT};${DEFAULT_CXX_EXCEPTION_HANDLING}
+        )
+    endif()
+    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
+        target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Debug>:/INCREMENTAL>
+            $<$<CONFIG:Release>:/OPT:REF;/OPT:ICF;/INCREMENTAL:NO;/FORCE:MULTIPLE>
+            /MANIFEST:NO;/DEBUG;/SUBSYSTEM:WINDOWS
+        )
+    elseif("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "Win32")
+        target_link_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Debug>:/STACK:8777216>
+            $<$<CONFIG:Release>:/OPT:REF;/OPT:ICF;/INCREMENTAL:NO;/FORCE:MULTIPLE>
+            /MANIFEST:NO;/DEBUG;/SUBSYSTEM:WINDOWS
+        )
+    endif()
+    # Remove /RTC from msvc flags
+    foreach (fentry CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+        string (REGEX REPLACE "/RTC(su|[1su])" "" ${fentry} "${${fentry}}")
+    endforeach(fentry)
 endif()
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
@@ -524,93 +480,84 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
             >
             -pthread
         )
-
-        target_link_options(${PROJECT_NAME} PRIVATE
+        target_link_options(${PROJECT_NAME} PRIVATE -pthread)
+    elseif (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            -Wall -Wextra -Wno-error
+            -Wno-return-type
+            -Wno-unused-parameter
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-missing-field-initializers
+            -Wno-parentheses
+            -Wno-narrowing
+            -Wno-missing-braces
+            -Wno-int-conversion
+            $<$<COMPILE_LANGUAGE:C>:
+                -Werror-implicit-function-declaration
+                -Wno-incompatible-pointer-types
+                -fpermissive
+            >
+            $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
+            $<$<COMPILE_LANGUAGE:CXX>:
+                -Wno-c++11-narrowing
+                -Wno-deprecated-enum-enum-conversion
+            >
             -pthread
         )
-    elseif (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          -Wall -Wextra -Wno-error
-          -Wno-return-type
-          -Wno-unused-parameter
-          -Wno-unused-function
-          -Wno-unused-variable
-          -Wno-missing-field-initializers
-          -Wno-parentheses
-          -Wno-narrowing
-          -Wno-missing-braces
-          -Wno-int-conversion
-          $<$<COMPILE_LANGUAGE:C>:
-              -Werror-implicit-function-declaration
-              -Wno-incompatible-pointer-types
-              -fpermissive
-          >
-          $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
-          $<$<COMPILE_LANGUAGE:CXX>:
-              -Wno-c++11-narrowing
-              -Wno-deprecated-enum-enum-conversion
-          >
-          -pthread
-      )
-
-      target_link_options(${PROJECT_NAME} PRIVATE
-          -pthread
-      )
-  elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          -O2
-
-          # disable some warnings to not clutter output
-          -Wno-multichar
-          -Wno-return-type
-          -Wno-narrowing
-          -Wno-switch-outside-range
-          $<$<COMPILE_LANGUAGE:C>:
-              -Werror-implicit-function-declaration
-              -Wno-incompatible-pointer-types
-              -Wno-discarded-array-qualifiers
-              -Wno-discarded-qualifiers
-              -Wno-int-conversion
-              -Wno-builtin-declaration-mismatch
-              -Wno-switch-unreachable
-              -Wno-stringop-overflow
-          >
-      )
-  else()
-      if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-        set(CPU_OPTION -msse2 -mfpmath=sse)
-      elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-        set(CPU_OPTION -mcpu=native)
-      endif()
-
-      target_compile_options(${PROJECT_NAME} PRIVATE
-          -Wall -Wextra -Wno-error
-          -Wno-unused-parameter
-          -Wno-unused-function
-          -Wno-unused-variable
-          -Wno-missing-field-initializers
-          -Wno-parentheses
-          -Wno-narrowing
-          -Wno-missing-braces
-          -Wno-int-conversion
-          $<$<COMPILE_LANGUAGE:C>:
-              -Werror-implicit-function-declaration
-              -Wno-incompatible-pointer-types
-              -fpermissive
-          >
-          $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
-          $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>
-          -pthread
-    ${CPU_OPTION}
-      )
-
-      target_link_options(${PROJECT_NAME} PRIVATE
-          -pthread
-          -Wl,-export-dynamic
-      )
-  endif()
+        target_link_options(${PROJECT_NAME} PRIVATE -pthread)
+    elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            -O2
+            # disable some warnings to not clutter output
+            -Wno-multichar
+            -Wno-return-type
+            -Wno-narrowing
+            -Wno-switch-outside-range
+            $<$<COMPILE_LANGUAGE:C>:
+                -Werror-implicit-function-declaration
+                -Wno-incompatible-pointer-types
+                -Wno-discarded-array-qualifiers
+                -Wno-discarded-qualifiers
+                -Wno-int-conversion
+                -Wno-builtin-declaration-mismatch
+                -Wno-switch-unreachable
+                -Wno-stringop-overflow
+            >
+        )
+    else()
+        if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+            set(CPU_OPTION -msse2 -mfpmath=sse)
+        elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+            set(CPU_OPTION -mcpu=native)
+        endif()
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            -Wall -Wextra -Wno-error
+            -Wno-unused-parameter
+            -Wno-unused-function
+            -Wno-unused-variable
+            -Wno-missing-field-initializers
+            -Wno-parentheses
+            -Wno-narrowing
+            -Wno-missing-braces
+            -Wno-int-conversion
+            $<$<COMPILE_LANGUAGE:C>:
+                -Werror-implicit-function-declaration
+                -Wno-incompatible-pointer-types
+                -fpermissive
+            >
+            $<$<COMPILE_LANGUAGE:CXX>:-fpermissive>
+            $<$<COMPILE_LANGUAGE:CXX>:-Wno-deprecated-enum-enum-conversion>
+            -pthread
+            ${CPU_OPTION}
+        )
+        target_link_options(${PROJECT_NAME} PRIVATE -pthread -Wl,-export-dynamic)
+    endif()
 endif()
 
+################################################################################
+# Asset Extraction (only on non-Android/non-Switch platforms)
+################################################################################
 if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     include(ExternalProject)
     ExternalProject_Add(TorchExternal
@@ -620,9 +567,9 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     )
     ExternalProject_Get_Property(TorchExternal install_dir)
     if (MSVC)
-      set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/$<CONFIGURATION>/torch)
+        set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/$<CONFIGURATION>/torch)
     else()
-      set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/torch)
+        set(TORCH_EXECUTABLE ${install_dir}/src/TorchExternal-build/torch)
     endif()
     add_custom_target(
         ExtractAssets
@@ -631,7 +578,6 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
         COMMAND ${TORCH_EXECUTABLE} o2r baserom.z64
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/sf64.o2r" "${CMAKE_BINARY_DIR}/sf64.o2r"
     )
-
     add_custom_target(
         GeneratePortO2R
         DEPENDS TorchExternal
@@ -639,15 +585,18 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
         COMMAND ${TORCH_EXECUTABLE} pack port starship.o2r o2r
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/starship.o2r" "${CMAKE_BINARY_DIR}/starship.o2r"
     )
-
     if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
-      install(FILES "${CMAKE_BINARY_DIR}/starship.o2r" DESTINATION . COMPONENT ${PROJECT_NAME})
+        install(FILES "${CMAKE_BINARY_DIR}/starship.o2r" DESTINATION . COMPONENT ${PROJECT_NAME})
     endif()
 endif()
 
-set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
-set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE "${CMAKE_SOURCE_DIR}/Starship.desktop")
-set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_ICON_FILE "${CMAKE_SOURCE_DIR}/logo.png")
+################################################################################
+# Packaging and platform-specific properties
+################################################################################
+if(TARGET ${PROJECT_NAME})
+    set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE "${CMAKE_SOURCE_DIR}/Starship.desktop")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_ICON_FILE "${CMAKE_SOURCE_DIR}/logo.png")
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
