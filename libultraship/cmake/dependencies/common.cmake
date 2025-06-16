@@ -9,15 +9,11 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
 endif()
 
 #=================== ImGui ===================
-set(sdl_gamepad_patch git apply ${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies/patches/sdl-gamepad-fix.patch)
-
-# Applies the patch or checks if it has already been applied successfully previously. Will error otherwise.
-set(sdl_apply_patch_if_needed ${sdl_gamepad_patch} ${git_hide_output} || ${sdl_gamepad_patch} --reverse --check)
 FetchContent_Declare(
     ImGui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
     GIT_TAG v1.90.6-docking
-    PATCH_COMMAND ${sdl_apply_patch_if_needed}
+    # PATCH_COMMAND removed -- no patch applied
 )
 FetchContent_MakeAvailable(ImGui)
 list(APPEND ADDITIONAL_LIB_INCLUDES ${imgui_SOURCE_DIR} ${imgui_SOURCE_DIR}/backends)
@@ -34,7 +30,6 @@ target_sources(ImGui
     ${imgui_SOURCE_DIR}/imgui.cpp
 )
 
-# I know this isn't where it goes, but Android needs a custom imgui impl sdl2 file.
 if (NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
     target_sources(ImGui
         PRIVATE
@@ -45,7 +40,7 @@ else()
     target_sources(ImGui
         PRIVATE
         ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/android/imgui_impl_sdl2.cpp # Custom implementation
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/android/imgui_impl_sdl2.cpp # Custom implementation for Android
     )
 endif()
 
