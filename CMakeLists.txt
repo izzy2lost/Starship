@@ -207,6 +207,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/libultra
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/bridge
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern/spdlog
+    ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern/nlohmann-json
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/extern/tinyxml2
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/
     ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/libjpeg/include/
