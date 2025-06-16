@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16.0 FATAL_ERROR)
-
+set(OpenGL_GL_PREFERENCE "LEGACY")
 # Set the project version and language
 project(Starship VERSION 2.0.0 LANGUAGES C CXX ASM)
 include(FetchContent)
