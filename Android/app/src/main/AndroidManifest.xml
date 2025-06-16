@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:versionCode="1"
-    android:versionName="1.0.0"
+    android:versionName="0.1-alpha"
     android:installLocation="auto">
 
     <!-- OpenGL ES 3.0 support -->
@@ -33,7 +33,7 @@
         <meta-data android:name="SDL_ENV.SDL_ANDROID_TRAP_BACK_BUTTON" android:value="1"/>
         <meta-data android:name="SDL_ENV.SDL_IOS_ORIENTATIONS" android:value="LandscapeLeft LandscapeRight"/>
 
-        <!-- Main activity (use your main Java class name) -->
+        <!-- Main activity -->
         <activity android:name=".MainActivity"
             android:alwaysRetainTaskState="true"
             android:launchMode="singleInstance"
@@ -50,7 +50,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Add additional activities as needed -->
+        <!-- Additional Starship-specific activities -->
         <activity android:name=".RomVersionSelectorActivity" />
         <activity android:name=".RomPickerActivity" android:exported="false" />
     </application>
