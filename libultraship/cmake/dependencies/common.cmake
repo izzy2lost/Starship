@@ -45,7 +45,7 @@ else()
     target_sources(ImGui
         PRIVATE
         ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/mobile/imgui_impl_sdl2.cpp # Custom implementation
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/android/imgui_impl_sdl2.cpp # Custom implementation
     )
 endif()
 
