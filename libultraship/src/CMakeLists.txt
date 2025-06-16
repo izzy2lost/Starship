@@ -108,8 +108,8 @@ target_sources(libultraship PRIVATE ${Source_Files__Utils})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Android" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(Source_Files__Port
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/mobile/AndroidImpl.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/port/mobile/AndroidImpl.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/port/android/AndroidImpl.cpp
     )
 endif()
 
