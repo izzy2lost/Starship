@@ -301,7 +301,11 @@ FetchContent_MakeAvailable(dr_libs)
 # Libultraship Integration                                                     #
 #==============================================================================#
 
-include_directories(
+add_subdirectory(libultraship)
+add_dependencies(${PROJECT_NAME} libultraship)
+target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -320,7 +324,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/audio
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/window
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/window/gui
-  ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/config
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/libultra
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/public/bridge
@@ -331,89 +334,51 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/spdlog/include/
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic/Fast3D/U64/PR
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic
-  ${SDL2_INCLUDE_DIRS}
-  ${GLEW_INCLUDE_DIRS}
   ${dr_libs_SOURCE_DIR}
 )
 
-add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
-add_dependencies(${PROJECT_NAME} libultraship)
-target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
+#==================== Platform-specific linkage ======================#
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # Android: SDL2 (from workflow), GLESv3, log
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2)
+    find_library(LOG_LIB log)
+    if(LOG_LIB)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${LOG_LIB})
+    endif()
+    find_library(GLES_LIB GLESv3)
+    if(GLES_LIB)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${GLES_LIB})
+    endif()
+
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
-        "$<$<CONFIG:Debug>:"
-            "_DEBUG;"
-            "_CRT_SECURE_NO_WARNINGS;"
-            "ENABLE_DX11;"
-        ">"
-        "$<$<CONFIG:Release>:"
-            "NDEBUG"
-        ">"
-        "INCLUDE_GAME_PRINTF;"
-        "UNICODE;"
-        "_UNICODE;"
-        "_CRT_SECURE_NO_WARNINGS;"
-        "_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;"
+        "$<$<CONFIG:Debug>:_DEBUG;_CRT_SECURE_NO_WARNINGS;ENABLE_DX11;>"
+        "$<$<CONFIG:Release>:NDEBUG>"
+        "INCLUDE_GAME_PRINTF;UNICODE;_UNICODE;_CRT_SECURE_NO_WARNINGS;_SILENCE_ALL_MS_EXT_DEPRECATION_WARNINGS;"
     )
     add_compile_definitions(STORMLIB_NO_AUTO_LINK)
-	set(STORMLIB_NO_AUTO_LINK ON)
-elseif (CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		"$<$<CONFIG:Debug>:"
-			"_DEBUG"
-		">"
-		"$<$<CONFIG:Release>:"
-			"NDEBUG"
-		">"
-        "SPDLOG_ACTIVE_LEVEL=3;"
-		"SPDLOG_NO_THREAD_ID;"
-        "SPDLOG_NO_TLS;"
-		"STBI_NO_THREAD_LOCALS;"
-	)
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
-	target_compile_definitions(${PROJECT_NAME} PRIVATE
-		"$<$<CONFIG:Debug>:"
-			"_DEBUG"
-		">"
-		"$<$<CONFIG:Release>:"
-			"NDEBUG"
-		">"
-        "$<$<BOOL:${BUILD_CROWD_CONTROL}>:ENABLE_CROWD_CONTROL>"
-		"SPDLOG_ACTIVE_LEVEL=0;"
-		"_CONSOLE;"
-		"_CRT_SECURE_NO_WARNINGS;"
-		"UNICODE;"
-		"_UNICODE"
-	)
-endif()
-
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(STORMLIB_NO_AUTO_LINK ON)
     find_package(Ogg CONFIG REQUIRED)
-    link_libraries(Ogg::ogg)
-
     find_package(Vorbis CONFIG REQUIRED)
-    link_libraries(Vorbis::vorbisfile)
-	set(ADDITIONAL_LIBRARY_DEPENDENCIES
-        "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net-static>"
-        "Ogg::ogg"
-        "Vorbis::vorbis"
-        "Vorbis::vorbisenc"
-        "Vorbis::vorbisfile"
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        Ogg::ogg
+        Vorbis::vorbis
+        Vorbis::vorbisenc
+        Vorbis::vorbisfile
     )
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(SDL2)
-	find_package(Vorbis REQUIRED)
-	link_libraries(Vorbis::vorbisfile)
-	find_package(Ogg REQUIRED)
-	link_libraries(Ogg::ogg)
-    set(ADDITIONAL_LIBRARY_DEPENDENCIES
-        -lglad
+    find_package(Vorbis REQUIRED)
+    find_package(Ogg REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
         SDL2::SDL2
-        "Ogg::ogg"
-        "Vorbis::vorbisfile"
+        Vorbis::vorbisfile
+        Ogg::ogg
+        -lglad
     )
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<CONFIG:Debug>:-Wl,--wrap=abort>"
@@ -421,18 +386,19 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/
     )
-else()
+
+else() # Linux, Mac, etc.
     find_package(Ogg REQUIRED)
     find_package(Vorbis REQUIRED)
- 	set(ADDITIONAL_LIBRARY_DEPENDENCIES
-        "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net>"
-        "Ogg::ogg"
-        "Vorbis::vorbis"
-        "Vorbis::vorbisenc"
-        "Vorbis::vorbisfile"
-	)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        Ogg::ogg
+        Vorbis::vorbis
+        Vorbis::vorbisenc
+        Vorbis::vorbisfile
+    )
 endif()
 
+# Optional networking, if enabled
 if(USE_NETWORKING)
     if(MSVC)
         vcpkg_install_packages(sdl2-net)
@@ -445,28 +411,12 @@ endif()
 
 option(USE_STANDALONE "Build as a standalone executable" OFF)
 option(BUILD_STORMLIB "Build with StormLib support" OFF)
-
 option(BUILD_SM64 "Build with Super Mario 64 support" OFF)
 option(BUILD_MK64 "Build with Mario Kart 64 support" OFF)
 option(BUILD_FZERO "Build with F-Zero X support" OFF)
+
 add_subdirectory(tools/Torch)
-target_link_libraries(${PROJECT_NAME} PRIVATE torch "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
-
-if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
-
-nx_generate_nacp(${PROJECT_NAME}.nacp
-   NAME "${PROJECT_NAME}"
-   AUTHOR "${PROJECT_TEAM}"
-   VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-)
-
-nx_create_nro(${PROJECT_NAME}
-    NACP ${PROJECT_NAME}.nacp
-    ICON ${CMAKE_CURRENT_SOURCE_DIR}/nx-logo.jpg
-)
-
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.nro DESTINATION . COMPONENT ${PROJECT_NAME})
-endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE torch)
 
 ################################################################################
 # Compile and link options
