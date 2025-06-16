@@ -47,6 +47,15 @@ file(GLOB_RECURSE LIBULTRASHIP_SOURCES
 add_library(libultraship STATIC ${LIBULTRASHIP_SOURCES})
 set_target_properties(libultraship PROPERTIES PREFIX "")
 
+target_include_directories(libultraship
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/..
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/spdlog
+        ${CMAKE_CURRENT_SOURCE_DIR}/../extern/nlohmann-json
+        ${_EXTRA_SDL2_INCLUDES}
+)
+
 # ========== Platform-specific Links ==========
 if (CMAKE_SYSTEM_NAME STREQUAL "Android")
     find_library(ANDROID_LOG_LIB log)
