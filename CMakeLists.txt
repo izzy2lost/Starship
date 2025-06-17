@@ -412,8 +412,6 @@ option(BUILD_SM64 "Build with Super Mario 64 support" OFF)
 option(BUILD_MK64 "Build with Mario Kart 64 support" OFF)
 option(BUILD_FZERO "Build with F-Zero X support" OFF)
 
-# ---- Torch Asset Extraction (not for Android) ----
-if(NOT ANDROID)
     add_subdirectory(tools/Torch)
     target_link_libraries(${PROJECT_NAME} PRIVATE torch)
 endif()
