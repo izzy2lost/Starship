@@ -414,7 +414,6 @@ option(BUILD_FZERO "Build with F-Zero X support" OFF)
 
     add_subdirectory(tools/Torch)
     target_link_libraries(${PROJECT_NAME} PRIVATE torch)
-endif()
 
 ################################################################################
 # Compile and link options
@@ -560,7 +559,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
 endif()
 
 ################################################################################
-# Asset Extraction (only on non-Android/non-Switch platforms)
+# Asset Extraction
 ################################################################################
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     include(ExternalProject)
