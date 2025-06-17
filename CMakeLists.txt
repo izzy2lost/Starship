@@ -330,6 +330,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/libultraship/Lib/spdlog/include/
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic/Fast3D/U64/PR
   ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/src/graphic
+  ${SDL2_INCLUDE_DIRS}
   ${dr_libs_SOURCE_DIR}
 )
 
