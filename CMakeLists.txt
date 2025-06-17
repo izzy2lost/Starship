@@ -564,7 +564,7 @@ endif()
 ################################################################################
 # Asset Extraction (only on non-Android/non-Switch platforms)
 ################################################################################
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     include(ExternalProject)
     ExternalProject_Add(TorchExternal
         PREFIX TorchExternal
