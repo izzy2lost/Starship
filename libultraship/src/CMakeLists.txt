@@ -126,7 +126,10 @@ target_sources(libultraship PRIVATE ${Source_Files__Port})
 #=================== Resource ===================
 
 file(GLOB_RECURSE Source_Files__Resource RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/*.h" "resource/*.cpp")
+
+# Only filter for Android
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    # This will filter out anything with vorbis or SampleFactory in the path/filename
     list(FILTER Source_Files__Resource EXCLUDE REGEX "vorbis")
     list(FILTER Source_Files__Resource EXCLUDE REGEX "SampleFactory")
 endif()
