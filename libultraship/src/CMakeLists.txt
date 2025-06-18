@@ -62,11 +62,11 @@ source_group("public/bridge" FILES ${Source_Files__Public__Bridge})
 target_sources(libultraship PRIVATE ${Source_Files__Public__Libultra} ${Source_Files__Public__Bridge})
 
 #=================== Debug ===================
+# (Disabled debug sources - missing files and not needed for Android build)
 
-file(GLOB Source_Files__Debug RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/*.h" "debug/*.cpp")
-
-source_group("debug" FILES ${Source_Files__Debug})
-target_sources(libultraship PRIVATE ${Source_Files__Debug})
+# file(GLOB Source_Files__Debug RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/*.h" "debug/*.cpp")
+# source_group("debug" FILES ${Source_Files__Debug})
+# target_sources(libultraship PRIVATE ${Source_Files__Debug})
 
 #=================== Log ===================
 
