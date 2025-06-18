@@ -1,8 +1,7 @@
 #include "Resource.h"
 #include <spdlog/spdlog.h>
-#include "libultraship/libultra/gbi.h"
 
-namespace LUS {
+namespace Ship {
 IResource::IResource(std::shared_ptr<ResourceInitData> initData) : mInitData(initData) {
 }
 
@@ -21,4 +20,4 @@ void IResource::Dirty() {
 std::shared_ptr<ResourceInitData> IResource::GetInitData() {
     return mInitData;
 }
-} // namespace LUS
+} // namespace Ship

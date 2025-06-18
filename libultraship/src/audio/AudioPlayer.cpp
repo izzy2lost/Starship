@@ -1,19 +1,49 @@
 #include "AudioPlayer.h"
 #include "spdlog/spdlog.h"
 
-namespace LUS {
-AudioPlayer::AudioPlayer() : mInitialized(false){};
-
+namespace Ship {
 AudioPlayer::~AudioPlayer() {
     SPDLOG_TRACE("destruct audio player");
 }
 
-bool AudioPlayer::Init(void) {
+bool AudioPlayer::Init() {
     mInitialized = DoInit();
     return IsInitialized();
 }
 
-bool AudioPlayer::IsInitialized(void) {
+bool AudioPlayer::IsInitialized() {
     return mInitialized;
 }
-} // namespace LUS
+
+int32_t AudioPlayer::GetSampleRate() const {
+    return mAudioSettings.SampleRate;
+}
+
+int32_t AudioPlayer::GetSampleLength() const {
+    return mAudioSettings.SampleLength;
+}
+
+int32_t AudioPlayer::GetDesiredBuffered() const {
+    return mAudioSettings.DesiredBuffered;
+}
+
+AudioChannelsSetting AudioPlayer::GetAudioChannels() const {
+    return mAudioSettings.AudioSurround;
+}
+
+void AudioPlayer::SetSampleRate(int32_t rate) {
+    mAudioSettings.SampleRate = rate;
+}
+
+void AudioPlayer::SetSampleLength(int32_t length) {
+    mAudioSettings.SampleLength = length;
+}
+
+void AudioPlayer::SetDesiredBuffered(int32_t size) {
+    mAudioSettings.DesiredBuffered = size;
+}
+
+void AudioPlayer::SetAudioChannels(AudioChannelsSetting surround) {
+    mAudioSettings.AudioSurround = surround;
+}
+} // namespace Ship

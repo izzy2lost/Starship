@@ -6,13 +6,21 @@
 #define strdup _strdup
 #endif
 
-namespace LUS {
+namespace Ship {
 namespace Math {
 float clamp(float d, float min, float max) {
     const float t = d < min ? min : d;
     return t > max ? max : t;
 }
 
+size_t HashCombine(size_t lhs, size_t rhs) {
+    if constexpr (sizeof(size_t) >= 8) {
+        lhs ^= rhs + 0x517cc1b727220a95 + (lhs << 6) + (lhs >> 2);
+    } else {
+        lhs ^= rhs + 0x9e3779b9 + (lhs << 6) + (lhs >> 2);
+    }
+    return lhs;
+}
 } // namespace Math
 
 std::vector<std::string> splitText(const std::string text, char separator = ' ', bool keepQuotes = false) {
@@ -67,4 +75,4 @@ std::string toLowerCase(std::string in) {
     std::transform(cpy.begin(), cpy.end(), cpy.begin(), ::tolower);
     return cpy;
 }
-} // namespace LUS
+} // namespace Ship

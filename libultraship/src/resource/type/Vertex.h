@@ -1,11 +1,12 @@
 #pragma once
 
 #include "resource/Resource.h"
-#include "libultraship/libultra/gbi.h"
 #include <vector>
 
-namespace LUS {
-class Vertex : public Resource<Vtx> {
+union Vtx;
+
+namespace Fast {
+class Vertex : public Ship::Resource<Vtx> {
   public:
     using Resource::Resource;
 
@@ -16,4 +17,4 @@ class Vertex : public Resource<Vtx> {
 
     std::vector<Vtx> VertexList;
 };
-} // namespace LUS
+} // namespace Fast

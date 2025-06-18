@@ -1,12 +1,16 @@
 #include "ConsoleVariable.h"
 
 #include <functional>
-#include <Utils/DiskFile.h>
+#include "utils/filesystemtools/DiskFile.h"
 #include <utils/Utils.h>
 #include "config/Config.h"
 #include "Context.h"
 
-namespace LUS {
+#ifdef _MSC_VER
+#define strdup _strdup
+#endif
+
+namespace Ship {
 
 ConsoleVariable::ConsoleVariable() {
     Load();
@@ -45,7 +49,7 @@ const char* ConsoleVariable::GetString(const char* name, const char* defaultValu
     auto variable = Get(name);
 
     if (variable != nullptr && variable->Type == ConsoleVariableType::String) {
-        return variable->String.c_str();
+        return variable->String;
     }
 
     return defaultValue;
@@ -111,7 +115,10 @@ void ConsoleVariable::SetString(const char* name, const char* value) {
     }
 
     variable->Type = ConsoleVariableType::String;
-    variable->String = std::string(value);
+    if (variable->String != nullptr) {
+        free(variable->String);
+    }
+    variable->String = strdup(value);
 }
 
 void ConsoleVariable::SetColor(const char* name, Color_RGBA8 value) {
@@ -165,20 +172,82 @@ void ConsoleVariable::RegisterColor24(const char* name, Color_RGB8 defaultValue)
 }
 
 void ConsoleVariable::ClearVariable(const char* name) {
-    std::shared_ptr<Config> conf = LUS::Context::GetInstance()->GetConfig();
+    std::shared_ptr<Config> conf = Context::GetInstance()->GetConfig();
+    auto var = Get(name);
+    if (var != nullptr) {
+        bool color = var->Type == ConsoleVariableType::Color || var->Type == ConsoleVariableType::Color24;
+        if (color) {
+            std::string a = StringHelper::Sprintf("%s.%s", name, "A");
+            std::string b = StringHelper::Sprintf("%s.%s", name, "B");
+            std::string g = StringHelper::Sprintf("%s.%s", name, "G");
+            std::string r = StringHelper::Sprintf("%s.%s", name, "R");
+            std::string t = StringHelper::Sprintf("%s.%s", name, "Type");
+            mVariables.erase(a);
+            mVariables.erase(b);
+            mVariables.erase(g);
+            mVariables.erase(r);
+            mVariables.erase(t);
+            conf->Erase(std::string("CVars.") + a);
+            conf->Erase(std::string("CVars.") + b);
+            conf->Erase(std::string("CVars.") + g);
+            conf->Erase(std::string("CVars.") + r);
+            conf->Erase(std::string("CVars.") + t);
+        } else if (var->Type == ConsoleVariableType::String) {
+            free(var->String);
+            var->String = nullptr;
+        }
+    }
     mVariables.erase(name);
     conf->Erase(StringHelper::Sprintf("CVars.%s", name));
 }
 
+void ConsoleVariable::ClearBlock(const char* name) {
+    std::shared_ptr<Config> conf = Context::GetInstance()->GetConfig();
+    conf->EraseBlock(StringHelper::Sprintf("CVars.%s", name));
+    Load();
+}
+
+void ConsoleVariable::CopyVariable(const char* from, const char* to) {
+    auto& variableFrom = mVariables[from];
+    if (!variableFrom) {
+        return;
+    }
+    auto& variableTo = mVariables[to];
+    if (!variableTo) {
+        variableTo = std::make_shared<CVar>();
+    }
+
+    variableTo->Type = variableFrom->Type;
+    switch (variableTo->Type) {
+        case ConsoleVariableType::Integer:
+            variableTo->Integer = variableFrom->Integer;
+            break;
+        case ConsoleVariableType::Float:
+            variableTo->Float = variableFrom->Float;
+            break;
+        case ConsoleVariableType::String:
+            if (variableTo->String != nullptr) {
+                free(variableTo->String);
+            }
+            variableTo->String = strdup(variableFrom->String);
+            break;
+        case ConsoleVariableType::Color:
+            variableTo->Color = variableFrom->Color;
+            break;
+        case ConsoleVariableType::Color24:
+            variableTo->Color24 = variableFrom->Color24;
+            break;
+    }
+}
+
 void ConsoleVariable::Save() {
-    std::shared_ptr<Config> conf = LUS::Context::GetInstance()->GetConfig();
+    std::shared_ptr<Config> conf = Context::GetInstance()->GetConfig();
 
     for (const auto& variable : mVariables) {
         const std::string key = StringHelper::Sprintf("CVars.%s", variable.first.c_str());
 
-        if (variable.second->Type == ConsoleVariableType::String && variable.second != nullptr &&
-            variable.second->String.length() > 0) {
-            conf->SetString(key, std::string(variable.second->String));
+        if (variable.second->Type == ConsoleVariableType::String && variable.second != nullptr) {
+            conf->SetString(key, variable.second->String);
         } else if (variable.second->Type == ConsoleVariableType::Integer) {
             conf->SetInt(key, variable.second->Integer);
         } else if (variable.second->Type == ConsoleVariableType::Float) {
@@ -208,8 +277,11 @@ void ConsoleVariable::Save() {
 }
 
 void ConsoleVariable::Load() {
-    std::shared_ptr<Config> conf = LUS::Context::GetInstance()->GetConfig();
+    std::shared_ptr<Config> conf = Context::GetInstance()->GetConfig();
     conf->Reload();
+    if (!mVariables.empty()) {
+        mVariables.clear();
+    }
 
     LoadFromPath("", conf->GetNestedJson()["CVars"].items());
 
@@ -265,7 +337,7 @@ void ConsoleVariable::LoadFromPath(
     }
 }
 void ConsoleVariable::LoadLegacy() {
-    auto conf = LUS::Context::GetPathRelativeToAppDirectory("cvars.cfg");
+    auto conf = Context::GetPathRelativeToAppDirectory("cvars.cfg");
     if (DiskFile::Exists(conf)) {
         const auto lines = DiskFile::ReadAllLines(conf);
 
@@ -295,11 +367,7 @@ void ConsoleVariable::LoadLegacy() {
             if (cfg[1].find("\"") != std::string::npos) {
                 std::string value(cfg[1]);
                 value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
-#ifdef _MSC_VER
-                SetString(cfg[0].c_str(), _strdup(value.c_str()));
-#else
                 SetString(cfg[0].c_str(), strdup(value.c_str()));
-#endif
             }
             if (Math::IsNumber<float>(cfg[1])) {
                 SetFloat(cfg[0].c_str(), std::stof(cfg[1]));
@@ -312,4 +380,4 @@ void ConsoleVariable::LoadLegacy() {
         fs::remove(conf);
     }
 }
-} // namespace LUS
+} // namespace Ship

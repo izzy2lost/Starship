@@ -2,15 +2,15 @@
 
 #include "window/gui/GuiWindow.h"
 
-namespace LUS {
+namespace Ship {
 class StatsWindow : public GuiWindow {
   public:
     using GuiWindow::GuiWindow;
-    ~StatsWindow();
+    virtual ~StatsWindow();
 
   private:
     void InitElement() override;
     void DrawElement() override;
     void UpdateElement() override;
 };
-} // namespace LUS
+} // namespace Ship

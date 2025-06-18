@@ -4,10 +4,11 @@
 #include <vector>
 #include <sstream>
 
-namespace LUS {
+namespace Ship {
 
 namespace Math {
 float clamp(float d, float min, float max);
+size_t HashCombine(size_t lhs, size_t rhs);
 template <typename Numeric> bool IsNumber(const std::string& s) {
     Numeric n;
     return ((std::istringstream(s) >> n >> std::ws).eof());
@@ -16,4 +17,4 @@ template <typename Numeric> bool IsNumber(const std::string& s) {
 
 std::vector<std::string> splitText(const std::string& text, char separator, bool keepQuotes);
 std::string toLowerCase(std::string in);
-} // namespace LUS
+} // namespace Ship

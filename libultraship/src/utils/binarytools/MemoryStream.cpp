@@ -5,27 +5,33 @@
 #define memcpy_s(dest, destSize, source, sourceSize) memcpy(dest, source, destSize)
 #endif
 
-LUS::MemoryStream::MemoryStream() {
-    mBuffer = std::vector<char>();
+Ship::MemoryStream::MemoryStream() {
+    mBuffer = std::make_shared<std::vector<char>>();
     // mBuffer.reserve(1024 * 16);
     mBufferSize = 0;
     mBaseAddress = 0;
 }
 
-LUS::MemoryStream::MemoryStream(char* nBuffer, size_t nBufferSize) : MemoryStream() {
-    mBuffer = std::vector<char>(nBuffer, nBuffer + nBufferSize);
+Ship::MemoryStream::MemoryStream(char* nBuffer, size_t nBufferSize) : MemoryStream() {
+    mBuffer = std::make_shared<std::vector<char>>(nBuffer, nBuffer + nBufferSize);
     mBufferSize = nBufferSize;
     mBaseAddress = 0;
 }
 
-LUS::MemoryStream::~MemoryStream() {
+Ship::MemoryStream::MemoryStream(std::shared_ptr<std::vector<char>> buffer) : MemoryStream() {
+    mBuffer = buffer;
+    mBufferSize = buffer->size();
+    mBaseAddress = 0;
 }
 
-uint64_t LUS::MemoryStream::GetLength() {
-    return mBuffer.size();
+Ship::MemoryStream::~MemoryStream() {
 }
 
-void LUS::MemoryStream::Seek(int32_t offset, SeekOffsetType seekType) {
+uint64_t Ship::MemoryStream::GetLength() {
+    return mBuffer->size();
+}
+
+void Ship::MemoryStream::Seek(int32_t offset, SeekOffsetType seekType) {
     if (seekType == SeekOffsetType::Start) {
         mBaseAddress = offset;
     } else if (seekType == SeekOffsetType::Current) {
@@ -35,49 +41,49 @@ void LUS::MemoryStream::Seek(int32_t offset, SeekOffsetType seekType) {
     }
 }
 
-std::unique_ptr<char[]> LUS::MemoryStream::Read(size_t length) {
+std::unique_ptr<char[]> Ship::MemoryStream::Read(size_t length) {
     std::unique_ptr<char[]> result = std::make_unique<char[]>(length);
 
-    memcpy_s(result.get(), length, &mBuffer[mBaseAddress], length);
+    memcpy_s(result.get(), length, &mBuffer->at(mBaseAddress), length);
     mBaseAddress += length;
 
     return result;
 }
 
-void LUS::MemoryStream::Read(const char* dest, size_t length) {
-    memcpy_s((void*)dest, length, &mBuffer[mBaseAddress], length);
+void Ship::MemoryStream::Read(const char* dest, size_t length) {
+    memcpy_s((void*)dest, length, &mBuffer->at(mBaseAddress), length);
     mBaseAddress += length;
 }
 
-int8_t LUS::MemoryStream::ReadByte() {
-    return mBuffer[mBaseAddress++];
+int8_t Ship::MemoryStream::ReadByte() {
+    return mBuffer->at(mBaseAddress++);
 }
 
-void LUS::MemoryStream::Write(char* srcBuffer, size_t length) {
-    if (mBaseAddress + length >= mBuffer.size()) {
-        mBuffer.resize(mBaseAddress + length);
+void Ship::MemoryStream::Write(char* srcBuffer, size_t length) {
+    if (mBaseAddress + length >= mBuffer->size()) {
+        mBuffer->resize(mBaseAddress + length);
         mBufferSize += length;
     }
 
-    memcpy_s(&mBuffer[mBaseAddress], length, srcBuffer, length);
+    memcpy_s(&((*mBuffer)[mBaseAddress]), length, srcBuffer, length);
     mBaseAddress += length;
 }
 
-void LUS::MemoryStream::WriteByte(int8_t value) {
-    if (mBaseAddress >= mBuffer.size()) {
-        mBuffer.resize(mBaseAddress + 1);
+void Ship::MemoryStream::WriteByte(int8_t value) {
+    if (mBaseAddress >= mBuffer->size()) {
+        mBuffer->resize(mBaseAddress + 1);
         mBufferSize = mBaseAddress;
     }
 
-    mBuffer[mBaseAddress++] = value;
+    mBuffer->at(mBaseAddress++) = value;
 }
 
-std::vector<char> LUS::MemoryStream::ToVector() {
-    return mBuffer;
+std::vector<char> Ship::MemoryStream::ToVector() {
+    return *mBuffer;
 }
 
-void LUS::MemoryStream::Flush() {
+void Ship::MemoryStream::Flush() {
 }
 
-void LUS::MemoryStream::Close() {
+void Ship::MemoryStream::Close() {
 }

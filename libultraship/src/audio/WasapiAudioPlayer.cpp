@@ -15,9 +15,7 @@ const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 const IID IID_IAudioClient = __uuidof(IAudioClient);
 const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
-namespace LUS {
-WasapiAudioPlayer::WasapiAudioPlayer()
-    : mRefCount(1), mBufferFrameCount(0), mInitialized(false), mStarted(false), AudioPlayer(){};
+namespace Ship {
 
 void WasapiAudioPlayer::ThrowIfFailed(HRESULT res) {
     if (FAILED(res)) {
@@ -25,23 +23,45 @@ void WasapiAudioPlayer::ThrowIfFailed(HRESULT res) {
     }
 }
 
-bool WasapiAudioPlayer::SetupStream(void) {
+bool WasapiAudioPlayer::SetupStream() {
     try {
         ThrowIfFailed(mDeviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &mDevice));
         ThrowIfFailed(mDevice->Activate(IID_IAudioClient, CLSCTX_ALL, nullptr, IID_PPV_ARGS_Helper(&mClient)));
 
-        WAVEFORMATEX desired;
-        desired.wFormatTag = WAVE_FORMAT_PCM;
-        desired.nChannels = 2;
-        desired.nSamplesPerSec = this->GetSampleRate();
-        desired.nAvgBytesPerSec = desired.nSamplesPerSec * 2 * 2;
-        desired.nBlockAlign = 4;
-        desired.wBitsPerSample = 16;
-        desired.cbSize = 0;
+        auto audioSurround = this->GetAudioChannels();
+        if (audioSurround == AudioChannelsSetting::audioStereo) {
+            mNumChannels = 2;
+            WAVEFORMATEX desired;
+            desired.wFormatTag = WAVE_FORMAT_PCM;
+            desired.nChannels = mNumChannels; // Stereo audio
+            desired.wBitsPerSample = 16;      // 16-bit audio
+            desired.nSamplesPerSec = this->GetSampleRate();
+            desired.nBlockAlign = desired.nChannels * desired.wBitsPerSample / 8;
+            desired.nAvgBytesPerSec = desired.nSamplesPerSec * desired.nBlockAlign; // 2 bytes per sample (16-bit audio)
+            desired.cbSize = 0;
 
-        ThrowIfFailed(mClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
-                                          AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
-                                          2000000, 0, &desired, nullptr));
+            ThrowIfFailed(mClient->Initialize(
+                AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
+                2000000, 0, &desired, nullptr));
+        } else if (audioSurround == AudioChannelsSetting::audioSurround51) {
+            mNumChannels = 6;
+            WAVEFORMATEXTENSIBLE desired;
+            desired.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+            desired.Format.nChannels = mNumChannels; // 6 channels for 5.1 audio
+            desired.Format.wBitsPerSample = 16;      // 16-bit audio
+            desired.Format.nSamplesPerSec = this->GetSampleRate();
+            desired.Format.nBlockAlign = desired.Format.nChannels * desired.Format.wBitsPerSample / 8;
+            desired.Format.nAvgBytesPerSec =
+                desired.Format.nSamplesPerSec * desired.Format.nBlockAlign; // 2 bytes per sample (16-bit audio)
+            desired.Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+            desired.dwChannelMask = KSAUDIO_SPEAKER_5POINT1;
+            desired.Samples.wValidBitsPerSample = 16;
+            desired.SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+
+            ThrowIfFailed(mClient->Initialize(
+                AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
+                2000000, 0, (WAVEFORMATEX*)&desired, nullptr));
+        }
 
         ThrowIfFailed(mClient->GetBufferSize(&mBufferFrameCount));
         ThrowIfFailed(mClient->GetService(IID_PPV_ARGS(&mRenderClient)));
@@ -53,7 +73,7 @@ bool WasapiAudioPlayer::SetupStream(void) {
     return true;
 }
 
-bool WasapiAudioPlayer::DoInit(void) {
+bool WasapiAudioPlayer::DoInit() {
     try {
         ThrowIfFailed(
             CoCreateInstance(CLSID_MMDeviceEnumerator, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&mDeviceEnumerator)));
@@ -64,7 +84,7 @@ bool WasapiAudioPlayer::DoInit(void) {
     return true;
 }
 
-int WasapiAudioPlayer::Buffered(void) {
+int WasapiAudioPlayer::Buffered() {
     if (!mInitialized) {
         if (!SetupStream()) {
             return 0;
@@ -77,10 +97,6 @@ int WasapiAudioPlayer::Buffered(void) {
     } catch (HRESULT res) { return 0; }
 }
 
-int WasapiAudioPlayer::GetDesiredBuffered(void) {
-    return 2480;
-}
-
 void WasapiAudioPlayer::Play(const uint8_t* buf, size_t len) {
     if (!mInitialized) {
         if (!SetupStream()) {
@@ -88,8 +104,7 @@ void WasapiAudioPlayer::Play(const uint8_t* buf, size_t len) {
         }
     }
     try {
-        UINT32 frames = len / 4;
-
+        UINT32 frames = len / (mNumChannels * sizeof(int16_t));
         UINT32 padding;
         ThrowIfFailed(mClient->GetCurrentPadding(&padding));
 
@@ -103,7 +118,7 @@ void WasapiAudioPlayer::Play(const uint8_t* buf, size_t len) {
 
         BYTE* data;
         ThrowIfFailed(mRenderClient->GetBuffer(frames, &data));
-        memcpy(data, buf, frames * 4);
+        memcpy(data, buf, frames * mNumChannels * sizeof(int16_t));
         ThrowIfFailed(mRenderClient->ReleaseBuffer(frames, 0));
 
         if (!mStarted && padding + frames > 1500) {
@@ -164,5 +179,5 @@ HRESULT STDMETHODCALLTYPE WasapiAudioPlayer::QueryInterface(REFIID riid, VOID** 
     }
     return S_OK;
 }
-} // namespace LUS
+} // namespace Ship
 #endif

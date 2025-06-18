@@ -1,22 +1,18 @@
 #pragma once
 
 #include "resource/Resource.h"
-#include "resource/ResourceFactory.h"
+#include "resource/ResourceFactoryBinary.h"
 
-namespace LUS {
-class TextureFactory : public ResourceFactory {
+namespace Fast {
+class ResourceFactoryBinaryTextureV0 final : public Ship::ResourceFactoryBinary {
   public:
-    std::shared_ptr<IResource> ReadResource(std::shared_ptr<ResourceInitData> initData,
-                                            std::shared_ptr<BinaryReader> reader) override;
+    std::shared_ptr<Ship::IResource> ReadResource(std::shared_ptr<Ship::File> file,
+                                                  std::shared_ptr<Ship::ResourceInitData> initData) override;
 };
 
-class TextureFactoryV0 : public ResourceVersionFactory {
+class ResourceFactoryBinaryTextureV1 final : public Ship::ResourceFactoryBinary {
   public:
-    void ParseFileBinary(std::shared_ptr<BinaryReader> reader, std::shared_ptr<IResource> resource) override;
+    std::shared_ptr<Ship::IResource> ReadResource(std::shared_ptr<Ship::File> file,
+                                                  std::shared_ptr<Ship::ResourceInitData> initData) override;
 };
-
-class TextureFactoryV1 : public ResourceVersionFactory {
-  public:
-    void ParseFileBinary(std::shared_ptr<BinaryReader> reader, std::shared_ptr<IResource> resource) override;
-};
-} // namespace LUS
+} // namespace Fast

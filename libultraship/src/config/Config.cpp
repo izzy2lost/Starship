@@ -5,15 +5,16 @@
 #include <filesystem>
 #include <unordered_map>
 #include <any>
-#include <Utils/StringHelper.h>
+#include "utils/StringHelper.h"
+#include "Context.h"
 
 #ifdef __APPLE__
-#include "graphic/Fast3D/gfx_metal.h"
+#include "graphic/Fast3D/backends/gfx_metal.h"
 #endif
 
 namespace fs = std::filesystem;
 
-namespace LUS {
+namespace Ship {
 Config::Config(std::string path) : mPath(std::move(path)), mIsNewInstance(false) {
     Reload();
 }
@@ -130,6 +131,73 @@ void Config::Erase(const std::string& key) {
     mFlattenedJson.erase(FormatNestedKey(key));
 }
 
+void Config::SetBlock(const std::string& key, nlohmann::json block) {
+    nlohmann::json gjson = mFlattenedJson.unflatten();
+    if (key.find(".") != std::string::npos) {
+        nlohmann::json* gjson2 = &gjson;
+        std::vector<std::string> dots = StringHelper::Split(key, ".");
+        if (dots.size() > 1) {
+            size_t curDot = 0;
+            for (auto& dot : dots) {
+                if (curDot == dots.size() - 1) {
+                    if (gjson2->contains(dot)) {
+                        gjson2->at(dot) = block;
+                        break;
+                    } else {
+                        gjson2->emplace(dot, block);
+                        break;
+                    }
+                } else if (gjson2->contains(dot)) {
+                    gjson2 = &gjson2->at(dot);
+                    curDot++;
+                }
+            }
+        }
+    } else {
+        if (gjson.contains(key)) {
+            gjson[key] = block;
+        }
+    }
+    mFlattenedJson = gjson.flatten();
+    Save();
+}
+
+void Config::EraseBlock(const std::string& key) {
+    nlohmann::json gjson = mFlattenedJson.unflatten();
+    if (key.find(".") != std::string::npos) {
+        nlohmann::json* gjson2 = &gjson;
+        std::vector<std::string> dots = StringHelper::Split(key, ".");
+        if (dots.size() > 1) {
+            size_t curDot = 0;
+            for (auto& dot : dots) {
+                if (gjson2->contains(dot)) {
+                    if (curDot == dots.size() - 1) {
+                        gjson2->at(dot).clear();
+                        gjson2->erase(dot);
+                    } else {
+                        gjson2 = &gjson2->at(dot);
+                        curDot++;
+                    }
+                }
+            }
+        }
+    } else {
+        if (gjson.contains(key)) {
+            gjson.erase(key);
+        }
+    }
+    mFlattenedJson = gjson.flatten();
+    Save();
+}
+
+void Config::Copy(const std::string& fromKey, const std::string& toKey) {
+    auto nestedFromKey = FormatNestedKey(fromKey);
+    auto nestedToKey = FormatNestedKey(toKey);
+    if (mFlattenedJson.contains(nestedFromKey)) {
+        mFlattenedJson[nestedToKey] = mFlattenedJson[nestedFromKey];
+    }
+}
+
 void Config::Reload() {
     if (mPath == "None" || !fs::exists(mPath) || !fs::is_regular_file(mPath)) {
         mIsNewInstance = true;
@@ -146,7 +214,8 @@ void Config::Reload() {
 
 void Config::Save() {
     std::ofstream file(mPath);
-    file << mFlattenedJson.unflatten().dump(4);
+    mNestedJson = mFlattenedJson.unflatten();
+    file << mNestedJson.dump(4);
 }
 
 template <typename T> std::vector<T> Config::GetArray(const std::string& key) {
@@ -164,15 +233,7 @@ nlohmann::json Config::GetNestedJson() {
     return mNestedJson;
 }
 
-nlohmann::json Config::GetFlattenedJson() {
-    return mFlattenedJson;
-}
-
-bool Config::IsNewInstance() {
-    return mIsNewInstance;
-}
-
-AudioBackend Config::GetAudioBackend() {
+AudioBackend Config::GetCurrentAudioBackend() {
     std::string backendName = GetString("Window.AudioBackend");
     if (backendName == "wasapi") {
         return AudioBackend::WASAPI;
@@ -180,7 +241,7 @@ AudioBackend Config::GetAudioBackend() {
 
     // Migrate pulse player in config to sdl
     if (backendName == "pulse") {
-        SetAudioBackend(AudioBackend::SDL);
+        SetCurrentAudioBackend(AudioBackend::SDL);
         return AudioBackend::SDL;
     }
 
@@ -197,7 +258,20 @@ AudioBackend Config::GetAudioBackend() {
     return AudioBackend::SDL;
 }
 
-void Config::SetAudioBackend(AudioBackend backend) {
+AudioChannelsSetting Config::GetCurrentAudioChannelsSetting() {
+    int32_t surround =
+        GetInt("CVars." CVAR_AUDIO_CHANNELS_SETTING, static_cast<int32_t>(AudioChannelsSetting::audioMax));
+    switch (surround) {
+        case AudioChannelsSetting::audioSurround51:
+            return AudioChannelsSetting::audioSurround51;
+        case AudioChannelsSetting::audioStereo:
+        case AudioChannelsSetting::audioMax:
+        default:
+            return AudioChannelsSetting::audioStereo;
+    }
+}
+
+void Config::SetCurrentAudioBackend(AudioBackend backend) {
     switch (backend) {
         case AudioBackend::WASAPI:
             SetString("Window.AudioBackend", "wasapi");
@@ -212,56 +286,44 @@ void Config::SetAudioBackend(AudioBackend backend) {
 
 WindowBackend Config::GetWindowBackend() {
     WindowBackend backend;
-    int backendId = GetInt("Window.Backend.Id", -1);
-    if (backendId != -1 && backendId < static_cast<int>(WindowBackend::BACKEND_COUNT)) {
+    auto backendId = GetInt("Window.Backend.Id", -1);
+    if (Context::GetInstance()->GetWindow()->IsAvailableWindowBackend(backendId)) {
         return static_cast<WindowBackend>(backendId);
     }
 
-    SPDLOG_TRACE("Could not find WindowBackend matching id from config file ({}). Returning default WindowBackend.",
-                 backendId);
-#ifdef ENABLE_DX12
-    return WindowBackend::DX12;
-#endif
+    SPDLOG_TRACE(
+        "Could not find available WindowBackend matching id from config file ({}). Returning default WindowBackend.",
+        backendId);
 #ifdef ENABLE_DX11
-    return WindowBackend::DX11;
-#endif
-#ifdef __WIIU__
-    return WindowBackend::GX2;
+    return WindowBackend::FAST3D_DXGI_DX11;
 #endif
 #ifdef __APPLE__
     if (Metal_IsSupported()) {
-        return WindowBackend::SDL_METAL;
+        return WindowBackend::FAST3D_SDL_METAL;
     }
 #endif
-    return WindowBackend::SDL_OPENGL;
+    return WindowBackend::FAST3D_SDL_OPENGL;
 }
 
 void Config::SetWindowBackend(WindowBackend backend) {
     SetInt("Window.Backend.Id", static_cast<int>(backend));
 
     switch (backend) {
-        case WindowBackend::DX11:
+        case WindowBackend::FAST3D_DXGI_DX11:
             SetString("Window.Backend.Name", "DirectX 11");
             break;
-        case WindowBackend::DX12:
-            SetString("Window.Backend.Name", "DirectX 12");
-            break;
-        case WindowBackend::GLX_OPENGL:
-        case WindowBackend::SDL_OPENGL:
+        case WindowBackend::FAST3D_SDL_OPENGL:
             SetString("Window.Backend.Name", "OpenGL");
             break;
-        case WindowBackend::SDL_METAL:
+        case WindowBackend::FAST3D_SDL_METAL:
             SetString("Window.Backend.Name", "Metal");
-            break;
-        case WindowBackend::GX2:
-            SetString("Window.Backend.Name", "GX2");
             break;
         default:
             SetString("Window.Backend.Name", "");
     }
 }
 
-bool Config::RegisterConfigVersionUpdater(std::shared_ptr<ConfigVersionUpdater> versionUpdater) {
+bool Config::RegisterVersionUpdater(std::shared_ptr<ConfigVersionUpdater> versionUpdater) {
     auto [_, emplaced] = mVersionUpdaters.emplace(versionUpdater->GetVersion(), versionUpdater);
     return emplaced;
 }
@@ -284,4 +346,4 @@ uint32_t ConfigVersionUpdater::GetVersion() {
     return mVersion;
 }
 
-} // namespace LUS
+} // namespace Ship

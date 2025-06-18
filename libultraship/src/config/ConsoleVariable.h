@@ -4,20 +4,26 @@
 #include <nlohmann/json.hpp>
 #include <stdint.h>
 #include <memory>
-#include <map>
+#include <unordered_map>
 #include <string>
 
-namespace LUS {
+namespace Ship {
 typedef enum class ConsoleVariableType { Integer, Float, String, Color, Color24 } ConsoleVariableType;
 
 typedef struct CVar {
-    const char* Name;
     ConsoleVariableType Type;
-    int32_t Integer;
-    float Float;
-    std::string String;
-    Color_RGBA8 Color;
-    Color_RGB8 Color24;
+    union {
+        int32_t Integer;
+        float Float;
+        char* String = nullptr;
+        Color_RGBA8 Color;
+        Color_RGB8 Color24;
+    };
+    ~CVar() {
+        if (Type == ConsoleVariableType::String && String != nullptr) {
+            free(String);
+        }
+    }
 } CVar;
 
 class ConsoleVariable {
@@ -46,6 +52,8 @@ class ConsoleVariable {
     void RegisterColor24(const char* name, Color_RGB8 defaultValue);
 
     void ClearVariable(const char* name);
+    void ClearBlock(const char* name);
+    void CopyVariable(const char* from, const char* to);
 
     void Save();
     void Load();
@@ -56,6 +64,6 @@ class ConsoleVariable {
     void LoadLegacy();
 
   private:
-    std::map<std::string, std::shared_ptr<CVar>, std::less<>> mVariables;
+    std::unordered_map<std::string, std::shared_ptr<CVar>> mVariables;
 };
-} // namespace LUS
+} // namespace Ship

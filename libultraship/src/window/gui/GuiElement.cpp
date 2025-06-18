@@ -2,22 +2,11 @@
 
 #include "libultraship/libultraship.h"
 
-namespace LUS {
-GuiElement::GuiElement(const std::string& visibilityConsoleVariable, bool isVisible)
-    : mIsInitialized(false), mIsVisible(isVisible), mVisibilityConsoleVariable(visibilityConsoleVariable) {
-    if (!mVisibilityConsoleVariable.empty()) {
-        mIsVisible = CVarGetInteger(mVisibilityConsoleVariable.c_str(), mIsVisible);
-        SyncVisibilityConsoleVariable();
-    }
+namespace Ship {
+GuiElement::GuiElement(bool isVisible) : mIsVisible(isVisible), mIsInitialized(false) {
 }
 
-GuiElement::GuiElement(const std::string& visibilityConsoleVariable) : GuiElement(visibilityConsoleVariable, false) {
-}
-
-GuiElement::GuiElement(bool isVisible) : GuiElement("", isVisible) {
-}
-
-GuiElement::GuiElement() : GuiElement("", false) {
+GuiElement::GuiElement() : GuiElement(false) {
 }
 
 GuiElement::~GuiElement() {
@@ -32,53 +21,24 @@ void GuiElement::Init() {
     mIsInitialized = true;
 }
 
-void GuiElement::Draw() {
-    if (!IsVisible()) {
-        return;
-    }
-
-    DrawElement();
-    // Sync up the IsVisible flag if it was changed by ImGui
-    SyncVisibilityConsoleVariable();
-}
-
 void GuiElement::Update() {
     UpdateElement();
 }
 
-void GuiElement::SyncVisibilityConsoleVariable() {
-    if (mVisibilityConsoleVariable.empty()) {
-        return;
-    }
-
-    bool shouldSave = CVarGetInteger(mVisibilityConsoleVariable.c_str(), 0) != IsVisible();
-
-    if (IsVisible()) {
-        CVarSetInteger(mVisibilityConsoleVariable.c_str(), IsVisible());
-    } else {
-        CVarClear(mVisibilityConsoleVariable.c_str());
-    }
-
-    if (shouldSave) {
-        LUS::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesOnNextTick();
-    }
-}
-
-void GuiElement::SetVisiblity(bool visible) {
+void GuiElement::SetVisibility(bool visible) {
     mIsVisible = visible;
-    SyncVisibilityConsoleVariable();
 }
 
 void GuiElement::Show() {
-    SetVisiblity(true);
+    SetVisibility(true);
 }
 
 void GuiElement::Hide() {
-    SetVisiblity(false);
+    SetVisibility(false);
 }
 
 void GuiElement::ToggleVisibility() {
-    SetVisiblity(!IsVisible());
+    SetVisibility(!IsVisible());
 }
 
 bool GuiElement::IsVisible() {
@@ -88,4 +48,4 @@ bool GuiElement::IsVisible() {
 bool GuiElement::IsInitialized() {
     return mIsInitialized;
 }
-} // namespace LUS
+} // namespace Ship

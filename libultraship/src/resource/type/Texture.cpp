@@ -1,7 +1,7 @@
 #include "resource/type/Texture.h"
 
-namespace LUS {
-Texture::Texture() : Resource(std::shared_ptr<ResourceInitData>()) {
+namespace Fast {
+Texture::Texture() : Resource(std::shared_ptr<Ship::ResourceInitData>()) {
 }
 
 uint8_t* Texture::GetPointer() {
@@ -14,7 +14,7 @@ size_t Texture::GetPointerSize() {
 
 Texture::~Texture() {
     if (ImageData != nullptr) {
-        delete ImageData;
+        delete[] ImageData;
     }
 }
-} // namespace LUS
+} // namespace Fast

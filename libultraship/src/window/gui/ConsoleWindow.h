@@ -7,15 +7,15 @@
 
 #include "window/gui/GuiWindow.h"
 #include "debug/Console.h"
-#include <ImGui/imgui.h>
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
-namespace LUS {
+namespace Ship {
 
 class ConsoleWindow : public GuiWindow {
   public:
     using GuiWindow::GuiWindow;
-    ~ConsoleWindow();
+    virtual ~ConsoleWindow();
 
     void ClearLogs(std::string channel);
     void ClearLogs();
@@ -27,12 +27,12 @@ class ConsoleWindow : public GuiWindow {
     void Append(const std::string& channel, spdlog::level::level_enum priority, const char* fmt, ...);
     std::string GetCurrentChannel();
     void ClearBindings();
+    void DrawElement() override;
 
   protected:
     void Append(const std::string& channel, spdlog::level::level_enum priority, const char* fmt, va_list args);
     void InitElement() override;
     void UpdateElement() override;
-    void DrawElement() override;
 
   private:
     struct ConsoleLine {
@@ -46,6 +46,8 @@ class ConsoleWindow : public GuiWindow {
                                 std::string* output);
     static int32_t HelpCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
                                std::string* output);
+    static int32_t UnbindCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
+                                 std::string* output);
     static int32_t BindCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
                                std::string* output);
     static int32_t BindToggleCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
@@ -64,7 +66,7 @@ class ConsoleWindow : public GuiWindow {
     bool mOpenAutocomplete = false;
     char* mInputBuffer = nullptr;
     char* mFilterBuffer = nullptr;
-    std::string mCmdHint = "Null";
+    std::string mCmdHint = "None";
     spdlog::level::level_enum mLevelFilter = spdlog::level::trace;
     std::map<ImGuiKey, std::string> mBindings;
     std::map<ImGuiKey, std::string> mBindingToggle;
@@ -87,4 +89,4 @@ class ConsoleWindow : public GuiWindow {
     };
     static constexpr size_t gMaxBufferSize = 255;
 };
-} // namespace LUS
+} // namespace Ship

@@ -6,8 +6,9 @@
 #include "debug/Console.h"
 #include <imgui.h>
 #include <unordered_map>
+#include "resource/ResourceManager.h"
 
-namespace LUS {
+namespace Ship {
 
 enum class OverlayType { TEXT, IMAGE, NOTIFICATION };
 
@@ -21,9 +22,12 @@ struct Overlay {
 class GameOverlay {
   public:
     GameOverlay();
-    ~GameOverlay();
+    virtual ~GameOverlay();
 
     void Init();
+    void LoadFont(const std::string& name, float fontSize, const ResourceIdentifier& identifier);
+    void LoadFont(const std::string& name, float fontSize, const std::string& path);
+    void SetCurrentFont(const std::string& name);
     void Draw();
     void DrawSettings();
     float GetStringWidth(const char* text);
@@ -32,6 +36,7 @@ class GameOverlay {
     void TextDraw(float x, float y, bool shadow, ImVec4 color, const char* text, ...);
     void TextDrawNotification(float duration, bool shadow, const char* fmt, ...);
     void ClearNotifications();
+    ImGuiID GetID();
 
   protected:
     float GetScreenWidth();
@@ -44,6 +49,5 @@ class GameOverlay {
     bool mNeedsCleanup = false;
 
     void CleanupNotifications();
-    void LoadFont(const std::string& name, const std::string& path, float fontSize);
 };
-} // namespace LUS
+} // namespace Ship

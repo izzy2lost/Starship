@@ -1,24 +1,33 @@
 #pragma once
 
 #ifdef __cplusplus
-#ifndef IMGUI_DEFINE_MATH_OPERATORS
-#define IMGUI_DEFINE_MATH_OPERATORS
-#endif
-#include <ImGui/imgui.h>
-#include <ImGui/imgui_internal.h>
+
+#include <imgui.h>
+#include <imgui_internal.h>
 #include <memory>
+#include <string>
+#include <map>
+#include <unordered_map>
+#include <vector>
 #include <SDL2/SDL.h>
 #include "window/gui/ConsoleWindow.h"
 #include "window/gui/InputEditorWindow.h"
+#include "controller/physicaldevice/SDLAddRemoveDeviceEventHandler.h"
 #include "window/gui/IconsFontAwesome4.h"
 #include "window/gui/GameOverlay.h"
-#include "window/gui/InputViewer.h"
 #include "window/gui/StatsWindow.h"
 #include "window/gui/GuiWindow.h"
 #include "window/gui/GuiMenuBar.h"
 #include "libultraship/libultra/controller.h"
+#include "resource/type/Texture.h"
+#include "window/gui/resource/GuiTexture.h"
 
-namespace LUS {
+namespace Fast {
+class Interpreter;
+}
+
+namespace Ship {
+class Window;
 
 typedef struct {
     union {
@@ -60,55 +69,77 @@ typedef union {
 class Gui {
   public:
     Gui();
-    ~Gui();
+    Gui(std::vector<std::shared_ptr<GuiWindow>> guiWindows);
+    virtual ~Gui();
 
     void Init(GuiWindowInitData windowImpl);
-    void StartFrame();
-    void EndFrame();
-    void RenderViewports();
-    void DrawMenu();
+    void StartDraw();
+    void EndDraw();
+    void HandleWindowEvents(WindowEvent event);
+    void SaveConsoleVariablesNextFrame();
+    bool SupportsViewports();
+    ImGuiID GetMainGameWindowID();
 
-    void SaveConsoleVariablesOnNextTick();
-    void Update(WindowEvent event);
     void AddGuiWindow(std::shared_ptr<GuiWindow> guiWindow);
+    std::shared_ptr<GuiWindow> GetGuiWindow(const std::string& name);
     void RemoveGuiWindow(std::shared_ptr<GuiWindow> guiWindow);
     void RemoveGuiWindow(const std::string& name);
+    void RemoveAllGuiWindows();
+
     void LoadGuiTexture(const std::string& name, const std::string& path, const ImVec4& tint);
+    bool HasTextureByName(const std::string& name);
+    void LoadGuiTexture(const std::string& name, const Fast::Texture& tex, const ImVec4& tint);
+    void UnloadTexture(const std::string& name);
     ImTextureID GetTextureByName(const std::string& name);
-    bool SupportsViewports();
-    std::shared_ptr<GuiWindow> GetGuiWindow(const std::string& name);
+    ImVec2 GetTextureSize(const std::string& name);
+    void LoadTextureFromRawImage(const std::string& name, const std::string& path);
+
     std::shared_ptr<GameOverlay> GetGameOverlay();
-    std::shared_ptr<InputViewer> GetInputViewer();
     void SetMenuBar(std::shared_ptr<GuiMenuBar> menuBar);
     std::shared_ptr<GuiMenuBar> GetMenuBar();
-    void LoadTexture(const std::string& name, const std::string& path);
+    void SetMenu(std::shared_ptr<GuiWindow> menu);
+    std::shared_ptr<GuiWindow> GetMenu();
+    bool GetMenuOrMenubarVisible();
+    bool IsMouseOverAnyGuiItem();
+    bool IsMouseOverActivePopup();
+
+    bool GamepadNavigationEnabled();
+    void BlockGamepadNavigation();
+    void UnblockGamepadNavigation();
+    void ShutDownImGui(Ship::Window* window);
 
   protected:
-    void ImGuiWMInit();
-    void ImGuiBackendInit();
+    void StartFrame();
+    void EndFrame();
+    void DrawFloatingWindows();
+    virtual void DrawMenu();
+    void DrawGame();
+    void CalculateGameViewport();
+
     void ImGuiBackendNewFrame();
     void ImGuiWMNewFrame();
+    void ImGuiWMInit();
+    void ImGuiBackendInit();
     void ImGuiRenderDrawData(ImDrawData* data);
+
     ImTextureID GetTextureById(int32_t id);
     void ApplyResolutionChanges();
     int16_t GetIntegerScaleFactor();
+    void CheckSaveCvars();
+    void HandleMouseCapture();
+    ImVec2 mTemporaryWindowPos;
+    ImGuiIO* mImGuiIo;
+    std::map<std::string, std::shared_ptr<GuiWindow>> mGuiWindows;
+    std::weak_ptr<Fast::Interpreter> mInterpreter;
 
   private:
-    struct GuiTexture {
-        uint32_t RendererTextureId;
-        int32_t Width;
-        int32_t Height;
-    };
-
     GuiWindowInitData mImpl;
-    ImGuiIO* mImGuiIo;
     bool mNeedsConsoleVariableSave;
     std::shared_ptr<GameOverlay> mGameOverlay;
-    std::shared_ptr<InputViewer> mInputViewer;
     std::shared_ptr<GuiMenuBar> mMenuBar;
-    std::map<std::string, GuiTexture> mGuiTextures;
-    std::map<std::string, std::shared_ptr<GuiWindow>> mGuiWindows;
+    std::shared_ptr<GuiWindow> mMenu;
+    std::unordered_map<std::string, GuiTextureMetadata> mGuiTextures;
 };
-} // namespace LUS
+} // namespace Ship
 
 #endif

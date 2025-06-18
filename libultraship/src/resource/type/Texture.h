@@ -1,11 +1,11 @@
 #pragma once
 
 #include "resource/Resource.h"
-#include "libultraship/libultra/types.h"
 
 #define TEX_FLAG_LOAD_AS_RAW (1 << 0)
+#define TEX_FLAG_LOAD_AS_IMG (1 << 1)
 
-namespace LUS {
+namespace Fast {
 enum class TextureType {
     Error = 0,
     RGBA32bpp = 1,
@@ -19,7 +19,7 @@ enum class TextureType {
     GrayscaleAlpha16bpp = 9,
 };
 
-class Texture : public Resource<uint8_t> {
+class Texture : public Ship::Resource<uint8_t> {
   public:
     using Resource::Resource;
 
@@ -38,4 +38,4 @@ class Texture : public Resource<uint8_t> {
 
     ~Texture();
 };
-} // namespace LUS
+} // namespace Fast

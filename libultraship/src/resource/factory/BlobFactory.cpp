@@ -2,31 +2,16 @@
 #include "resource/type/Blob.h"
 #include "spdlog/spdlog.h"
 
-namespace LUS {
-std::shared_ptr<IResource> BlobFactory::ReadResource(std::shared_ptr<ResourceInitData> initData,
-                                                     std::shared_ptr<BinaryReader> reader) {
-    auto resource = std::make_shared<Blob>(initData);
-    std::shared_ptr<ResourceVersionFactory> factory = nullptr;
-
-    switch (resource->GetInitData()->ResourceVersion) {
-        case 0:
-            factory = std::make_shared<BlobFactoryV0>();
-            break;
-    }
-
-    if (factory == nullptr) {
-        SPDLOG_ERROR("Failed to load Blob with version {}", resource->GetInitData()->ResourceVersion);
+namespace Ship {
+std::shared_ptr<Ship::IResource>
+ResourceFactoryBinaryBlobV0::ReadResource(std::shared_ptr<Ship::File> file,
+                                          std::shared_ptr<Ship::ResourceInitData> initData) {
+    if (!FileHasValidFormatAndReader(file, initData)) {
         return nullptr;
     }
 
-    factory->ParseFileBinary(reader, resource);
-
-    return resource;
-}
-
-void BlobFactoryV0::ParseFileBinary(std::shared_ptr<BinaryReader> reader, std::shared_ptr<IResource> resource) {
-    std::shared_ptr<Blob> blob = std::static_pointer_cast<Blob>(resource);
-    ResourceVersionFactory::ParseFileBinary(reader, blob);
+    auto blob = std::make_shared<Blob>(initData);
+    auto reader = std::get<std::shared_ptr<Ship::BinaryReader>>(file->Reader);
 
     uint32_t dataSize = reader->ReadUInt32();
 
@@ -35,5 +20,7 @@ void BlobFactoryV0::ParseFileBinary(std::shared_ptr<BinaryReader> reader, std::s
     for (uint32_t i = 0; i < dataSize; i++) {
         blob->Data.push_back(reader->ReadUByte());
     }
+
+    return blob;
 }
-} // namespace LUS
+} // namespace Ship

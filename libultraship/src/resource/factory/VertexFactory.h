@@ -1,21 +1,19 @@
 #pragma once
 
 #include "resource/Resource.h"
-#include "resource/ResourceFactory.h"
+#include "resource/ResourceFactoryBinary.h"
+#include "resource/ResourceFactoryXML.h"
 
-namespace LUS {
-
-class VertexFactory : public ResourceFactory {
+namespace Fast {
+class ResourceFactoryBinaryVertexV0 final : public Ship::ResourceFactoryBinary {
   public:
-    std::shared_ptr<IResource> ReadResource(std::shared_ptr<ResourceInitData> initData,
-                                            std::shared_ptr<BinaryReader> reader) override;
-    std::shared_ptr<IResource> ReadResourceXML(std::shared_ptr<ResourceInitData> initData,
-                                               tinyxml2::XMLElement* reader);
+    std::shared_ptr<Ship::IResource> ReadResource(std::shared_ptr<Ship::File> file,
+                                                  std::shared_ptr<Ship::ResourceInitData> initData) override;
 };
 
-class VertexFactoryV0 : public ResourceVersionFactory {
+class ResourceFactoryXMLVertexV0 final : public Ship::ResourceFactoryXML {
   public:
-    void ParseFileBinary(std::shared_ptr<BinaryReader> reader, std::shared_ptr<IResource> resource) override;
-    void ParseFileXML(tinyxml2::XMLElement* reader, std::shared_ptr<IResource> resource) override;
+    std::shared_ptr<Ship::IResource> ReadResource(std::shared_ptr<Ship::File> file,
+                                                  std::shared_ptr<Ship::ResourceInitData> initData) override;
 };
-} // namespace LUS
+} // namespace Fast

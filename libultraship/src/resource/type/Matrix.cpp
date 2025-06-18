@@ -1,7 +1,7 @@
 #include "resource/type/Matrix.h"
 
-namespace LUS {
-Matrix::Matrix() : Resource(std::shared_ptr<ResourceInitData>()) {
+namespace Fast {
+Matrix::Matrix() : Resource(std::shared_ptr<Ship::ResourceInitData>()) {
 }
 
 Mtx* Matrix::GetPointer() {
@@ -11,4 +11,4 @@ Mtx* Matrix::GetPointer() {
 size_t Matrix::GetPointerSize() {
     return sizeof(Mtx);
 }
-} // namespace LUS
+} // namespace Fast

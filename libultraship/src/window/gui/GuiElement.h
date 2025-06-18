@@ -2,17 +2,15 @@
 
 #include <string>
 
-namespace LUS {
+namespace Ship {
 class GuiElement {
   public:
-    GuiElement(const std::string& visibilityConsoleVariable, bool isVisible);
-    GuiElement(const std::string& visibilityConsoleVariable);
     GuiElement(bool isVisible);
     GuiElement();
-    ~GuiElement();
+    virtual ~GuiElement();
 
     void Init();
-    void Draw();
+    virtual void Draw() = 0;
     void Update();
 
     void Show();
@@ -20,20 +18,17 @@ class GuiElement {
     void ToggleVisibility();
     bool IsVisible();
     bool IsInitialized();
+    virtual void DrawElement() = 0;
 
   protected:
     virtual void InitElement() = 0;
-    virtual void DrawElement() = 0;
     virtual void UpdateElement() = 0;
 
-    void SetVisiblity(bool visible);
+    virtual void SetVisibility(bool visible);
     bool mIsVisible;
 
   private:
-    void SyncVisibilityConsoleVariable();
-    std::string mVisibilityConsoleVariable;
-
     bool mIsInitialized;
 };
 
-} // namespace LUS
+} // namespace Ship
