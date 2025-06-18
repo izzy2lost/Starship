@@ -125,8 +125,8 @@ target_sources(libultraship PRIVATE ${Source_Files__Port})
 
 #=================== Resource ===================
 
-file(GLOB Source_Files__Resource RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/*.h" "resource/*.cpp")
-if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+file(GLOB_RECURSE Source_Files__Resource RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/*.h" "resource/*.cpp")
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
     list(FILTER Source_Files__Resource EXCLUDE REGEX "vorbis")
     list(FILTER Source_Files__Resource EXCLUDE REGEX "SampleFactory")
 endif()
@@ -147,6 +147,7 @@ target_sources(libultraship PRIVATE
     ${Source_Files__Resource__Factories}
     ${Source_Files__Resource__Archive}
 )
+
 #=================== Graphic ===================
 
 file(GLOB Source_Files__Graphic RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "graphic/Fast3D/*.h" "graphic/Fast3D/*.cpp" "graphic/Fast3D/*.c" "graphic/Fast3D/backends/*.cpp" "graphic/Fast3D/debug/*.h" "graphic/Fast3D/debug/*.cpp" "graphic/Fast3D/debug/*.c")
