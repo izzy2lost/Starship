@@ -17,19 +17,17 @@ android {
         }
         minSdkVersion 21
         targetSdkVersion 34
-        versionCode 1
-        versionName "0.1-alpha"
         externalNativeBuild {
             cmake {
-                arguments "-DANDROID_APP_PLATFORM=android-21",
+                arguments "-DANDROID_PLATFORM=android-21",  // Fixed parameter name
                           "-DANDROID_STL=c++_static",
                           "-DHAVE_LD_VERSION_SCRIPT=OFF",
-                          "-DUSE_OPENGLES=ON",
-                          "-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+                          "-DUSE_OPENGLES=ON"
                 abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
             }
         }
     }
+}        
 
     buildTypes {
         release {
