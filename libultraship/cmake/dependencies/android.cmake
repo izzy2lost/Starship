@@ -10,6 +10,10 @@ if (NOT ${SDL2_FOUND})
         OVERRIDE_FIND_PACKAGE
     )
     FetchContent_MakeAvailable(SDL2)
+if(EXISTS "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c")
+    file(READ "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" _sdlfile)
+    string(REPLACE "ALooper_pollAll" "ALooper_pollOnce" _sdlfile "${_sdlfile}")
+    file(WRITE "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" "${_sdlfile}")
 endif()
 
 #=================== nlohmann-json ===================
