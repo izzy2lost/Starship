@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.16.0 FATAL_ERROR)
 # Set the project version and language
 project(Starship VERSION 2.0.0 LANGUAGES C CXX ASM)
 include(FetchContent)
+FetchContent_Declare(
+    libzip
+    GIT_REPOSITORY https://github.com/nih-at/libzip.git
+    GIT_TAG v1.10.1  # or the version your project uses
+)
+FetchContent_MakeAvailable(libzip)
 
 set(NATO_PHONETIC_ALPHABET
   "Alfa" "Bravo" "Charlie" "Delta" "Echo" "Foxtrot" "Golf" "Hotel"
