@@ -1,6 +1,6 @@
 include(FetchContent)
 
-#=================== SDL2 ===================
+##=================== SDL2 ===================
 find_package(SDL2 QUIET)
 if (NOT ${SDL2_FOUND})
     FetchContent_Declare(
@@ -10,10 +10,11 @@ if (NOT ${SDL2_FOUND})
         OVERRIDE_FIND_PACKAGE
     )
     FetchContent_MakeAvailable(SDL2)
-if(EXISTS "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c")
-    file(READ "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" _sdlfile)
-    string(REPLACE "ALooper_pollAll" "ALooper_pollOnce" _sdlfile "${_sdlfile}")
-    file(WRITE "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" "${_sdlfile}")
+    if(EXISTS "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c")
+        file(READ "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" _sdlfile)
+        string(REPLACE "ALooper_pollAll" "ALooper_pollOnce" _sdlfile "${_sdlfile}")
+        file(WRITE "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" "${_sdlfile}")
+    endif()
 endif()
 
 #=================== nlohmann-json ===================
