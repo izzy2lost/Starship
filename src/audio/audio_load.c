@@ -901,106 +901,6 @@ s32 AudioLoad_SlowLoadSample(s32 fontId, u8 instId, s8* status) {
     }
     if (sample->medium == MEDIUM_RAM) {
         *status = SLOW_LOAD_STATUS_2;
-void AudioLoad_SyncDma(uintptr_t devAddr, u8* ramAddr, u32 size, s32 medium) {
-    memcpy(ramAddr, (const void*)devAddr, size); // FIXED
-
-    return;
-    size = ALIGN16(size);
-    osInvalDCache(ramAddr, size);
-
-    while (true) {
-        if (size < 0x400) {
-            break;
-        }
-        AudioLoad_Dma(&gSyncDmaIoMsg, 1, 0, devAddr, ramAddr, 0x400, &gSyncDmaQueue, medium, "FastCopy");
-        MQ_WAIT_FOR_MESG(&gSyncDmaQueue, NULL);
-        size -= 0x400;
-        devAddr += 0x400;
-        ramAddr += 0x400;
-    }
-
-    if (size != 0) {
-        AudioLoad_Dma(&gSyncDmaIoMsg, OS_MESG_PRI_HIGH, OS_READ, devAddr, ramAddr, size, &gSyncDmaQueue, medium,
-                      "FastCopy");
-        MQ_WAIT_FOR_MESG(&gSyncDmaQueue, NULL);
-    }
-}
-
-void AudioLoad_SyncDmaUnkMedium(uintptr_t devAddr, u8* ramAddr, u32 size, s32 unkMediumParam) {
-    uintptr_t addr = devAddr;
-
-    osInvalDCache(ramAddr, size);
-    func_8000FC8C(func_8000FC7C(unkMediumParam, &addr), addr, ramAddr, size);
-}
-
-static const char devstr22[] = "Error: Cannot DMA Media [%d]\n";
-static const char devstr23[] = "Warning: size not align 16 %x  (%s)\n";
-static const char devstr24[] = "Load Bank BG, Type %d , ID %d\n";
-static const char devstr25[] = "get auto\n";
-static const char devstr26[] = "get s-auto %x\n";
-
-s32 AudioLoad_Dma(OSIoMesg* mesg, u32 priority, s32 direction, uintptr_t devAddr, void* ramAddr, u32 size,
-                  OSMesgQueue* retQueue, s32 medium, const char* dmaType) {
-    OSPiHandle* handle;
-
-    // ... (omitted comments and logic for brevity) ...
-
-    if (size % 16) {
-        size = ALIGN16(size);
-    }
-
-    mesg->hdr.pri = priority;
-    mesg->hdr.retQueue = retQueue;
-    mesg->dramAddr = ramAddr;
-    mesg->devAddr = devAddr;
-    mesg->size = size;
-
-    // handle->transferInfo.cmdType = 2;
-    // osEPiStartDma(handle, mesg, direction);
-    memcpy(ramAddr, (const void*)devAddr, size); // FIXED
-
-    return 0;
-}
-
-s32 func_8000FC7C(u32 unkMediumParam, u32* addrPtr) {
-    return 0;
-}
-
-void func_8000FC8C(s32 unkParam2, uintptr_t addr, u8* ramAddr, u32 size) {
-}
-
-void AudioLoad_SyncLoadSimple(u32 tableType, u32 id) {
-    s32 didAllocate;
-
-    AudioLoad_SyncLoad(tableType, id, &didAllocate);
-}
-
-void* AudioLoad_AsyncLoadInner(s32 tableType, s32 id, s32 nChunks, s32 retData, OSMesgQueue* retQueue) {
-    // ... (function unchanged for brevity) ...
-    return table->entries[id].romAddr;
-}
-
-void AudioLoad_ProcessLoads(s32 resetStatus) {
-    AudioLoad_ProcessSlowLoads(resetStatus);
-    // AudioLoad_ProcessSamplePreloads(resetStatus);
-    // AudioLoad_ProcessAsyncLoads(resetStatus);
-}
-
-static const char devstr38[] = "Entry--- %d %d\n";
-static const char devstr39[] = "---Block LPS here\n";
-static const char devstr40[] = "===Block LPS end\n";
-s32 AudioLoad_SlowLoadSample(s32 fontId, u8 instId, s8* status) {
-    Sample* sample;
-    AudioSlowLoad* slowLoad;
-
-    sample = AudioLoad_GetFontSample(fontId, instId);
-
-    if (sample == NULL) {
-        *status = SLOW_LOAD_STATUS_0;
-        return -1;
-    }
-    if (sample->medium == MEDIUM_RAM) {
-        *status = SLOW_LOAD_STATUS_2;
         return 0;
     }
 
@@ -1028,7 +928,7 @@ s32 AudioLoad_SlowLoadSample(s32 fontId, u8 instId, s8* status) {
     slowLoad->bytesRemaining = ALIGN16(sample->size);
     slowLoad->ramAddr = slowLoad->curRamAddr;
     slowLoad->curDevAddr = GameEngine_Malloc(sample->size * 2);
-    memcpy(slowLoad->curDevAddr, (const void*)sample->sampleAddr, sample->size); // FIXED
+    memcpy(slowLoad->curDevAddr, sample->sampleAddr, sample->size);
     slowLoad->medium = sample->medium;
     slowLoad->seqOrFontId = fontId;
     slowLoad->instId = instId;
