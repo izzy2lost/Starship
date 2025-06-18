@@ -132,24 +132,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui
 )
 
-# Collect source files to build the executable
-file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    # "src/assets/*.c"
-    "src/audio/*.c"
-    "src/audio/*.h"
-    "src/engine/*.c"
-    "src/engine/*.h"
-    "src/libultra/io/aisetfreq.c"
-    "src/libultra/gu/sqrtf.c"
-    "src/libultra/gu/mtxutil.c"
-    "src/libultra/gu/ortho.c"
-    "src/overlays/*.c"
-    "src/overlays/*.h"
-    "src/port/*.h"
-    "src/port/*.c"
-    "src/port/*.cpp"
-)
-
 ################################################################################
 # Set target arch type if empty. Visual studio solution generator provides it.
 ################################################################################
@@ -199,12 +181,6 @@ add_compile_definitions(
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/properties.h.in ${CMAKE_CURRENT_SOURCE_DIR}/properties.h @ONLY)
 
-# Include directories
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
 
 # Collect source files to build the executable/library
 file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
