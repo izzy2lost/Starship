@@ -1,4 +1,3 @@
-#include <string.h>
 #include <stdlib.h>
 #include "sys.h"
 #include "sf64dma.h"
