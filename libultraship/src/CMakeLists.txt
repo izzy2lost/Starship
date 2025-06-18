@@ -20,6 +20,11 @@ configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/install_config.h.in ${CMAKE_CURRENT_
 
 file(GLOB Source_Files__TopLevel RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.h" "*.cpp")
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
+
 source_group("" FILES ${Source_Files__TopLevel})
 target_sources(libultraship PRIVATE ${Source_Files__TopLevel})
 
@@ -31,6 +36,11 @@ if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
     list(FILTER Source_Files__Audio EXCLUDE REGEX "audio/WasapiAudioPlayer.*")
 endif()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
+
 source_group("audio" FILES ${Source_Files__Audio})
 target_sources(libultraship PRIVATE ${Source_Files__Audio})
 
@@ -38,12 +48,27 @@ target_sources(libultraship PRIVATE ${Source_Files__Audio})
 
 file(GLOB_RECURSE Source_Files__Controller RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "controller/*.h" "controller/*.cpp")
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
+
 source_group("controller" FILES ${Source_Files__Controller})
 target_sources(libultraship PRIVATE ${Source_Files__Controller})
 
 #=================== Config ===================
 
 file(GLOB Source_Files__Config RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "config/*.h" "config/*.cpp")
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
 
 source_group("config" FILES ${Source_Files__Config})
 target_sources(libultraship PRIVATE ${Source_Files__Config})
@@ -57,6 +82,11 @@ file(GLOB Source_Files__Public__Libultra RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "p
 source_group("public/libultra" FILES ${Source_Files__Public__Libultra})
 
 file(GLOB Source_Files__Public__Bridge RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "public/bridge/*.h" "public/bridge/*.cpp")
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
 
 source_group("public/bridge" FILES ${Source_Files__Public__Bridge})
 target_sources(libultraship PRIVATE ${Source_Files__Public__Libultra} ${Source_Files__Public__Bridge})
@@ -74,11 +104,21 @@ file(GLOB Source_Files__Log RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "log/*.h" "log/
 
 source_group("log" FILES ${Source_Files__Log})
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
+
 target_sources(libultraship PRIVATE ${Source_Files__Log})
 
 #=================== Window ===================
 
 file(GLOB Source_Files__Window RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "window/*.h" "window/*.cpp")
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
 
 source_group("window" FILES ${Source_Files__Window})
 target_sources(libultraship PRIVATE ${Source_Files__Window})
@@ -86,6 +126,11 @@ target_sources(libultraship PRIVATE ${Source_Files__Window})
 #=================== Gui ===================
 
 file(GLOB_RECURSE Source_Files__Window__Gui RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "window/gui/*.h" "window/gui/*.cpp")
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
 
 source_group("window/gui" FILES ${Source_Files__Window__Gui})
 target_sources(libultraship PRIVATE ${Source_Files__Window__Gui})
@@ -108,6 +153,11 @@ else()
     list(REMOVE_ITEM Header_Files__include ${CMAKE_CURRENT_SOURCE_DIR}/utils/macUtils.h)
 endif()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
+
 source_group("utils" FILES ${Source_Files__Utils})
 target_sources(libultraship PRIVATE ${Source_Files__Utils})
 
@@ -118,6 +168,11 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Android" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
         ${CMAKE_CURRENT_SOURCE_DIR}/port/mobile/MobileImpl.h
         ${CMAKE_CURRENT_SOURCE_DIR}/port/mobile/MobileImpl.cpp
     )
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
 endif()
 
 source_group("port" FILES ${Source_Files__Port})
@@ -137,6 +192,11 @@ source_group("resource/factory" FILES ${Source_Files__Resource__Factories})
 file(GLOB Source_Files__Resource__Archive RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/archive/*.h" "resource/archive/*.cpp")
 source_group("resource/archive" FILES ${Source_Files__Resource__Archive})
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
+endif()
+
 target_sources(libultraship PRIVATE ${Source_Files__Resource} ${Source_Files__Resource__Types} ${Source_Files__Resource__Factories} ${Source_Files__Resource__Archive})
 
 #=================== Graphic ===================
@@ -155,6 +215,11 @@ endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
     list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/backends/gfx_opengl*")
+endif()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "vorbis")
+    list(FILTER <YourSourceList> EXCLUDE REGEX "SampleFactory")
 endif()
 
 source_group("graphic" FILES ${Source_Files__Graphic})
