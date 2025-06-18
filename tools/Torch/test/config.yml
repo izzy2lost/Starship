@@ -1,0 +1,36 @@
+f7475fb11e7e6830f82883412638e8390791ab87:
+  name: Star Fox 64 (U) (V1.1)
+  path: sf64/us
+  logging: ERROR
+  config:
+    gbi: F3DEX
+    sort: OFFSET
+    output:
+      code: sf64/src
+
+d064229a32cc05ab85e2381ce07744eb3ffaf530:
+  name: Star Fox 64 (JP) (V1.0)
+  path: sf64/jp
+  config:
+    gbi: F3DEX
+    sort: OFFSET
+    output:
+      code: sf64/src
+
+8a20a5c83d6ceb0f0506cfc9fa20d8f438cafe51:
+  name: Super Mario 64 [JP]
+  path: sm64/jp
+  config:
+    gbi: F3D
+    sort: OFFSET
+    output:
+      code: sm64/src
+
+9bef1128717f958171a4afac3ed78ee2bb4e86ce:
+  name: Super Mario 64 [US]
+  path: sm64/us
+  config:
+    gbi: F3D
+    sort: OFFSET
+    output:
+      code: sm64/src

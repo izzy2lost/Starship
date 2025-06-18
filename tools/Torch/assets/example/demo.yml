@@ -1,0 +1,8 @@
+hud/health:
+  type: TEXTURE
+  size: 512
+  width: 16
+  height: 16
+  offset: 0xFF
+  format: RGBA16
+  symbol: health_icon_FF

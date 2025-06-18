@@ -1,0 +1,8 @@
+header:
+  type: NAUDIO:V0:AUDIO_HEADER
+  ctl:
+    offset: 0x966260
+    size: 0x13840
+  tbl:
+    offset: 0x979AA0
+    size: 0x24C4C0

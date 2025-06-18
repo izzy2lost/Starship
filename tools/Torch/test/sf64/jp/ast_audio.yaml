@@ -1,0 +1,27 @@
+:config:
+  force: true
+  header:
+    code:
+      - '#include "sys.h"'
+      - '#include "sf64audio_provisional.h"'
+
+audio_sample_bank_table:
+  { type: NAUDIO:AUDIO_TABLE, format: SAMPLE, offset: 0xC1360, symbol: gSampleBankTableInit }
+
+audio_seq_table:
+  { type: NAUDIO:AUDIO_TABLE, format: SEQUENCE, offset: 0xC13B0, symbol: gSeqTableInit }
+
+audio_soundfont_table:
+  { type: NAUDIO:AUDIO_TABLE, format: SOUNDFONT, offset: 0xC17E0, symbol: gSoundFontTableInit }
+
+audio_seq_font_table:
+  { type: ARRAY, count: 566, array_type: u8, offset: 0xC1A00, symbol: gSeqFontTableInit }
+  
+# audio_seq:
+#   { type: BLOB, offset: 0xDEA20, size: 0x3ACF0, symbol: gAudioSeq }
+  
+# audio_bank:
+#   { type: BLOB, offset: 0x119710, size: 0x1E020, symbol: gAudioBank }
+
+# audio_table:
+#   { type: BLOB, offset: 0x137730, size: 0x73C580, symbol: gAudioTable }

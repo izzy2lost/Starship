@@ -1,0 +1,9 @@
+:config:
+  force: true
+  external_files:
+    - "sf64/us/ast_tables.yaml"
+
+# sf_00000:
+#   type: NAUDIO:V1:SOUND_FONT
+#   offset: 0x0
+#   symbol: sf_00000

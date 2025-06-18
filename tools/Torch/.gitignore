@@ -1,0 +1,17 @@
+.idea/
+build-*/
+cmake-build-*/
+*.otr
+*.log
+.DS_Store
+debug/
+!src/factories/debug/
+*.z64
+*.n64
+*.inc.c
+headers/
+build/
+code/
+.vscode/
+tools/
+modding/*

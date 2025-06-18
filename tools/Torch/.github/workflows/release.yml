@@ -1,0 +1,92 @@
+name: Publish Binaries
+
+on:
+  push:
+    branches:
+      - main  # Change this to match your repository's default branch
+
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Linux Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build libbz2-dev
+
+    - name: Configure and Build Linux Binaries
+      run: |
+        cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release
+        cmake --build build-cmake -j
+
+    - name: Publish Linux Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build-cmake/*
+        tag_name: v1.0.0  # Replace with your release tag
+        release_name: Linux Release v1.0.0  # Replace with your release name
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+#  build_windows:
+#    runs-on: windows-latest
+    
+#    steps:
+#    - name: Checkout code
+#      uses: actions/checkout@v2
+
+#    - name: Install Windows Dependencies
+#      run: |
+#        choco install -y cmake ninja
+
+#    - name: Configure and Build Windows Binaries
+#      run: |
+#        cmake -H. -Bbuild-cmake -G"Ninja" -DCMAKE_BUILD_TYPE=Release
+#        cmake --build build-cmake --config Release -j
+
+#    - name: Publish Windows Release
+#      uses: softprops/action-gh-release@v1
+#      with:
+        files: |
+#          build-cmake/*
+#        tag_name: v1.0.0  # Replace with your release tag
+#        release_name: Windows Release v1.0.0  # Replace with your release name
+#        draft: false
+#        prerelease: false
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build_macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install macOS Dependencies
+      run: |
+        brew install cmake ninja
+
+    - name: Configure and Build macOS Binaries
+      run: |
+        cmake -H. -Bbuild-cmake -GNinja -DCMAKE_BUILD_TYPE=Release
+        cmake --build build-cmake -j
+
+    - name: Publish macOS Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build-cmake/*
+        tag_name: v1.0.0  # Replace with your release tag
+        release_name: macOS Release v1.0.0  # Replace with your release name
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
