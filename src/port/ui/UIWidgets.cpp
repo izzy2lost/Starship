@@ -259,7 +259,7 @@ namespace UIWidgets {
     }
 
     bool LabeledRightAlignedEnhancementCombobox(const char* label, const char* cvarName, std::span<const char*, std::dynamic_extent> comboArray, uint8_t defaultIndex, bool disabled, const char* disabledTooltipText, uint8_t disabledValue) {
-        ImGui::Text(label);
+        ImGui::Text("%s", label);
         s32 currentValue = CVarGetInteger(cvarName, defaultIndex);
 
 #ifdef __WIIU__
@@ -712,32 +712,32 @@ namespace UIWidgets {
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x);
             } else if (options.labelPosition == LabelPosition::Above) {
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(label).x);
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
                 ImGui::NewLine();
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x);
             }
         } else if (options.alignment == ComponentAlignment::Left) {
             if (options.labelPosition == LabelPosition::Above) {
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             }
         }
         dirty = ImGui::Checkbox(invisibleLabel, value);
         if (options.alignment == ComponentAlignment::Right) {
             if (options.labelPosition == LabelPosition::Near) {
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(label).x - ImGui::GetStyle().FramePadding.x * 2 - ImGui::GetStyle().ItemSpacing.x * 2);
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             } else if (options.labelPosition == LabelPosition::Far) {
                 ImGui::SameLine();
                 ImGui::SetCursorPosX(startX);
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             }
         } else if (options.alignment == ComponentAlignment::Left) {
             if (options.labelPosition == LabelPosition::Near) {
                 ImGui::SameLine();
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             } else if (options.labelPosition == LabelPosition::Far) {
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(label).x);
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             }
         }
         PopStyleCheckbox();
@@ -794,7 +794,7 @@ namespace UIWidgets {
         PushStyleCombobox(options.color);
         if (options.alignment == ComponentAlignment::Left) {
             if (options.labelPosition == LabelPosition::Above) {
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
             } else if (options.labelPosition == LabelPosition::Near) {
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(label).x - ImGui::GetStyle().ItemSpacing.x * 2);
@@ -805,7 +805,7 @@ namespace UIWidgets {
             if (options.labelPosition == LabelPosition::Above) {
                 ImGui::NewLine();
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(label).x);
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
             } else if (options.labelPosition == LabelPosition::Near) {
                 ImGui::SameLine(ImGui::CalcTextSize(label).x + ImGui::GetStyle().ItemSpacing.x * 2);
@@ -832,15 +832,15 @@ namespace UIWidgets {
         if (options.alignment == ComponentAlignment::Left) {
             if (options.labelPosition == LabelPosition::Near) {
                 ImGui::SameLine();
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             } else if (options.labelPosition == LabelPosition::Far) {
                 ImGui::SameLine(ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(label).x);
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             }
         } else if (options.alignment == ComponentAlignment::Right) {
             if (options.labelPosition == LabelPosition::Near || options.labelPosition == LabelPosition::Far) {
                 ImGui::SameLine(startX);
-                ImGui::Text(label);
+                ImGui::Text("%s", label);
             }
         }
         PopStyleCombobox();
