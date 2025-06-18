@@ -11,7 +11,7 @@
 #include "resource/ResourceManager.h"
 #include "Context.h"
 #include "window/Window.h"
-#include "debug/Console.h"
+// #include "debug/Console.h"
 #include "debug/CrashHandler.h"
 #include "config/ConsoleVariable.h"
 #include "config/Config.h"
