@@ -64,6 +64,17 @@ if (NOT ${libzip_FOUND})
         GIT_REPOSITORY https://github.com/nih-at/libzip.git
         GIT_TAG v1.10.1
         OVERRIDE_FIND_PACKAGE
+        CMAKE_ARGS
+            -DENABLE_COMMONCRYPTO=OFF
+            -DENABLE_GNUTLS=OFF
+            -DENABLE_MBEDTLS=OFF
+            -DENABLE_OPENSSL=OFF
+            -DBUILD_TOOLS=OFF
+            -DBUILD_REGRESS=OFF
+            -DBUILD_EXAMPLES=OFF
+            -DBUILD_DOC=OFF
+            -DBUILD_OSSFUZZ=OFF
+            -DBUILD_SHARED_LIBS=OFF
     )
     FetchContent_MakeAvailable(libzip)
     list(APPEND ADDITIONAL_LIB_INCLUDES ${libzip_SOURCE_DIR}/lib ${libzip_BINARY_DIR})
