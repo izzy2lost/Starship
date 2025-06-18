@@ -150,15 +150,6 @@ file(GLOB_RECURSE ALL_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "src/port/*.cpp"
 )
 
-# === Exclude vorbis files for Android ===
-if (CMAKE_SYSTEM_NAME STREQUAL "Android")
-    list(FILTER ALL_FILES EXCLUDE REGEX "vorbis")
-endif()
-
-add_executable(${PROJECT_NAME} ${ALL_FILES})
-# or
-# add_library(${PROJECT_NAME} ... ${ALL_FILES})
-    
 ################################################################################
 # Set target arch type if empty. Visual studio solution generator provides it.
 ################################################################################
@@ -251,7 +242,11 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
-# Add the correct target type for the platform
+# === Exclude vorbis files for Android ===
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    list(FILTER ALL_FILES EXCLUDE REGEX "vorbis")
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
     add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 else()
