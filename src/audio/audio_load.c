@@ -928,7 +928,7 @@ s32 AudioLoad_SlowLoadSample(s32 fontId, u8 instId, s8* status) {
     slowLoad->bytesRemaining = ALIGN16(sample->size);
     slowLoad->ramAddr = slowLoad->curRamAddr;
     slowLoad->curDevAddr = GameEngine_Malloc(sample->size * 2);
-    memcpy(slowLoad->curDevAddr, (const void*)sample->sampleAddr, sample->size);
+    memcpy((void*)slowLoad->curDevAddr, (const void*)sample->sampleAddr, sample->size);
     slowLoad->medium = sample->medium;
     slowLoad->seqOrFontId = fontId;
     slowLoad->instId = instId;
