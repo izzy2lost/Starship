@@ -1,7 +1,6 @@
-#include "crashhandlerbridge.h"
-#include "Context.h"
-#include "debug/CrashHandler.h"
+// #include "crashhandlerbridge.h"
+// #include "Context.h"
 
-void CrashHandlerRegisterCallback(CrashHandlerCallback callback) {
-    Ship::Context::GetInstance()->GetCrashHandler()->RegisterCallback(callback);
-}
+// void CrashHandlerRegisterCallback(CrashHandlerCallback callback) {
+    // LUS::Context::GetInstance()->GetCrashHandler()->RegisterCallback(callback);
+// }
