@@ -4,6 +4,8 @@
 #include "assets/ast_allies.h"
 #include "port/mods/PortEnhancements.h"
 
+void gDPSetInterpolation(void* a, int b) { }
+
 ArwingInfo D_ending_80198590;
 Vec3f D_ending_801985D0;
 Vec3f D_ending_801985E0;
