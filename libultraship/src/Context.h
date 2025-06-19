@@ -8,16 +8,16 @@
 #include "config/Config.h"
 #include "resource/ResourceManager.h"
 #include "controller/controldeck/ControlDeck.h"
-// #include "debug/CrashHandler.h"
 #include "audio/Audio.h"
 #include "window/Window.h"
 #include "config/ConsoleVariable.h"
+// #include "debug/CrashHandler.h"
 // #include "debug/Console.h"
 
-namespace LUS {
+namespace Ship {
 
 class Context {
-  public:
+public:
     static std::shared_ptr<Context> GetInstance();
     static std::shared_ptr<Context> CreateInstance(const std::string name, const std::string shortName,
                                                    const std::string configFilePath,
@@ -37,21 +37,6 @@ class Context {
 
     void Init(const std::vector<std::string>& otrFiles, const std::unordered_set<uint32_t>& validHashes,
               uint32_t reservedThreadCount);
-
-    std::shared_ptr<spdlog::logger> GetLogger();
-    std::shared_ptr<Config> GetConfig();
-    std::shared_ptr<ConsoleVariable> GetConsoleVariables();
-    std::shared_ptr<ResourceManager> GetResourceManager();
-    std::shared_ptr<ControlDeck> GetControlDeck();
-    //std::shared_ptr<CrashHandler> GetCrashHandler();
-    std::shared_ptr<Window> GetWindow();
-    // std::shared_ptr<Console> GetConsole();
-    std::shared_ptr<Audio> GetAudio();
-
-    std::string GetConfigFilePath();
-    std::string GetName();
-    std::string GetShortName();
-
     void InitLogging();
     void InitConfiguration();
     void InitConsoleVariables();
@@ -63,10 +48,24 @@ class Context {
     // void InitConsole();
     void InitWindow();
 
-  protected:
+    std::shared_ptr<spdlog::logger> GetLogger();
+    std::shared_ptr<Config> GetConfig();
+    std::shared_ptr<ConsoleVariable> GetConsoleVariables();
+    std::shared_ptr<ResourceManager> GetResourceManager();
+    std::shared_ptr<ControlDeck> GetControlDeck();
+    // std::shared_ptr<CrashHandler> GetCrashHandler();
+    std::shared_ptr<Window> GetWindow();
+    // std::shared_ptr<Console> GetConsole();
+    std::shared_ptr<Audio> GetAudio();
+
+    std::string GetConfigFilePath();
+    std::string GetName();
+    std::string GetShortName();
+
+protected:
     Context() = default;
 
-  private:
+private:
     static std::weak_ptr<Context> mContext;
 
     std::shared_ptr<spdlog::logger> mLogger;
@@ -86,4 +85,5 @@ class Context {
     std::string mName;
     std::string mShortName;
 };
-} // namespace LUS
+
+} // namespace Ship
