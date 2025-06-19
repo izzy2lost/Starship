@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+namespace Fast {
 #define OPCODE(x) (int8_t)(x)
 
 #include "f3dex.h"
@@ -66,6 +67,9 @@ constexpr int8_t OTR_G_READFB = OPCODE(0x3e);
 constexpr int8_t OTR_G_REGBLENDEDTEX = OPCODE(0x3f);
 constexpr int8_t OTR_G_SETINTENSITY = OPCODE(0x40);
 constexpr int8_t OTR_G_MOVEMEM_HASH = OPCODE(0x42);
+constexpr int8_t OTR_G_LOAD_SHADER = OPCODE(0x43);
+constexpr int8_t RDP_G_SETTILESIZE_INTERP = OPCODE(0x44);
+constexpr int8_t RDP_G_SETTARGETINTERPINDEX = OPCODE(0x45);
 
 /*
  * The following commands are the "generated" RDP commands; the user
@@ -956,6 +960,7 @@ typedef union {
 #define G_MW_NUMLIGHT 0x02
 #define G_MW_CLIP 0x04
 #define G_MW_SEGMENT 0x06
+#define G_MW_SEGMENT_INTERP 0x07
 #define G_MW_FOG 0x08
 #define G_MW_LIGHTCOL 0x0a
 #define G_MW_PERSPNORM 0x0e
@@ -1112,16 +1117,34 @@ typedef union {
     long int force_structure_alignment[4];
 } F3DHilite;
 
+#ifdef USE_GBI_TRACE
+/*
+ * Trace structure
+ */
+typedef struct {
+    const char* file;
+    int idx;
+    bool valid;
+} F3DTrace;
+#endif
+
 /*
  * Generic Gfx Packet
  */
 typedef struct {
     uintptr_t w0;
     uintptr_t w1;
+#ifdef USE_GBI_TRACE
+    F3DTrace trace;
+#endif
 } F3DGwords;
 
 #ifdef __cplusplus
+#ifdef USE_GBI_TRACE
+static_assert(sizeof(F3DGwords) == 2 * sizeof(void*) + sizeof(F3DTrace), "Display list size is bad");
+#else
 static_assert(sizeof(F3DGwords) == 2 * sizeof(void*), "Display list size is bad");
+#endif
 #endif
 
 /*
@@ -1332,5 +1355,5 @@ typedef struct {
     F3DuObjTxtr txtr;
     F3DuObjSprite sprite;
 } F3DuObjTxSprite; /* 48 bytes */
-
+}
 #endif
