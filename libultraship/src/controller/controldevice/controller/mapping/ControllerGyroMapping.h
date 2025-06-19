@@ -1,5 +1,6 @@
 #pragma once
 
+#include "controller/controldevice/controller/Controller.h"
 #include <cstdint>
 #include <string>
 #include "ControllerInputMapping.h"
