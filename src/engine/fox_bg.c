@@ -29,6 +29,8 @@
 
 #include <libultra/gbi.h>
 
+void gDPSetInterpolation(void* a, int b) { }
+
 f32 gWarpZoneBgAlpha;
 u8 D_bg_8015F964;  // related to water surfaces
 f32 D_bg_8015F968; // heat shimmer effect for SO and TI?
