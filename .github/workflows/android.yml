@@ -38,7 +38,7 @@ jobs:
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
         make -C tools/Torch type=release -j3
-        tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
+        tools/Torch/cmake-build-release/torch pack port starship.o2r
         
     - uses: actions/upload-artifact@v4
       with:
