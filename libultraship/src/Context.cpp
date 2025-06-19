@@ -36,7 +36,7 @@ Context::~Context() {
     // mCrashHandler = nullptr;
     mControlDeck = nullptr;
     mResourceManager = nullptr;
-    // mConsoleVariables = nullptr;
+    mConsoleVariables = nullptr;
     GetConfig()->Save();
     mConfig = nullptr;
     spdlog::shutdown();
@@ -183,13 +183,13 @@ void Context::InitConfiguration() {
     mConfig = std::make_shared<Config>(GetPathRelativeToAppDirectory(GetConfigFilePath()));
 }
 
-// void Context::InitConsoleVariables() {
-    //:if (GetConsoleVariables() != nullptr) {
-        // return;
-    // }
+void Context::InitConsoleVariables() {
+    if (GetConsoleVariables() != nullptr) {
+        return;
+    }
 
-    //mConsoleVariables = std::make_shared<ConsoleVariable>();
-// }
+    mConsoleVariables = std::make_shared<ConsoleVariable>();
+}
 
 void Context::InitResourceManager(const std::vector<std::string>& otrFiles,
                                   const std::unordered_set<uint32_t>& validHashes, uint32_t reservedThreadCount) {
@@ -265,9 +265,9 @@ void Context::InitWindow() {
     GetWindow()->Init();
 }
 
-// std::shared_ptr<ConsoleVariable> Context::GetConsoleVariables() {
-    //;return mConsoleVariables;
-// }
+std::shared_ptr<ConsoleVariable> Context::GetConsoleVariables() {
+    return mConsoleVariables;
+}
 
 std::shared_ptr<spdlog::logger> Context::GetLogger() {
     return mLogger;
