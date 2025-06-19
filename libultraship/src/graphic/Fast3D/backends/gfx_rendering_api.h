@@ -7,6 +7,8 @@
 #include <set>
 #include "imconfig.h"
 
+#include <imgui.h>
+
 namespace Fast {
 struct ShaderProgram;
 
