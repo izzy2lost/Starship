@@ -23,7 +23,7 @@ jobs:
       - name: Build APK
         run: |
          cd Android
-         ./gradlew assembleRelease -P elfBuildType=Release
+         ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
          mv app/build/outputs/apk/release/app-release.apk ../starship.apk
     
       - name: Upload APK artifact
