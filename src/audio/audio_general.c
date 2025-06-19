@@ -5,6 +5,10 @@
 #include "audioseq_cmd.h"
 #include "port/Engine.h"
 
+static int GetNumAudioChannels(void) {
+    return 2; // Always stereo. Change to 1 if you want mono.
+}
+
 void Audio_SetModulationAndPlaySfx(f32* sfxSource, u32 sfxId, f32 freqMod);
 s32 Audio_GetCurrentVoice(void);
 void Audio_PlaySequence(u8, u16, u8, u8);
