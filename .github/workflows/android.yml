@@ -12,8 +12,10 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: true
+        
     - name: Install dependencies
       run: sudo apt-get install gcc g++ git cmake ninja-build lsb-release
+      
     - name: ccache
       uses: hendrikmuhs/ccache-action@v1.2.13
       with:
@@ -21,6 +23,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-o2r-ccache-${{ github.ref }}
           ${{ runner.os }}-o2r-ccache-
+          
     - name: Cache build folders
       uses: actions/cache@v4
       with:
@@ -30,11 +33,13 @@ jobs:
           ${{ runner.os }}-o2r-build-
         path: |
           tools/Torch/cmake-build-release
+          
     - name: Generate starship.o2r
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
         make -C tools/Torch type=release -j3
         tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
+        
     - uses: actions/upload-artifact@v4
       with:
         name: starship.o2r
