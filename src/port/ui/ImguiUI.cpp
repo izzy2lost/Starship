@@ -1,13 +1,13 @@
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImguiUI.h"
+#include <imgui_internal.h>
 #include "UIWidgets.h"
 #include "ResolutionEditor.h"
 
 #include <spdlog/spdlog.h>
 #include <imgui.h>
-#define IMGUI_DEFINE_MATH_OPERATORS
 #include "libultraship/src/Context.h"
 
-#include <imgui_internal.h>
 #include <libultraship/libultraship.h>
 #include <Fast3D/interpreter.h>
 #include "port/Engine.h"
