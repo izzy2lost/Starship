@@ -26,7 +26,6 @@ src/assets/*
 build-new/
 tools/mio0
 tools/ido-recomp
-debug/
 .venv/
 m2cfiles/
 TempComp.bin.mio0
