@@ -8,7 +8,7 @@
 // #include "graphic/Fast3D/debug/GfxDebugger.h"
 #include "config/ConsoleVariable.h"
 #include "controller/controldeck/ControlDeck.h"
-#include "debug/CrashHandler.h"
+// #include "debug/CrashHandler.h"
 #include "window/FileDropMgr.h"
 
 #ifdef _WIN32
