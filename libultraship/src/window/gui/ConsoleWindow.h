@@ -1,21 +1,61 @@
 #pragma once
 
+#if defined(__ANDROID__)
+
+// =============================
+// Stub for Android: does nothing
+// =============================
+
+namespace LUS {
+class ConsoleWindow {
+  public:
+    ConsoleWindow(...) {}
+    ~ConsoleWindow() {}
+
+    void ClearLogs(std::string = "") {}
+    void ClearLogs() {}
+    void Dispatch(const std::string&) {}
+    void SendInfoMessage(const char*, ...) {}
+    void SendErrorMessage(const char*, ...) {}
+    void SendInfoMessage(const std::string&) {}
+    void SendErrorMessage(const std::string&) {}
+    void Append(const std::string&, int, const char*, ...) {}
+    std::string GetCurrentChannel() { return {}; }
+    void ClearBindings() {}
+
+  protected:
+    void Append(const std::string&, int, const char*, va_list) {}
+    void InitElement() {}
+    void UpdateElement() {}
+    void DrawElement() {}
+
+  private:
+    // No-op stub, so private fields not needed
+};
+} // namespace LUS
+
+#else
+
+// =============================
+// Original header for non-Android
+// =============================
+
 #include <map>
 #include <vector>
 #include <string>
 #include <functional>
 
 #include "window/gui/GuiWindow.h"
-// #include "debug/Console.h"
-#include <imgui.h>
+#include "debug/Console.h"
+#include <ImGui/imgui.h>
 #include <spdlog/spdlog.h>
 
-namespace Ship {
+namespace LUS {
 
 class ConsoleWindow : public GuiWindow {
   public:
     using GuiWindow::GuiWindow;
-    virtual ~ConsoleWindow();
+    ~ConsoleWindow();
 
     void ClearLogs(std::string channel);
     void ClearLogs();
@@ -27,12 +67,12 @@ class ConsoleWindow : public GuiWindow {
     void Append(const std::string& channel, spdlog::level::level_enum priority, const char* fmt, ...);
     std::string GetCurrentChannel();
     void ClearBindings();
-    void DrawElement() override;
 
   protected:
     void Append(const std::string& channel, spdlog::level::level_enum priority, const char* fmt, va_list args);
     void InitElement() override;
     void UpdateElement() override;
+    void DrawElement() override;
 
   private:
     struct ConsoleLine {
@@ -46,8 +86,6 @@ class ConsoleWindow : public GuiWindow {
                                 std::string* output);
     static int32_t HelpCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
                                std::string* output);
-    static int32_t UnbindCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
-                                 std::string* output);
     static int32_t BindCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
                                std::string* output);
     static int32_t BindToggleCommand(std::shared_ptr<Console> console, const std::vector<std::string>& args,
@@ -66,7 +104,7 @@ class ConsoleWindow : public GuiWindow {
     bool mOpenAutocomplete = false;
     char* mInputBuffer = nullptr;
     char* mFilterBuffer = nullptr;
-    std::string mCmdHint = "None";
+    std::string mCmdHint = "Null";
     spdlog::level::level_enum mLevelFilter = spdlog::level::trace;
     std::map<ImGuiKey, std::string> mBindings;
     std::map<ImGuiKey, std::string> mBindingToggle;
@@ -89,4 +127,6 @@ class ConsoleWindow : public GuiWindow {
     };
     static constexpr size_t gMaxBufferSize = 255;
 };
-} // namespace Ship
+} // namespace LUS
+
+#endif // __ANDROID__
