@@ -5,7 +5,7 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include "install_config.h"
-#include "graphic/Fast3D/debug/GfxDebugger.h"
+// #include "graphic/Fast3D/debug/GfxDebugger.h"
 #include "config/ConsoleVariable.h"
 #include "controller/controldeck/ControlDeck.h"
 #include "debug/CrashHandler.h"
