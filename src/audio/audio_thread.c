@@ -2,6 +2,11 @@
 #include "sf64audio_provisional.h"
 #include "audiothread_cmd.h"
 
+// Stereo fix for Android/SDL2 builds
+static int GetNumAudioChannels(void) {
+    return 2;
+}
+
 void AudioThread_ProcessCmds(u32 msg);
 void AudioThread_SetFadeOutTimer(s32 seqPlayId, s32 fadeTime);
 void AudioThread_SetFadeInTimer(s32 seqPlayId, s32 fadeTime);
