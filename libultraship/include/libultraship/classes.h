@@ -20,7 +20,7 @@
 #include "window/gui/GuiWindow.h"
 #include "window/gui/InputEditorWindow.h"
 #include "window/gui/StatsWindow.h"
-#include "controller/Controller.h"
+#include "controller/controldevice/controller/Controller.h"
 #include "controller/SDLController.h"
 #include "controller/ControlDeck.h"
 #include "controller/KeyboardController.h"
