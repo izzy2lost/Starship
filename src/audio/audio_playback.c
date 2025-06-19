@@ -2,6 +2,11 @@
 #include "sf64audio_provisional.h"
 #include "port/resource/loaders/AudioLoader.h"
 
+// Stereo fix for Android/SDL2 builds
+static int GetNumAudioChannels(void) {
+    return 2;
+}
+
 static const char devstr00[] = "Audio: setvol: volume minus %f\n";
 static const char devstr01[] = "Audio: setvol: volume overflow %f\n";
 static const char devstr02[] = "Audio: setpitch: pitch zero or minus %f\n";
