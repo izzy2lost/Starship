@@ -24,6 +24,11 @@
 
 #define SAMPLE_SIZE sizeof(s16)
 
+// Stereo fix for Android/SDL2 builds
+static int GetNumAudioChannels(void) {
+    return 2;
+}
+
 typedef enum {
     /* 0 */ HAAS_EFFECT_DELAY_NONE,
     /* 1 */ HAAS_EFFECT_DELAY_LEFT, // Delay left channel so that right channel is heard first
