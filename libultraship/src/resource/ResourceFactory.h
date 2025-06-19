@@ -7,11 +7,9 @@
 namespace Ship {
 class ResourceFactory {
   public:
-    virtual std::shared_ptr<IResource> ReadResource(std::shared_ptr<File> file,
-                                                    std::shared_ptr<ResourceInitData> initData) = 0;
+    virtual std::shared_ptr<IResource> ReadResource(std::shared_ptr<File> file) = 0;
 
   protected:
-    virtual bool FileHasValidFormatAndReader(std::shared_ptr<File> file,
-                                             std::shared_ptr<Ship::ResourceInitData> initData) = 0;
+    virtual bool FileHasValidFormatAndReader(std::shared_ptr<File> file) = 0;
 };
 } // namespace Ship

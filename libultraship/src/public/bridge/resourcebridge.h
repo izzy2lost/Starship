@@ -8,15 +8,14 @@
 #ifdef __cplusplus
 #include "resource/type/Texture.h"
 #include "resource/Resource.h"
-#include <memory>
 
 std::shared_ptr<Ship::IResource> ResourceLoad(const char* name);
 std::shared_ptr<Ship::IResource> ResourceLoad(uint64_t crc);
 template <class T> std::shared_ptr<T> ResourceLoad(const char* name) {
-    return std::static_pointer_cast<T>(ResourceLoad(name));
+    return static_pointer_cast<T>(ResourceLoad(name));
 }
 template <class T> std::shared_ptr<T> ResourceLoad(uint64_t crc) {
-    return std::static_pointer_cast<T>(ResourceLoad(crc));
+    return static_pointer_cast<T>(ResourceLoad(crc));
 }
 
 extern "C" {
@@ -44,10 +43,10 @@ void ResourceDirtyByCrc(uint64_t crc);
 void ResourceUnloadByName(const char* name);
 void ResourceUnloadByCrc(uint64_t crc);
 void ResourceUnloadDirectory(const char* name);
-void ResourceClearCache();
+void ResourceClearCache(void);
 void ResourceGetGameVersions(uint32_t* versions, size_t versionsSize, size_t* versionsCount);
 uint32_t ResourceHasGameVersion(uint32_t hash);
-uint32_t IsResourceManagerLoaded();
+uint32_t ResourceDoesOtrFileExist();
 
 #ifdef __cplusplus
 };

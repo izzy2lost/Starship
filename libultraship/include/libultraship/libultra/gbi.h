@@ -190,9 +190,6 @@
 #define G_DL_INDEX 0x3d
 #define G_READFB 0x3e
 #define G_SETINTENSITY 0x40
-#define G_LOAD_SHADER 0x43
-#define G_SETTILESIZE_INTERP 0x44
-#define G_SETTARGETINTERPINDEX 0x45
 
 /*
  * The following commands are the "generated" RDP commands; the user
@@ -967,9 +964,7 @@
 #define G_DL_NOPUSH 0x01
 
 #if defined(_MSC_VER) || defined(__GNUC__)
-#ifndef _LANGUAGE_C
 #define _LANGUAGE_C
-#endif
 #endif
 
 /*
@@ -1175,7 +1170,6 @@ typedef union {
 #define G_MW_NUMLIGHT 0x02
 #define G_MW_CLIP 0x04
 #define G_MW_SEGMENT 0x06
-#define G_MW_SEGMENT_INTERP 0x07
 #define G_MW_FOG 0x08
 #define G_MW_LIGHTCOL 0x0a
 #ifdef F3DEX_GBI_2
@@ -1647,40 +1641,19 @@ typedef struct {
     unsigned long w3;
 } TexRect;
 
-#ifdef USE_GBI_TRACE
-/*
- * Trace structure
- */
-typedef struct {
-    const char* file;
-    int idx;
-    bool valid;
-} Trace;
-
-#define MakeTrace()              \
-    , {                          \
-        __FILE__, __LINE__, true \
-    }
-#else
-#define MakeTrace()
-#endif
 /*
  * Generic Gfx Packet
  */
 typedef struct {
     uintptr_t w0;
     uintptr_t w1;
-#ifdef USE_GBI_TRACE
-    Trace trace;
-#endif
+
+    // unsigned long long w0;
+    // unsigned long long w1;
 } Gwords;
 
 #ifdef __cplusplus
-#ifdef USE_GBI_TRACE
-static_assert((sizeof(Gwords) == 2 * sizeof(void*) + sizeof(Trace)), "Display list size is bad");
-#else
-static_assert((sizeof(Gwords) == 2 * sizeof(void*)), "Display list size is bad");
-#endif
+static_assert(sizeof(Gwords) == 2 * sizeof(void*), "Display list size is bad");
 #endif
 
 /*
@@ -1736,18 +1709,6 @@ typedef union Gfx {
 #define gsDma0p(c, s, l) \
     { _SHIFTL((c), 24, 8) | _SHIFTL((l), 0, 24), (uintptr_t)(s) }
 
-#ifdef USE_GBI_TRACE
-#define gDma1p(pkt, c, s, l, p)                                                           \
-    _DW({                                                                                 \
-        Gfx* _g = (Gfx*)(pkt);                                                            \
-                                                                                          \
-        _g->words.w0 = (_SHIFTL((c), 24, 8) | _SHIFTL((p), 16, 8) | _SHIFTL((l), 0, 16)); \
-        _g->words.w1 = (uintptr_t)(s);                                                    \
-        _g->words.trace.file = __FILE__;                                                  \
-        _g->words.trace.idx = __LINE__;                                                   \
-        _g->words.trace.valid = true;                                                     \
-    })
-#else
 #define gDma1p(pkt, c, s, l, p)                                                           \
     _DW({                                                                                 \
         Gfx* _g = (Gfx*)(pkt);                                                            \
@@ -1755,22 +1716,10 @@ typedef union Gfx {
         _g->words.w0 = (_SHIFTL((c), 24, 8) | _SHIFTL((p), 16, 8) | _SHIFTL((l), 0, 16)); \
         _g->words.w1 = (uintptr_t)(s);                                                    \
     })
-#endif
+
 #define gsDma1p(c, s, l, p) \
-    { (_SHIFTL((c), 24, 8) | _SHIFTL((p), 16, 8) | _SHIFTL((l), 0, 16)), (uintptr_t)(s)MakeTrace() }
+    { (_SHIFTL((c), 24, 8) | _SHIFTL((p), 16, 8) | _SHIFTL((l), 0, 16)), (uintptr_t)(s) }
 
-#ifdef USE_GBI_TRACE
-#define gDma2p(pkt, c, adrs, len, idx, ofs)                                                                          \
-    _DW({                                                                                                            \
-        Gfx* _g = (Gfx*)(pkt);                                                                                       \
-        _g->words.w0 =                                                                                               \
-            (_SHIFTL((c), 24, 8) | _SHIFTL(((len)-1) / 8, 19, 5) | _SHIFTL((ofs) / 8, 8, 8) | _SHIFTL((idx), 0, 8)); \
-        _g->words.w1 = (uintptr_t)(adrs);                                                                            \
-        _g->words.trace.file = __FILE__;                                                                             \
-        _g->words.trace.idx = __LINE__;                                                                              \
-        _g->words.trace.valid = true;                                                                                \
-    })
-#else
 #define gDma2p(pkt, c, adrs, len, idx, ofs)                                                                          \
     _DW({                                                                                                            \
         Gfx* _g = (Gfx*)(pkt);                                                                                       \
@@ -1778,12 +1727,10 @@ typedef union Gfx {
             (_SHIFTL((c), 24, 8) | _SHIFTL(((len)-1) / 8, 19, 5) | _SHIFTL((ofs) / 8, 8, 8) | _SHIFTL((idx), 0, 8)); \
         _g->words.w1 = (uintptr_t)(adrs);                                                                            \
     })
-#endif
-
 #define gsDma2p(c, adrs, len, idx, ofs)                                                                          \
     {                                                                                                            \
         (_SHIFTL((c), 24, 8) | _SHIFTL(((len)-1) / 8, 19, 5) | _SHIFTL((ofs) / 8, 8, 8) | _SHIFTL((idx), 0, 8)), \
-            (uintptr_t)(adrs)MakeTrace()                                                                         \
+            (uintptr_t)(adrs)                                                                                    \
     }
 
 #define gSPNoOp(pkt) gDma0p(pkt, G_SPNOOP, 0, 0)
@@ -1807,26 +1754,14 @@ typedef union Gfx {
  *        | |seg|         address             |
  *        +-+---+-----------------------------+
  */
-#ifdef USE_GBI_TRACE
-#define __gSPVertex(pkt, v, n, v0)                                                              \
-    _DW({                                                                                       \
-        Gfx* _g = (Gfx*)(pkt);                                                                  \
-        _g->words.w0 = _SHIFTL(G_VTX, 24, 8) | _SHIFTL((n), 12, 8) | _SHIFTL((v0) + (n), 1, 7); \
-        _g->words.w1 = (uintptr_t)(v);                                                          \
-        _g->words.trace.file = __FILE__;                                                        \
-        _g->words.trace.idx = __LINE__;                                                         \
-        _g->words.trace.valid = true;                                                           \
-    })
-#else
 #define __gSPVertex(pkt, v, n, v0)                                                              \
     _DW({                                                                                       \
         Gfx* _g = (Gfx*)(pkt);                                                                  \
         _g->words.w0 = _SHIFTL(G_VTX, 24, 8) | _SHIFTL((n), 12, 8) | _SHIFTL((v0) + (n), 1, 7); \
         _g->words.w1 = (uintptr_t)(v);                                                          \
     })
-#endif
 #define gsSPVertex(v, n, v0) \
-    { (_SHIFTL(G_VTX, 24, 8) | _SHIFTL((n), 12, 8) | _SHIFTL((v0) + (n), 1, 7)), (uintptr_t)(v)MakeTrace() }
+    { (_SHIFTL(G_VTX, 24, 8) | _SHIFTL((n), 12, 8) | _SHIFTL((v0) + (n), 1, 7)), (uintptr_t)(v) }
 
 #elif (defined(F3DEX_GBI) || defined(F3DLP_GBI))
 /*
@@ -2159,7 +2094,6 @@ typedef union Gfx {
     { _SHIFTL(G_CULLDL, 24, 8) | ((0x0f & (vstart)) * 40), ((0x0f & ((vend) + 1)) * 40) }
 #endif
 
-#define __gSPSegmentInterp(pkt, segment, base) gMoveWd(pkt, G_MW_SEGMENT_INTERP, segment, base)
 #define __gSPSegment(pkt, segment, base) gMoveWd(pkt, G_MW_SEGMENT, (segment)*4, base)
 #define gsSPSegment(segment, base) gsMoveWd(G_MW_SEGMENT, (segment)*4, base)
 
@@ -2795,12 +2729,6 @@ typedef union Gfx {
 #define gsSPGrayscale(state) \
     { (_SHIFTL(G_SETGRAYSCALE, 24, 8)), (state) }
 
-#define gsSPLoadShader(shader, type) gsDma1p(G_LOAD_SHADER, shader, 0, type)
-#define gsSPUnloadShader() gsDma1p(G_LOAD_SHADER, 0, 0, 0)
-
-#define gSPLoadShader(pkt, shader, type) gDma1p(pkt, G_LOAD_SHADER, shader, 0, type)
-#define gSPUnloadShader(pkt) gDma1p(pkt, G_LOAD_SHADER, 0, 0, 0)
-
 #define gSPExtraGeometryMode(pkt, c, s)                                                 \
     _DW({                                                                               \
         Gfx* _g = (Gfx*)(pkt);                                                          \
@@ -3214,16 +3142,6 @@ typedef union Gfx {
             _SHIFTL(tile, 24, 3) | _SHIFTL(lrs, 12, 12) | _SHIFTL(lrt, 0, 12) \
     }
 
-#define gDPSetInterpolation(pkt, index)              \
-    _DW({                                            \
-        Gfx* _g = (Gfx*)(pkt);                       \
-                                                     \
-        _g->words.w0 = G_SETTARGETINTERPINDEX << 24; \
-        _g->words.w1 = index;                        \
-    })
-
-#define __gDPSetTileSizeInterp(pkt, t, uls, ult, lrs, lrt) \
-    gDPLoadTileGeneric(pkt, G_SETTILESIZE_INTERP, t, uls, ult, lrs, lrt)
 #define gDPSetTileSize(pkt, t, uls, ult, lrs, lrt) gDPLoadTileGeneric(pkt, G_SETTILESIZE, t, uls, ult, lrs, lrt)
 #define gsDPSetTileSize(t, uls, ult, lrs, lrt) gsDPLoadTileGeneric(G_SETTILESIZE, t, uls, ult, lrs, lrt)
 #define gDPLoadTile(pkt, t, uls, ult, lrs, lrt) gDPLoadTileGeneric(pkt, G_LOADTILE, t, uls, ult, lrs, lrt)

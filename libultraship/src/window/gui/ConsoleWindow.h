@@ -1,45 +1,5 @@
 #pragma once
 
-#if defined(__ANDROID__)
-
-// =============================
-// Stub for Android: does nothing
-// =============================
-
-namespace LUS {
-class ConsoleWindow {
-  public:
-    ConsoleWindow(...) {}
-    ~ConsoleWindow() {}
-
-    void ClearLogs(std::string = "") {}
-    void ClearLogs() {}
-    void Dispatch(const std::string&) {}
-    void SendInfoMessage(const char*, ...) {}
-    void SendErrorMessage(const char*, ...) {}
-    void SendInfoMessage(const std::string&) {}
-    void SendErrorMessage(const std::string&) {}
-    void Append(const std::string&, int, const char*, ...) {}
-    std::string GetCurrentChannel() { return {}; }
-    void ClearBindings() {}
-
-  protected:
-    void Append(const std::string&, int, const char*, va_list) {}
-    void InitElement() {}
-    void UpdateElement() {}
-    void DrawElement() {}
-
-  private:
-    // No-op stub, so private fields not needed
-};
-} // namespace LUS
-
-#else
-
-// =============================
-// Original header for non-Android
-// =============================
-
 #include <map>
 #include <vector>
 #include <string>
@@ -47,10 +7,13 @@ class ConsoleWindow {
 
 #include "window/gui/GuiWindow.h"
 #include "debug/Console.h"
-#include <ImGui/imgui.h>
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#define IMGUI_DEFINE_MATH_OPERATORS
+#endif
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 
-namespace LUS {
+namespace Ship {
 
 class ConsoleWindow : public GuiWindow {
   public:
@@ -67,12 +30,12 @@ class ConsoleWindow : public GuiWindow {
     void Append(const std::string& channel, spdlog::level::level_enum priority, const char* fmt, ...);
     std::string GetCurrentChannel();
     void ClearBindings();
+    void DrawElement() override;
 
   protected:
     void Append(const std::string& channel, spdlog::level::level_enum priority, const char* fmt, va_list args);
     void InitElement() override;
     void UpdateElement() override;
-    void DrawElement() override;
 
   private:
     struct ConsoleLine {
@@ -127,6 +90,4 @@ class ConsoleWindow : public GuiWindow {
     };
     static constexpr size_t gMaxBufferSize = 255;
 };
-} // namespace LUS
-
-#endif // __ANDROID__
+} // namespace Ship

@@ -19,7 +19,7 @@ class ControllerLED {
     void ClearLEDMapping(std::string id);
     void SaveLEDMappingIdsToConfig();
     void ClearAllMappings();
-    void ClearAllMappingsForDeviceType(PhysicalDeviceType physicalDeviceType);
+    void ClearAllMappingsForDevice(ShipDeviceIndex lusIndex);
     void LoadLEDMappingFromConfig(std::string id);
     void ReloadAllMappingsFromConfig();
 
@@ -27,7 +27,7 @@ class ControllerLED {
 
     void SetLEDColor(Color_RGB8 color);
 
-    bool HasMappingsForPhysicalDeviceType(PhysicalDeviceType physicalDeviceType);
+    bool HasMappingsForShipDeviceIndex(ShipDeviceIndex lusIndex);
 
   private:
     uint8_t mPortIndex;

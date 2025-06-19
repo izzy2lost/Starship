@@ -4,7 +4,7 @@
 
 extern "C" {
 
-int32_t AudioPlayerBuffered() {
+int32_t AudioPlayerBuffered(void) {
     auto audio = Ship::Context::GetInstance()->GetAudio()->GetAudioPlayer();
     if (audio == nullptr) {
         return 0;
@@ -17,7 +17,7 @@ int32_t AudioPlayerBuffered() {
     return audio->Buffered();
 }
 
-int32_t AudioPlayerGetDesiredBuffered() {
+int32_t AudioPlayerGetDesiredBuffered(void) {
     auto audio = Ship::Context::GetInstance()->GetAudio()->GetAudioPlayer();
     if (audio == nullptr) {
         return 0;
@@ -28,25 +28,6 @@ int32_t AudioPlayerGetDesiredBuffered() {
     }
 
     return audio->GetDesiredBuffered();
-}
-
-AudioChannelsSetting GetAudioChannels() {
-    auto audio = Ship::Context::GetInstance()->GetAudio()->GetAudioPlayer();
-
-    if (audio == nullptr) {
-        return audioStereo;
-    }
-
-    return audio->GetAudioChannels();
-}
-
-int32_t GetNumAudioChannels() {
-    switch (GetAudioChannels()) {
-        case audioSurround51:
-            return 6;
-        default:
-            return 2;
-    }
 }
 
 void AudioPlayerPlayFrame(const uint8_t* buf, size_t len) {

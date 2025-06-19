@@ -11,6 +11,7 @@ class ControllerGyro {
     ControllerGyro(uint8_t portIndex);
     ~ControllerGyro();
 
+    // void AddOrReplaceGyroMapping(std::shared_ptr<ControllerGyroMapping> mapping);
     void ReloadGyroMappingFromConfig();
     void ClearGyroMapping();
     void SaveGyroMappingIdToConfig();
@@ -21,7 +22,7 @@ class ControllerGyro {
 
     void UpdatePad(float& x, float& y);
 
-    bool HasMappingForPhysicalDeviceType(PhysicalDeviceType physicalDeviceType);
+    bool HasMappingForShipDeviceIndex(ShipDeviceIndex lusIndex);
 
   private:
     uint8_t mPortIndex;

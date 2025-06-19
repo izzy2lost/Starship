@@ -14,14 +14,14 @@ namespace Ship {
 
 class ControllerStick {
   public:
-    ControllerStick(uint8_t portIndex, StickIndex stickIndex);
+    ControllerStick(uint8_t portIndex, Stick stick);
     ~ControllerStick();
 
     void ReloadAllMappingsFromConfig();
-    void AddDefaultMappings(PhysicalDeviceType physicalDeviceType);
+    void AddDefaultMappings(ShipDeviceIndex lusIndex);
 
     void ClearAllMappings();
-    void ClearAllMappingsForDeviceType(PhysicalDeviceType physicalDeviceType);
+    void ClearAllMappingsForDevice(ShipDeviceIndex lusIndex);
     void UpdatePad(int8_t& x, int8_t& y);
     std::shared_ptr<ControllerAxisDirectionMapping> GetAxisDirectionMappingById(Direction direction, std::string id);
     std::unordered_map<Direction, std::unordered_map<std::string, std::shared_ptr<ControllerAxisDirectionMapping>>>
@@ -52,10 +52,9 @@ class ControllerStick {
     bool NotchSnapAngleIsDefault();
 
     bool ProcessKeyboardEvent(KbEventType eventType, KbScancode scancode);
-    bool ProcessMouseButtonEvent(bool isPressed, Ship::MouseBtn button);
 
-    bool HasMappingsForPhysicalDeviceType(PhysicalDeviceType physicalDeviceType);
-    StickIndex GetStickIndex();
+    bool HasMappingsForShipDeviceIndex(ShipDeviceIndex lusIndex);
+    Stick LeftOrRightStick();
 
   private:
     double GetClosestNotch(double angle, double approximationThreshold);
@@ -63,7 +62,7 @@ class ControllerStick {
     float GetAxisDirectionValue(Direction direction);
 
     uint8_t mPortIndex;
-    StickIndex mStickIndex;
+    Stick mStick;
 
     uint8_t mSensitivityPercentage;
     float mSensitivity;
@@ -76,8 +75,7 @@ class ControllerStick {
     std::unordered_map<Direction, std::unordered_map<std::string, std::shared_ptr<ControllerAxisDirectionMapping>>>
         mAxisDirectionMappings;
 
-    bool mUseEventInputToCreateNewMapping;
+    bool mUseKeydownEventToCreateNewMapping;
     KbScancode mKeyboardScancodeForNewMapping;
-    MouseBtn mMouseButtonForNewMapping;
 };
 } // namespace Ship

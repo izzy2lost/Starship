@@ -2,21 +2,19 @@
 #include "resource/type/Matrix.h"
 #include "spdlog/spdlog.h"
 
-namespace Fast {
-std::shared_ptr<Ship::IResource>
-ResourceFactoryBinaryMatrixV0::ReadResource(std::shared_ptr<Ship::File> file,
-                                            std::shared_ptr<Ship::ResourceInitData> initData) {
-    if (!FileHasValidFormatAndReader(file, initData)) {
+namespace LUS {
+std::shared_ptr<Ship::IResource> ResourceFactoryBinaryMatrixV0::ReadResource(std::shared_ptr<Ship::File> file) {
+    if (!FileHasValidFormatAndReader(file)) {
         return nullptr;
     }
 
-    auto matrix = std::make_shared<Matrix>(initData);
+    auto matrix = std::make_shared<Matrix>(file->InitData);
     auto reader = std::get<std::shared_ptr<Ship::BinaryReader>>(file->Reader);
 
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 4; j++) {
 #ifdef GBI_FLOATS
-            matrix->Matrx.mf[i][j] = reader->ReadFloat();
+            matrix->Matrx.mf[i][j] = reader->ReadInt32();
 #else
             matrix->Matrx.m[i][j] = reader->ReadInt32();
 #endif
@@ -25,4 +23,4 @@ ResourceFactoryBinaryMatrixV0::ReadResource(std::shared_ptr<Ship::File> file,
 
     return matrix;
 }
-} // namespace Fast
+} // namespace LUS

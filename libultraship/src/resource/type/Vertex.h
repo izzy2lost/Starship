@@ -5,7 +5,7 @@
 
 union Vtx;
 
-namespace Fast {
+namespace LUS {
 class Vertex : public Ship::Resource<Vtx> {
   public:
     using Resource::Resource;
@@ -17,4 +17,4 @@ class Vertex : public Ship::Resource<Vtx> {
 
     std::vector<Vtx> VertexList;
 };
-} // namespace Fast
+} // namespace LUS

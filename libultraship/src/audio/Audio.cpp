@@ -1,7 +1,6 @@
 #include "Audio.h"
 
 #include "Context.h"
-#include "controller/controldeck/ControlDeck.h"
 
 namespace Ship {
 
@@ -10,7 +9,7 @@ Audio::~Audio() {
 }
 
 void Audio::InitAudioPlayer() {
-    switch (GetCurrentAudioBackend()) {
+    switch (GetAudioBackend()) {
 #ifdef _WIN32
         case AudioBackend::WASAPI:
             mAudioPlayer = std::make_shared<WasapiAudioPlayer>(this->mAudioSettings);
@@ -24,7 +23,7 @@ void Audio::InitAudioPlayer() {
         if (!mAudioPlayer->Init()) {
             // Failed to initialize system audio player.
             // Fallback to SDL if the native system player does not work.
-            SetCurrentAudioBackend(AudioBackend::SDL);
+            SetAudioBackend(AudioBackend::SDL);
             mAudioPlayer = std::make_shared<SDLAudioPlayer>(this->mAudioSettings);
             mAudioPlayer->Init();
         }
@@ -38,20 +37,20 @@ void Audio::Init() {
 #endif
     mAvailableAudioBackends->push_back(AudioBackend::SDL);
 
-    SetCurrentAudioBackend(Context::GetInstance()->GetConfig()->GetCurrentAudioBackend());
+    SetAudioBackend(Context::GetInstance()->GetConfig()->GetAudioBackend());
 }
 
 std::shared_ptr<AudioPlayer> Audio::GetAudioPlayer() {
     return mAudioPlayer;
 }
 
-AudioBackend Audio::GetCurrentAudioBackend() {
+AudioBackend Audio::GetAudioBackend() {
     return mAudioBackend;
 }
 
-void Audio::SetCurrentAudioBackend(AudioBackend backend) {
+void Audio::SetAudioBackend(AudioBackend backend) {
     mAudioBackend = backend;
-    Context::GetInstance()->GetConfig()->SetCurrentAudioBackend(GetCurrentAudioBackend());
+    Context::GetInstance()->GetConfig()->SetAudioBackend(GetAudioBackend());
     Context::GetInstance()->GetConfig()->Save();
 
     InitAudioPlayer();

@@ -13,7 +13,7 @@ namespace Ship {
 
 class ControllerLEDMapping : public ControllerMapping {
   public:
-    ControllerLEDMapping(PhysicalDeviceType physicalDeviceType, uint8_t portIndex, uint8_t colorSource,
+    ControllerLEDMapping(ShipDeviceIndex shipDeviceIndex, uint8_t portIndex, uint8_t colorSource,
                          Color_RGB8 savedColor);
     ~ControllerLEDMapping();
 

@@ -10,9 +10,9 @@
 extern "C" {
 #endif
 
-void GfxDebuggerRequestDebugging();
-bool GfxDebuggerIsDebugging();
-bool GfxDebuggerIsDebuggingRequested();
+void GfxDebuggerRequestDebugging(void);
+bool GfxDebuggerIsDebugging(void);
+bool GfxDebuggerIsDebuggingRequested(void);
 void GfxDebuggerDebugDisplayList(void* cmds);
 
 #ifdef __cplusplus

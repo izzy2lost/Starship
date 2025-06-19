@@ -5,7 +5,6 @@
 namespace Ship {
 class ResourceFactoryXML : public ResourceFactory {
   protected:
-    bool FileHasValidFormatAndReader(std::shared_ptr<File> file,
-                                     std::shared_ptr<Ship::ResourceInitData> initData) override;
+    bool FileHasValidFormatAndReader(std::shared_ptr<File> file) override;
 };
 } // namespace Ship

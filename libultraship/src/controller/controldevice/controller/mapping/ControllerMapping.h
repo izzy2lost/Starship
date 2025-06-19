@@ -1,23 +1,23 @@
 #pragma once
 
 #include <string>
-#include "controller/physicaldevice/PhysicalDeviceType.h"
+#include "controller/deviceindex/ShipDeviceIndex.h"
 
 namespace Ship {
 
-#define MAPPING_TYPE_UNKNOWN -1
 #define MAPPING_TYPE_GAMEPAD 0
 #define MAPPING_TYPE_KEYBOARD 1
-#define MAPPING_TYPE_MOUSE 2
+#define MAPPING_TYPE_UNKNOWN 2
 
 class ControllerMapping {
   public:
-    ControllerMapping(PhysicalDeviceType physicalDeviceType);
+    ControllerMapping(ShipDeviceIndex shipDeviceIndex);
     ~ControllerMapping();
     virtual std::string GetPhysicalDeviceName();
-    PhysicalDeviceType GetPhysicalDeviceType();
+    ShipDeviceIndex GetShipDeviceIndex();
+    virtual bool PhysicalDeviceIsConnected() = 0;
 
   protected:
-    PhysicalDeviceType mPhysicalDeviceType;
+    ShipDeviceIndex mShipDeviceIndex;
 };
 } // namespace Ship

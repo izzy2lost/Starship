@@ -24,22 +24,21 @@ class ControllerButton {
     void ClearButtonMappingId(std::string id);
     void ClearButtonMapping(std::string id);
     void ClearButtonMapping(std::shared_ptr<ControllerButtonMapping> mapping);
-    void AddDefaultMappings(PhysicalDeviceType physicalDeviceType);
+    void AddDefaultMappings(ShipDeviceIndex shipDeviceIndex);
 
     void LoadButtonMappingFromConfig(std::string id);
     void SaveButtonMappingIdsToConfig();
     void ReloadAllMappingsFromConfig();
     void ClearAllButtonMappings();
-    void ClearAllButtonMappingsForDeviceType(PhysicalDeviceType physicalDeviceType);
+    void ClearAllButtonMappingsForDevice(ShipDeviceIndex shipDeviceIndex);
 
     bool AddOrEditButtonMappingFromRawPress(CONTROLLERBUTTONS_T bitmask, std::string id);
 
     void UpdatePad(CONTROLLERBUTTONS_T& padButtons);
 
     bool ProcessKeyboardEvent(KbEventType eventType, KbScancode scancode);
-    bool ProcessMouseButtonEvent(bool isPressed, Ship::MouseBtn button);
 
-    bool HasMappingsForPhysicalDeviceType(PhysicalDeviceType physicalDeviceType);
+    bool HasMappingsForShipDeviceIndex(ShipDeviceIndex lusIndex);
 
   private:
     uint8_t mPortIndex;
@@ -47,8 +46,7 @@ class ControllerButton {
     std::unordered_map<std::string, std::shared_ptr<ControllerButtonMapping>> mButtonMappings;
     std::string GetConfigNameFromBitmask(CONTROLLERBUTTONS_T bitmask);
 
-    bool mUseEventInputToCreateNewMapping;
+    bool mUseKeydownEventToCreateNewMapping;
     KbScancode mKeyboardScancodeForNewMapping;
-    MouseBtn mMouseButtonForNewMapping;
 };
 } // namespace Ship

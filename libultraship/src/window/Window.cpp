@@ -5,7 +5,6 @@
 #include "public/bridge/consolevariablebridge.h"
 #include "controller/controldevice/controller/mapping/keyboard/KeyboardScancodes.h"
 #include "Context.h"
-#include "controller/controldeck/ControlDeck.h"
 
 #ifdef __APPLE__
 #include "utils/AppleFolderManager.h"
@@ -13,20 +12,16 @@
 
 namespace Ship {
 
-Window::Window(std::shared_ptr<Gui> gui) {
-    mGui = gui;
+Window::Window(std::vector<std::shared_ptr<GuiWindow>> guiWindows) {
+    mGui = std::make_shared<Gui>(guiWindows);
     mAvailableWindowBackends = std::make_shared<std::vector<WindowBackend>>();
     mConfig = Context::GetInstance()->GetConfig();
-}
-
-Window::Window(std::vector<std::shared_ptr<GuiWindow>> guiWindows) : Window(std::make_shared<Gui>(guiWindows)) {
 }
 
 Window::Window() : Window(std::vector<std::shared_ptr<GuiWindow>>()) {
 }
 
 Window::~Window() {
-    mGui->ShutDownImGui(this);
     SPDLOG_DEBUG("destruct window");
 }
 

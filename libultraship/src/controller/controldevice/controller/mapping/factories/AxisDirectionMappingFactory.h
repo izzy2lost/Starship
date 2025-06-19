@@ -9,18 +9,15 @@ namespace Ship {
 class AxisDirectionMappingFactory {
   public:
     static std::shared_ptr<ControllerAxisDirectionMapping>
-    CreateAxisDirectionMappingFromConfig(uint8_t portIndex, StickIndex stickIndex, std::string id);
+    CreateAxisDirectionMappingFromConfig(uint8_t portIndex, Stick stick, std::string id);
 
     static std::vector<std::shared_ptr<ControllerAxisDirectionMapping>>
-    CreateDefaultKeyboardAxisDirectionMappings(uint8_t portIndex, StickIndex stickIndex);
+    CreateDefaultKeyboardAxisDirectionMappings(uint8_t portIndex, Stick stick);
 
     static std::vector<std::shared_ptr<ControllerAxisDirectionMapping>>
-    CreateDefaultSDLAxisDirectionMappings(uint8_t portIndex, StickIndex stickIndex);
+    CreateDefaultSDLAxisDirectionMappings(ShipDeviceIndex shipDeviceIndex, uint8_t portIndex, Stick stick);
 
     static std::shared_ptr<ControllerAxisDirectionMapping>
-    CreateAxisDirectionMappingFromSDLInput(uint8_t portIndex, StickIndex stickIndex, Direction direction);
-
-    static std::shared_ptr<ControllerAxisDirectionMapping>
-    CreateAxisDirectionMappingFromMouseWheelInput(uint8_t portIndex, StickIndex stickIndex, Direction direction);
+    CreateAxisDirectionMappingFromSDLInput(uint8_t portIndex, Stick stick, Direction direction);
 };
 } // namespace Ship

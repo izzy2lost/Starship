@@ -6,10 +6,6 @@
 #include "config/Config.h"
 #include "Context.h"
 
-#ifdef _MSC_VER
-#define strdup _strdup
-#endif
-
 namespace Ship {
 
 ConsoleVariable::ConsoleVariable() {
@@ -49,7 +45,7 @@ const char* ConsoleVariable::GetString(const char* name, const char* defaultValu
     auto variable = Get(name);
 
     if (variable != nullptr && variable->Type == ConsoleVariableType::String) {
-        return variable->String;
+        return variable->String.c_str();
     }
 
     return defaultValue;
@@ -115,10 +111,7 @@ void ConsoleVariable::SetString(const char* name, const char* value) {
     }
 
     variable->Type = ConsoleVariableType::String;
-    if (variable->String != nullptr) {
-        free(variable->String);
-    }
-    variable->String = strdup(value);
+    variable->String = std::string(value);
 }
 
 void ConsoleVariable::SetColor(const char* name, Color_RGBA8 value) {
@@ -192,9 +185,6 @@ void ConsoleVariable::ClearVariable(const char* name) {
             conf->Erase(std::string("CVars.") + g);
             conf->Erase(std::string("CVars.") + r);
             conf->Erase(std::string("CVars.") + t);
-        } else if (var->Type == ConsoleVariableType::String) {
-            free(var->String);
-            var->String = nullptr;
         }
     }
     mVariables.erase(name);
@@ -226,10 +216,7 @@ void ConsoleVariable::CopyVariable(const char* from, const char* to) {
             variableTo->Float = variableFrom->Float;
             break;
         case ConsoleVariableType::String:
-            if (variableTo->String != nullptr) {
-                free(variableTo->String);
-            }
-            variableTo->String = strdup(variableFrom->String);
+            variableTo->String = variableFrom->String;
             break;
         case ConsoleVariableType::Color:
             variableTo->Color = variableFrom->Color;
@@ -247,7 +234,7 @@ void ConsoleVariable::Save() {
         const std::string key = StringHelper::Sprintf("CVars.%s", variable.first.c_str());
 
         if (variable.second->Type == ConsoleVariableType::String && variable.second != nullptr) {
-            conf->SetString(key, variable.second->String);
+            conf->SetString(key, std::string(variable.second->String));
         } else if (variable.second->Type == ConsoleVariableType::Integer) {
             conf->SetInt(key, variable.second->Integer);
         } else if (variable.second->Type == ConsoleVariableType::Float) {
@@ -367,7 +354,11 @@ void ConsoleVariable::LoadLegacy() {
             if (cfg[1].find("\"") != std::string::npos) {
                 std::string value(cfg[1]);
                 value.erase(std::remove(value.begin(), value.end(), '\"'), value.end());
+#ifdef _MSC_VER
+                SetString(cfg[0].c_str(), _strdup(value.c_str()));
+#else
                 SetString(cfg[0].c_str(), strdup(value.c_str()));
+#endif
             }
             if (Math::IsNumber<float>(cfg[1])) {
                 SetFloat(cfg[0].c_str(), std::stof(cfg[1]));

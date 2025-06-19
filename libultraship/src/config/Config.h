@@ -57,18 +57,18 @@ class Config {
     void SetUInt(const std::string& key, uint32_t value);
     void Erase(const std::string& key);
     void EraseBlock(const std::string& key);
-    void SetBlock(const std::string& key, nlohmann::json block);
     void Copy(const std::string& fromKey, const std::string& toKey);
     bool Contains(const std::string& key);
     void Reload();
     void Save();
     nlohmann::json GetNestedJson();
+    nlohmann::json GetFlattenedJson();
+    bool IsNewInstance();
 
-    AudioBackend GetCurrentAudioBackend();
-    void SetCurrentAudioBackend(AudioBackend backend);
+    AudioBackend GetAudioBackend();
+    void SetAudioBackend(AudioBackend backend);
     WindowBackend GetWindowBackend();
     void SetWindowBackend(WindowBackend backend);
-    AudioChannelsSetting GetCurrentAudioChannelsSetting();
 
     /**
      * @brief Adds a ConfigVersionUpdater instance to the list to be run later via RunVersionUpdates
@@ -78,7 +78,7 @@ class Config {
      * @return false if the insert failed, i.e. if the list already has a ConfigVersionUpdater with
      * a matching version.
      */
-    bool RegisterVersionUpdater(std::shared_ptr<ConfigVersionUpdater> versionUpdater);
+    bool RegisterConfigVersionUpdater(std::shared_ptr<ConfigVersionUpdater> versionUpdater);
 
     /**
      * @brief Runs the Update function on each ConfigVersionUpdater instance if the version matches\

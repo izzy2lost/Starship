@@ -9,7 +9,7 @@
 #include "Context.h"
 
 #ifdef __APPLE__
-#include "graphic/Fast3D/backends/gfx_metal.h"
+#include "graphic/Fast3D/gfx_metal.h"
 #endif
 
 namespace fs = std::filesystem;
@@ -131,52 +131,19 @@ void Config::Erase(const std::string& key) {
     mFlattenedJson.erase(FormatNestedKey(key));
 }
 
-void Config::SetBlock(const std::string& key, nlohmann::json block) {
-    nlohmann::json gjson = mFlattenedJson.unflatten();
-    if (key.find(".") != std::string::npos) {
-        nlohmann::json* gjson2 = &gjson;
-        std::vector<std::string> dots = StringHelper::Split(key, ".");
-        if (dots.size() > 1) {
-            size_t curDot = 0;
-            for (auto& dot : dots) {
-                if (curDot == dots.size() - 1) {
-                    if (gjson2->contains(dot)) {
-                        gjson2->at(dot) = block;
-                        break;
-                    } else {
-                        gjson2->emplace(dot, block);
-                        break;
-                    }
-                } else if (gjson2->contains(dot)) {
-                    gjson2 = &gjson2->at(dot);
-                    curDot++;
-                }
-            }
-        }
-    } else {
-        if (gjson.contains(key)) {
-            gjson[key] = block;
-        }
-    }
-    mFlattenedJson = gjson.flatten();
-    Save();
-}
-
 void Config::EraseBlock(const std::string& key) {
     nlohmann::json gjson = mFlattenedJson.unflatten();
     if (key.find(".") != std::string::npos) {
-        nlohmann::json* gjson2 = &gjson;
+        nlohmann::json& gjson2 = gjson;
         std::vector<std::string> dots = StringHelper::Split(key, ".");
         if (dots.size() > 1) {
             size_t curDot = 0;
             for (auto& dot : dots) {
-                if (gjson2->contains(dot)) {
-                    if (curDot == dots.size() - 1) {
-                        gjson2->at(dot).clear();
-                        gjson2->erase(dot);
+                if (gjson2.contains(dot)) {
+                    if (curDot == dots.size()) {
+                        gjson2.erase(dot);
                     } else {
-                        gjson2 = &gjson2->at(dot);
-                        curDot++;
+                        gjson2 = gjson2[dot];
                     }
                 }
             }
@@ -187,7 +154,6 @@ void Config::EraseBlock(const std::string& key) {
         }
     }
     mFlattenedJson = gjson.flatten();
-    Save();
 }
 
 void Config::Copy(const std::string& fromKey, const std::string& toKey) {
@@ -214,8 +180,7 @@ void Config::Reload() {
 
 void Config::Save() {
     std::ofstream file(mPath);
-    mNestedJson = mFlattenedJson.unflatten();
-    file << mNestedJson.dump(4);
+    file << mFlattenedJson.unflatten().dump(4);
 }
 
 template <typename T> std::vector<T> Config::GetArray(const std::string& key) {
@@ -233,7 +198,15 @@ nlohmann::json Config::GetNestedJson() {
     return mNestedJson;
 }
 
-AudioBackend Config::GetCurrentAudioBackend() {
+nlohmann::json Config::GetFlattenedJson() {
+    return mFlattenedJson;
+}
+
+bool Config::IsNewInstance() {
+    return mIsNewInstance;
+}
+
+AudioBackend Config::GetAudioBackend() {
     std::string backendName = GetString("Window.AudioBackend");
     if (backendName == "wasapi") {
         return AudioBackend::WASAPI;
@@ -241,7 +214,7 @@ AudioBackend Config::GetCurrentAudioBackend() {
 
     // Migrate pulse player in config to sdl
     if (backendName == "pulse") {
-        SetCurrentAudioBackend(AudioBackend::SDL);
+        SetAudioBackend(AudioBackend::SDL);
         return AudioBackend::SDL;
     }
 
@@ -258,20 +231,7 @@ AudioBackend Config::GetCurrentAudioBackend() {
     return AudioBackend::SDL;
 }
 
-AudioChannelsSetting Config::GetCurrentAudioChannelsSetting() {
-    int32_t surround =
-        GetInt("CVars." CVAR_AUDIO_CHANNELS_SETTING, static_cast<int32_t>(AudioChannelsSetting::audioMax));
-    switch (surround) {
-        case AudioChannelsSetting::audioSurround51:
-            return AudioChannelsSetting::audioSurround51;
-        case AudioChannelsSetting::audioStereo:
-        case AudioChannelsSetting::audioMax:
-        default:
-            return AudioChannelsSetting::audioStereo;
-    }
-}
-
-void Config::SetCurrentAudioBackend(AudioBackend backend) {
+void Config::SetAudioBackend(AudioBackend backend) {
     switch (backend) {
         case AudioBackend::WASAPI:
             SetString("Window.AudioBackend", "wasapi");
@@ -323,7 +283,7 @@ void Config::SetWindowBackend(WindowBackend backend) {
     }
 }
 
-bool Config::RegisterVersionUpdater(std::shared_ptr<ConfigVersionUpdater> versionUpdater) {
+bool Config::RegisterConfigVersionUpdater(std::shared_ptr<ConfigVersionUpdater> versionUpdater) {
     auto [_, emplaced] = mVersionUpdaters.emplace(versionUpdater->GetVersion(), versionUpdater);
     return emplaced;
 }

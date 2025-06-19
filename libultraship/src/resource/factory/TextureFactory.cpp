@@ -2,16 +2,14 @@
 #include "resource/type/Texture.h"
 #include "spdlog/spdlog.h"
 
-namespace Fast {
+namespace LUS {
 
-std::shared_ptr<Ship::IResource>
-ResourceFactoryBinaryTextureV0::ReadResource(std::shared_ptr<Ship::File> file,
-                                             std::shared_ptr<Ship::ResourceInitData> initData) {
-    if (!FileHasValidFormatAndReader(file, initData)) {
+std::shared_ptr<Ship::IResource> ResourceFactoryBinaryTextureV0::ReadResource(std::shared_ptr<Ship::File> file) {
+    if (!FileHasValidFormatAndReader(file)) {
         return nullptr;
     }
 
-    auto texture = std::make_shared<Texture>(initData);
+    auto texture = std::make_shared<Texture>(file->InitData);
     auto reader = std::get<std::shared_ptr<Ship::BinaryReader>>(file->Reader);
 
     texture->Type = (TextureType)reader->ReadUInt32();
@@ -25,14 +23,12 @@ ResourceFactoryBinaryTextureV0::ReadResource(std::shared_ptr<Ship::File> file,
     return texture;
 }
 
-std::shared_ptr<Ship::IResource>
-ResourceFactoryBinaryTextureV1::ReadResource(std::shared_ptr<Ship::File> file,
-                                             std::shared_ptr<Ship::ResourceInitData> initData) {
-    if (!FileHasValidFormatAndReader(file, initData)) {
+std::shared_ptr<Ship::IResource> ResourceFactoryBinaryTextureV1::ReadResource(std::shared_ptr<Ship::File> file) {
+    if (!FileHasValidFormatAndReader(file)) {
         return nullptr;
     }
 
-    auto texture = std::make_shared<Texture>(initData);
+    auto texture = std::make_shared<Texture>(file->InitData);
     auto reader = std::get<std::shared_ptr<Ship::BinaryReader>>(file->Reader);
 
     texture->Type = (TextureType)reader->ReadUInt32();
@@ -48,4 +44,4 @@ ResourceFactoryBinaryTextureV1::ReadResource(std::shared_ptr<Ship::File> file,
 
     return texture;
 }
-} // namespace Fast
+} // namespace LUS

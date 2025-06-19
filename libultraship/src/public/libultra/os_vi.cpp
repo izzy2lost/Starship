@@ -36,11 +36,11 @@ void osViSetMode(OSViMode* a) {
 void osViBlack(uint8_t a) {
 }
 
-void* osViGetNextFramebuffer() {
+void* osViGetNextFramebuffer(void) {
     return nullptr;
 }
 
-void* osViGetCurrentFramebuffer() {
+void* osViGetCurrentFramebuffer(void) {
     return nullptr;
 }
 

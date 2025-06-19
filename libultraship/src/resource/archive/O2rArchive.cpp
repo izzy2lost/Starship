@@ -1,7 +1,6 @@
 #include "O2rArchive.h"
 
 #include "Context.h"
-#include "window/Window.h"
 #include "spdlog/spdlog.h"
 
 namespace Ship {
@@ -10,16 +9,15 @@ O2rArchive::O2rArchive(const std::string& archivePath) : Archive(archivePath) {
 
 O2rArchive::~O2rArchive() {
     SPDLOG_TRACE("destruct o2rarchive: {}", GetPath());
-    Close();
 }
 
-std::shared_ptr<File> O2rArchive::LoadFile(uint64_t hash) {
+std::shared_ptr<File> O2rArchive::LoadFileRaw(uint64_t hash) {
     const std::string& filePath =
         *Context::GetInstance()->GetResourceManager()->GetArchiveManager()->HashToString(hash);
-    return LoadFile(filePath);
+    return LoadFileRaw(filePath);
 }
 
-std::shared_ptr<File> O2rArchive::LoadFile(const std::string& filePath) {
+std::shared_ptr<File> O2rArchive::LoadFileRaw(const std::string& filePath) {
     if (mZipArchive == nullptr) {
         SPDLOG_TRACE("Failed to open file {} from zip archive {}. Archive not open.", filePath, GetPath());
         return nullptr;
@@ -35,12 +33,6 @@ std::shared_ptr<File> O2rArchive::LoadFile(const std::string& filePath) {
     zip_stat_init(&zipEntryStat);
     if (zip_stat_index(mZipArchive, zipEntryIndex, 0, &zipEntryStat) != 0) {
         SPDLOG_TRACE("Failed to get entry information for file {} in zip archive  {}.", filePath, GetPath());
-        return nullptr;
-    }
-
-    // Filesize 0, no logging needed
-    if (zipEntryStat.size == 0) {
-        SPDLOG_TRACE("Failed to load file {}; filesize 0", filePath, GetPath());
         return nullptr;
     }
 
@@ -67,7 +59,7 @@ std::shared_ptr<File> O2rArchive::LoadFile(const std::string& filePath) {
 }
 
 bool O2rArchive::Open() {
-    mZipArchive = zip_open(GetPath().c_str(), ZIP_CREATE, nullptr);
+    mZipArchive = zip_open(GetPath().c_str(), ZIP_RDONLY, nullptr);
     if (mZipArchive == nullptr) {
         SPDLOG_ERROR("Failed to load zip file \"{}\"", GetPath());
         return false;
@@ -90,11 +82,6 @@ bool O2rArchive::Open() {
 }
 
 bool O2rArchive::Close() {
-    if (mZipArchive == nullptr) {
-        SPDLOG_ERROR("Cannot close zip file. Zip file not loaded. \"{}\"", GetPath());
-        return false;
-    }
-
     if (zip_close(mZipArchive) == -1) {
         SPDLOG_ERROR("Failed to close zip file \"{}\"", GetPath());
         return false;
@@ -102,49 +89,4 @@ bool O2rArchive::Close() {
 
     return true;
 }
-
-bool O2rArchive::WriteFile(const std::string& filePath, const std::vector<uint8_t>& data) {
-    if (!mZipArchive) {
-        SPDLOG_ERROR("Cannot write to zip: Archive is not open.");
-        return false;
-    }
-
-    // Create a new zip source from the data buffer
-    zip_source_t* source = zip_source_buffer(mZipArchive, data.data(), data.size(), 0);
-    if (!source) {
-        SPDLOG_ERROR("Failed to create zip source for file \"{}\"", filePath);
-        return false;
-    }
-
-    // Add or replace the file in the zip archive
-    if (zip_file_add(mZipArchive, filePath.c_str(), source, ZIP_FL_ENC_UTF_8 | ZIP_FL_OVERWRITE) < 0) {
-        SPDLOG_ERROR("Failed to add file \"{}\" to ZIP", filePath);
-        zip_source_free(source);
-        return false;
-    }
-
-    // Save changes to disk
-    if (zip_close(mZipArchive) < 0) {
-        zip_error_t* error = zip_get_error(mZipArchive);
-        SPDLOG_ERROR("Failed to save changes to zip archive: {} ({})", zip_error_strerror(error),
-                     zip_error_code_zip(error));
-        zip_discard(mZipArchive); // Close zip and discard changes
-        return false;
-    }
-
-    SPDLOG_INFO("Successfully wrote file: {}", filePath);
-
-    // Reopen the zip file so that it may continued to be used by libultraship
-    mZipArchive = zip_open(GetPath().c_str(), ZIP_CREATE, nullptr);
-    if (mZipArchive == nullptr) {
-        SPDLOG_ERROR("Failed to reopen zip file after writing.");
-        return false;
-    }
-
-    IndexFile(filePath);
-
-    // Success
-    return true;
-}
-
 } // namespace Ship

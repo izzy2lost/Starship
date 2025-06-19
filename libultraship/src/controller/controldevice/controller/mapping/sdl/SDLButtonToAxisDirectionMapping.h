@@ -4,14 +4,12 @@
 namespace Ship {
 class SDLButtonToAxisDirectionMapping final : public ControllerAxisDirectionMapping, public SDLButtonToAnyMapping {
   public:
-    SDLButtonToAxisDirectionMapping(uint8_t portIndex, StickIndex stickIndex, Direction direction,
-                                    int32_t sdlControllerButton);
+    SDLButtonToAxisDirectionMapping(ShipDeviceIndex shipDeviceIndex, uint8_t portIndex, Stick stick,
+                                    Direction direction, int32_t sdlControllerButton);
     float GetNormalizedAxisDirectionValue() override;
     std::string GetAxisDirectionMappingId() override;
-    int8_t GetMappingType() override;
+    uint8_t GetMappingType() override;
     void SaveToConfig() override;
     void EraseFromConfig() override;
-    std::string GetPhysicalDeviceName() override;
-    std::string GetPhysicalInputName() override;
 };
 } // namespace Ship

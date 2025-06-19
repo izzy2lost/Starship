@@ -18,7 +18,7 @@ OtrArchive::~OtrArchive() {
     SPDLOG_TRACE("destruct otrarchive: {}", GetPath());
 }
 
-std::shared_ptr<File> OtrArchive::LoadFile(const std::string& filePath) {
+std::shared_ptr<File> OtrArchive::LoadFileRaw(const std::string& filePath) {
     if (mHandle == nullptr) {
         SPDLOG_TRACE("Failed to open file {} from mpq archive {}. Archive not open.", filePath, GetPath());
         return nullptr;
@@ -33,10 +33,6 @@ std::shared_ptr<File> OtrArchive::LoadFile(const std::string& filePath) {
 
     auto fileToLoad = std::make_shared<File>();
     DWORD fileSize = SFileGetFileSize(fileHandle, 0);
-    if (fileSize == 0) {
-        SPDLOG_TRACE("({}) Failed to load file {}; filesize 0", GetLastError(), filePath, GetPath());
-        return nullptr;
-    }
     DWORD readBytes;
     fileToLoad->Buffer = std::make_shared<std::vector<char>>(fileSize);
     bool readFileSuccess = SFileReadFile(fileHandle, fileToLoad->Buffer->data(), fileSize, &readBytes, NULL);
@@ -61,10 +57,10 @@ std::shared_ptr<File> OtrArchive::LoadFile(const std::string& filePath) {
     return fileToLoad;
 }
 
-std::shared_ptr<File> OtrArchive::LoadFile(uint64_t hash) {
+std::shared_ptr<File> OtrArchive::LoadFileRaw(uint64_t hash) {
     const std::string& filePath =
         *Context::GetInstance()->GetResourceManager()->GetArchiveManager()->HashToString(hash);
-    return LoadFile(filePath);
+    return LoadFileRaw(filePath);
 }
 
 bool OtrArchive::Open() {
@@ -79,7 +75,7 @@ bool OtrArchive::Open() {
 
     // Generate the file list by reading the list file.
     // This can also be done via the StormLib API, but this was copied from the LUS1.x implementation in GenerateCrcMap.
-    auto listFile = LoadFile("(listfile)");
+    auto listFile = LoadFileRaw("(listfile)");
 
     // Use std::string_view to avoid unnecessary string copies
     std::vector<std::string_view> lines =
@@ -103,11 +99,6 @@ bool OtrArchive::Close() {
     }
 
     return closed;
-}
-
-bool OtrArchive::WriteFile(const std::string& filename, const std::vector<uint8_t>& data) {
-    SPDLOG_INFO("otr does not support WriteFile, please use an o2r instead");
-    return false;
 }
 
 } // namespace Ship

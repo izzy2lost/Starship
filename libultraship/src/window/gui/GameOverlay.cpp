@@ -7,7 +7,6 @@
 #include "resource/archive/Archive.h"
 #include "resource/ResourceManager.h"
 #include "Context.h"
-#include "window/Window.h"
 #include "utils/StringHelper.h"
 
 namespace Ship {
@@ -18,25 +17,7 @@ GameOverlay::~GameOverlay() {
     SPDLOG_TRACE("destruct game overlay");
 }
 
-void GameOverlay::LoadFont(const std::string& name, float fontSize, const ResourceIdentifier& identifier) {
-    ImGuiIO& io = ImGui::GetIO();
-    auto initData = std::make_shared<ResourceInitData>();
-    initData->Format = RESOURCE_FORMAT_BINARY;
-    initData->Type = static_cast<uint32_t>(RESOURCE_TYPE_FONT);
-    initData->ResourceVersion = 0;
-    initData->Path = identifier.Path;
-    std::shared_ptr<Font> font = std::static_pointer_cast<Font>(
-        Context::GetInstance()->GetResourceManager()->LoadResource(identifier, false, initData));
-
-    if (font == nullptr) {
-        SPDLOG_ERROR("Failed to load font: {}", name);
-        return;
-    }
-
-    mFonts[name] = io.Fonts->AddFontFromMemoryTTF(font->Data, font->DataSize, fontSize);
-}
-
-void GameOverlay::LoadFont(const std::string& name, float fontSize, const std::string& path) {
+void GameOverlay::LoadFont(const std::string& name, const std::string& path, float fontSize) {
     ImGuiIO& io = ImGui::GetIO();
     auto initData = std::make_shared<ResourceInitData>();
     initData->Format = RESOURCE_FORMAT_BINARY;
@@ -168,7 +149,7 @@ void GameOverlay::SetCurrentFont(const std::string& name) {
 
     mCurrentFont = name;
     CVarSetString(CVAR_GAME_OVERLAY_FONT, name.c_str());
-    Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesOnNextTick();
 }
 
 void GameOverlay::DrawSettings() {
@@ -214,7 +195,7 @@ void GameOverlay::Draw() {
                     TextDraw(30, textY, true, color, "%s %d", text, var->Integer);
                     break;
                 case ConsoleVariableType::String:
-                    TextDraw(30, textY, true, color, "%s %s", text, var->String);
+                    TextDraw(30, textY, true, color, "%s %s", text, var->String.c_str());
                     break;
                 case ConsoleVariableType::Color:
                     TextDraw(30, textY, true, color, "%s (%u, %u, %u, %u)", text, var->Color.r, var->Color.g,
@@ -236,8 +217,8 @@ void GameOverlay::Draw() {
 
             const ImVec4 color = ImVec4(1.0f, 1.0f, 1.0f, duration);
 #ifdef __ANDROID__
-            const float textWidth = GetStringWidth(overlay.Value.c_str()) * 2.0f;
-            const float textOffset = 40.0f * 2.0f;
+            const float textWidth = GetStringWidth(overlay.Value.c_str()) * 3.0f;
+            const float textOffset = 40.0f*3;
 #else
             const float textWidth = GetStringWidth(overlay.Value.c_str());
             const float textOffset = 40.0f;
@@ -251,18 +232,5 @@ void GameOverlay::Draw() {
     }
 
     ImGui::End();
-}
-
-ImGuiID GameOverlay::GetID() {
-    static ImGuiID windowID = 0;
-    if (windowID != 0) {
-        return windowID;
-    }
-    ImGuiWindow* window = ImGui::FindWindowByName("GameOverlay");
-    if (window == NULL) {
-        return 0;
-    }
-    windowID = window->ID;
-    return windowID;
 }
 } // namespace Ship

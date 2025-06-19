@@ -7,7 +7,7 @@ class GuiElement {
   public:
     GuiElement(bool isVisible);
     GuiElement();
-    virtual ~GuiElement();
+    ~GuiElement();
 
     void Init();
     virtual void Draw() = 0;

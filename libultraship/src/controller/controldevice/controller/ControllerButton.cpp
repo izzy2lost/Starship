@@ -3,20 +3,16 @@
 #include "controller/controldevice/controller/mapping/factories/ButtonMappingFactory.h"
 
 #include "controller/controldevice/controller/mapping/keyboard/KeyboardKeyToButtonMapping.h"
-#include "controller/controldevice/controller/mapping/mouse/MouseButtonToButtonMapping.h"
 
 #include "public/bridge/consolevariablebridge.h"
 #include "utils/StringHelper.h"
 #include <sstream>
 #include <algorithm>
 
-#include "Context.h"
-#include "window/Window.h"
-
 namespace Ship {
 ControllerButton::ControllerButton(uint8_t portIndex, CONTROLLERBUTTONS_T bitmask)
-    : mPortIndex(portIndex), mBitmask(bitmask), mUseEventInputToCreateNewMapping(false),
-      mKeyboardScancodeForNewMapping(LUS_KB_UNKNOWN), mMouseButtonForNewMapping(LUS_MOUSE_BTN_UNKNOWN) {
+    : mPortIndex(portIndex), mBitmask(bitmask), mUseKeydownEventToCreateNewMapping(false),
+      mKeyboardScancodeForNewMapping(LUS_KB_UNKNOWN) {
 }
 
 ControllerButton::~ControllerButton() {
@@ -147,10 +143,10 @@ void ControllerButton::ClearAllButtonMappings() {
     SaveButtonMappingIdsToConfig();
 }
 
-void ControllerButton::ClearAllButtonMappingsForDeviceType(PhysicalDeviceType physicalDeviceType) {
+void ControllerButton::ClearAllButtonMappingsForDevice(ShipDeviceIndex shipDeviceIndex) {
     std::vector<std::string> mappingIdsToRemove;
     for (auto [id, mapping] : mButtonMappings) {
-        if (mapping->GetPhysicalDeviceType() == physicalDeviceType) {
+        if (mapping->GetShipDeviceIndex() == shipDeviceIndex) {
             mapping->EraseFromConfig();
             mappingIdsToRemove.push_back(id);
         }
@@ -171,27 +167,17 @@ void ControllerButton::UpdatePad(CONTROLLERBUTTONS_T& padButtons) {
     }
 }
 
-bool ControllerButton::HasMappingsForPhysicalDeviceType(PhysicalDeviceType physicalDeviceType) {
-    return std::any_of(mButtonMappings.begin(), mButtonMappings.end(), [physicalDeviceType](const auto& mapping) {
-        return mapping.second->GetPhysicalDeviceType() == physicalDeviceType;
-    });
+bool ControllerButton::HasMappingsForShipDeviceIndex(ShipDeviceIndex lusIndex) {
+    return std::any_of(mButtonMappings.begin(), mButtonMappings.end(),
+                       [lusIndex](const auto& mapping) { return mapping.second->GetShipDeviceIndex() == lusIndex; });
 }
 
 bool ControllerButton::AddOrEditButtonMappingFromRawPress(CONTROLLERBUTTONS_T bitmask, std::string id) {
     std::shared_ptr<ControllerButtonMapping> mapping = nullptr;
 
-    mUseEventInputToCreateNewMapping = true;
+    mUseKeydownEventToCreateNewMapping = true;
     if (mKeyboardScancodeForNewMapping != LUS_KB_UNKNOWN) {
         mapping = std::make_shared<KeyboardKeyToButtonMapping>(mPortIndex, bitmask, mKeyboardScancodeForNewMapping);
-    }
-
-    else if (!Context::GetInstance()->GetWindow()->GetGui()->IsMouseOverAnyGuiItem() &&
-             Context::GetInstance()->GetWindow()->GetGui()->IsMouseOverActivePopup()) {
-        if (mMouseButtonForNewMapping != LUS_MOUSE_BTN_UNKNOWN) {
-            mapping = std::make_shared<MouseButtonToButtonMapping>(mPortIndex, bitmask, mMouseButtonForNewMapping);
-        } else {
-            mapping = ButtonMappingFactory::CreateButtonMappingFromMouseWheelInput(mPortIndex, bitmask);
-        }
     }
 
     if (mapping == nullptr) {
@@ -203,8 +189,7 @@ bool ControllerButton::AddOrEditButtonMappingFromRawPress(CONTROLLERBUTTONS_T bi
     }
 
     mKeyboardScancodeForNewMapping = LUS_KB_UNKNOWN;
-    mMouseButtonForNewMapping = LUS_MOUSE_BTN_UNKNOWN;
-    mUseEventInputToCreateNewMapping = false;
+    mUseKeydownEventToCreateNewMapping = false;
 
     if (id != "") {
         ClearButtonMapping(id);
@@ -221,13 +206,9 @@ bool ControllerButton::AddOrEditButtonMappingFromRawPress(CONTROLLERBUTTONS_T bi
 }
 
 bool ControllerButton::ProcessKeyboardEvent(KbEventType eventType, KbScancode scancode) {
-    if (mUseEventInputToCreateNewMapping) {
-        if (eventType == LUS_KB_EVENT_KEY_DOWN) {
-            mKeyboardScancodeForNewMapping = scancode;
-            return true;
-        } else {
-            mKeyboardScancodeForNewMapping = LUS_KB_UNKNOWN;
-        }
+    if (mUseKeydownEventToCreateNewMapping && eventType == LUS_KB_EVENT_KEY_DOWN) {
+        mKeyboardScancodeForNewMapping = scancode;
+        return true;
     }
 
     bool result = false;
@@ -243,37 +224,12 @@ bool ControllerButton::ProcessKeyboardEvent(KbEventType eventType, KbScancode sc
     return result;
 }
 
-bool ControllerButton::ProcessMouseButtonEvent(bool isPressed, MouseBtn button) {
-    if (mUseEventInputToCreateNewMapping) {
-        if (isPressed) {
-            mMouseButtonForNewMapping = button;
-            return true;
-        } else {
-            mMouseButtonForNewMapping = LUS_MOUSE_BTN_UNKNOWN;
-        }
+void ControllerButton::AddDefaultMappings(ShipDeviceIndex shipDeviceIndex) {
+    for (auto mapping : ButtonMappingFactory::CreateDefaultSDLButtonMappings(shipDeviceIndex, mPortIndex, mBitmask)) {
+        AddButtonMapping(mapping);
     }
 
-    bool result = false;
-    for (auto [id, mapping] : GetAllButtonMappings()) {
-        if (mapping->GetMappingType() == MAPPING_TYPE_MOUSE) {
-            std::shared_ptr<MouseButtonToButtonMapping> mtobMapping =
-                std::dynamic_pointer_cast<MouseButtonToButtonMapping>(mapping);
-            if (mtobMapping != nullptr) {
-                result = result || mtobMapping->ProcessMouseButtonEvent(isPressed, button);
-            }
-        }
-    }
-    return result;
-}
-
-void ControllerButton::AddDefaultMappings(PhysicalDeviceType physicalDeviceType) {
-    if (physicalDeviceType == PhysicalDeviceType::SDLGamepad) {
-        for (auto mapping : ButtonMappingFactory::CreateDefaultSDLButtonMappings(mPortIndex, mBitmask)) {
-            AddButtonMapping(mapping);
-        }
-    }
-
-    if (physicalDeviceType == PhysicalDeviceType::Keyboard) {
+    if (shipDeviceIndex == ShipDeviceIndex::Keyboard) {
         for (auto mapping : ButtonMappingFactory::CreateDefaultKeyboardButtonMappings(mPortIndex, mBitmask)) {
             AddButtonMapping(mapping);
         }

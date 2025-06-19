@@ -1,5 +1,5 @@
 #include "Context.h"
-#include "controller/KeyboardScancodes.h"
+#include "controller/controldevice/controller/mapping/keyboard/KeyboardScancodes.h"
 #include <iostream>
 #include <spdlog/async.h>
 #include <spdlog/sinks/rotating_file_sink.h>
@@ -10,16 +10,18 @@
 #include "spdlog/sinks/android_sink.h"
 #endif
 #include "install_config.h"
+#include "graphic/Fast3D/debug/GfxDebugger.h"
+#include "graphic/Fast3D/Fast3dWindow.h"
 
-#ifdef __APPLE__
-#include "utils/OSXFolderManager.h"
-#elif defined(__SWITCH__)
-#include "port/switch/SwitchImpl.h"
-#elif defined(__WIIU__)
-#include "port/wiiu/WiiUImpl.h"
+#ifdef _WIN32
+#include <tchar.h>
 #endif
 
-namespace LUS {
+#ifdef __APPLE__
+#include "utils/AppleFolderManager.h"
+#endif
+
+namespace Ship {
 std::weak_ptr<Context> Context::mContext;
 
 std::shared_ptr<Context> Context::GetInstance() {
@@ -28,12 +30,13 @@ std::shared_ptr<Context> Context::GetInstance() {
 
 Context::~Context() {
     SPDLOG_TRACE("destruct context");
+    GetWindow()->SaveWindowToConfig();
+
     // Explicitly destructing everything so that logging is done last.
     mAudio = nullptr;
-    GetWindow()->SaveWindowSizeToConfig(GetConfig());
     mWindow = nullptr;
-    // mConsole = nullptr;
-    // mCrashHandler = nullptr;
+    mConsole = nullptr;
+    mCrashHandler = nullptr;
     mControlDeck = nullptr;
     mResourceManager = nullptr;
     mConsoleVariables = nullptr;
@@ -46,11 +49,11 @@ std::shared_ptr<Context> Context::CreateInstance(const std::string name, const s
                                                  const std::string configFilePath,
                                                  const std::vector<std::string>& otrFiles,
                                                  const std::unordered_set<uint32_t>& validHashes,
-                                                 uint32_t reservedThreadCount) {
+                                                 uint32_t reservedThreadCount, AudioSettings audioSettings) {
     if (mContext.expired()) {
         auto shared = std::make_shared<Context>(name, shortName, configFilePath);
         mContext = shared;
-        shared->Init(otrFiles, validHashes, reservedThreadCount);
+        shared->Init(otrFiles, validHashes, reservedThreadCount, audioSettings);
         return shared;
     }
 
@@ -73,20 +76,21 @@ std::shared_ptr<Context> Context::CreateUninitializedInstance(const std::string 
 }
 
 Context::Context(std::string name, std::string shortName, std::string configFilePath)
-    : mName(std::move(name)), mShortName(std::move(shortName)), mConfigFilePath(std::move(configFilePath)) {
+    : mConfigFilePath(std::move(configFilePath)), mName(std::move(name)), mShortName(std::move(shortName)) {
 }
 
 void Context::Init(const std::vector<std::string>& otrFiles, const std::unordered_set<uint32_t>& validHashes,
-                   uint32_t reservedThreadCount) {
+                   uint32_t reservedThreadCount, AudioSettings audioSettings) {
     InitLogging();
     InitConfiguration();
     InitConsoleVariables();
     InitResourceManager(otrFiles, validHashes, reservedThreadCount);
     InitControlDeck();
-    // InitCrashHandler();
-    // InitConsole();
+    InitCrashHandler();
+    InitConsole();
     InitWindow();
-    InitAudio();
+    InitAudio(audioSettings);
+    InitGfxDebugger();
 }
 
 void Context::InitLogging() {
@@ -99,44 +103,43 @@ void Context::InitLogging() {
         spdlog::init_thread_pool(8192, 1);
         std::vector<spdlog::sink_ptr> sinks;
 
-#if (!defined(_WIN32) && !defined(__WIIU__)) || defined(_DEBUG)
+#if (!defined(_WIN32)) || defined(_DEBUG)
 #if defined(_DEBUG) && defined(_WIN32)
         // LLVM on Windows allocs a hidden console in its entrypoint function.
         // We free that console here to create our own.
-        // FreeConsole();
-        // if (AllocConsole() == 0) {
-            // throw std::system_error(GetLastError(), std::generic_category(), "Failed to create debug console");
+        FreeConsole();
+        if (AllocConsole() == 0) {
+            throw std::system_error(GetLastError(), std::generic_category(), "Failed to create debug console");
         }
 
-        //;SetConsoleOutputCP(CP_UTF8);
+        SetConsoleOutputCP(CP_UTF8);
 
-        // FILE* fDummy;
-        //;freopen_s(&fDummy, "CONOUT$", "w", stdout);
-        // freopen_s(&fDummy, "CONOUT$", "w", stderr);
-        // freopen_s(&fDummy, "CONIN$", "r", stdin);
-        // std::cout.clear();
-        // std::clog.clear();
-        // std::cerr.clear();
-        // std::cin.clear();
+        FILE* fDummy;
+        freopen_s(&fDummy, "CONOUT$", "w", stdout);
+        freopen_s(&fDummy, "CONOUT$", "w", stderr);
+        freopen_s(&fDummy, "CONIN$", "r", stdin);
+        std::cout.clear();
+        std::clog.clear();
+        std::cerr.clear();
+        std::cin.clear();
 
-        // HANDLE hConOut = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-                                    // NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        // HANDLE hConIn = CreateFile(_T("CONIN$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
-                                   // OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        // SetStdHandle(STD_OUTPUT_HANDLE, hConOut);
-        // SetStdHandle(STD_ERROR_HANDLE, hConOut);
-        // SetStdHandle(STD_INPUT_HANDLE, hConIn);
-        // std::wcout.clear();
-        // std::wclog.clear();
-        // std::wcerr.clear();
-        // std::wcin.clear();
-// #endif
-        // auto systemConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+        HANDLE hConOut = CreateFile(_T("CONOUT$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE hConIn = CreateFile(_T("CONIN$"), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                                   OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        SetStdHandle(STD_OUTPUT_HANDLE, hConOut);
+        SetStdHandle(STD_ERROR_HANDLE, hConOut);
+        SetStdHandle(STD_INPUT_HANDLE, hConIn);
+        std::wcout.clear();
+        std::wclog.clear();
+        std::wcerr.clear();
+        std::wcin.clear();
+#endif
+        auto systemConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         // systemConsoleSink->set_level(spdlog::level::trace);
-        // sinks.push_back(systemConsoleSink);
-// #endif
+        sinks.push_back(systemConsoleSink);
+#endif
 
-#ifndef __WIIU__
         auto logPath = GetPathRelativeToAppDirectory(("logs/" + GetName() + ".log"));
         auto fileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(logPath, 1024 * 1024 * 10, 10);
 #ifdef _DEBUG
@@ -145,7 +148,6 @@ void Context::InitLogging() {
         fileSink->set_level(spdlog::level::debug);
 #endif
         sinks.push_back(fileSink);
-#endif
 
 #ifdef __ANDROID__
         auto logcatSink = std::make_shared<spdlog::sinks::android_sink_mt>(GetName(), ANDROID_APPNAME);
@@ -164,11 +166,7 @@ void Context::InitLogging() {
         GetLogger()->flush_on(spdlog::level::trace);
 #endif
 
-#ifndef __WIIU__
         GetLogger()->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%@] [%l] %v");
-#else
-        GetLogger()->set_pattern("[%s:%#] [%l] %v");
-#endif
 
         spdlog::register_logger(GetLogger());
         spdlog::set_default_logger(GetLogger());
@@ -200,68 +198,77 @@ void Context::InitResourceManager(const std::vector<std::string>& otrFiles,
     mMainPath = GetConfig()->GetString("Game.Main Archive", GetAppDirectoryPath());
     mPatchesPath = GetConfig()->GetString("Game.Patches Archive", GetAppDirectoryPath() + "/mods");
     if (otrFiles.empty()) {
-        mResourceManager = std::make_shared<ResourceManager>(mMainPath, mPatchesPath, validHashes, reservedThreadCount);
+        std::vector<std::string> paths = std::vector<std::string>();
+        paths.push_back(mMainPath);
+        paths.push_back(mPatchesPath);
+
+        mResourceManager = std::make_shared<ResourceManager>();
+        GetResourceManager()->Init(paths, validHashes, reservedThreadCount);
     } else {
-        mResourceManager = std::make_shared<ResourceManager>(otrFiles, validHashes, reservedThreadCount);
+        mResourceManager = std::make_shared<ResourceManager>();
+        GetResourceManager()->Init(otrFiles, validHashes, reservedThreadCount);
     }
 
     if (!GetResourceManager()->DidLoadSuccessfully()) {
-#if defined(__SWITCH__)
-        printf("Main OTR file not found!\n");
-#elif defined(__WIIU__)
-        LUS::WiiU::ThrowMissingOTR(mMainPath.c_str());
-#else
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "OTR file not found",
                                  "Main OTR file not found. Please generate one", nullptr);
         SPDLOG_ERROR("Main OTR file not found!");
+#ifdef __IOS__
+        // We need this exit to close the app when we dismiss the dialog
+        exit(0);
 #endif
         return;
     }
-#ifdef __SWITCH__
-    LUS::Switch::Init(PostInitPhase);
-#endif
 }
 
-void Context::InitControlDeck() {
+void Context::InitControlDeck(std::vector<CONTROLLERBUTTONS_T> additionalBitmasks) {
     if (GetControlDeck() != nullptr) {
         return;
     }
 
-    mControlDeck = std::make_shared<ControlDeck>();
+    mControlDeck = std::make_shared<ControlDeck>(additionalBitmasks);
 }
 
-// void Context::InitCrashHandler() {
-   // if (GetCrashHandler() != nullptr) {
-      // return;
-    // }
+void Context::InitCrashHandler() {
+    if (GetCrashHandler() != nullptr) {
+        return;
+    }
 
-    // mCrashHandler = // std::make_shared<CrashHandler>();
-// }
+    mCrashHandler = std::make_shared<CrashHandler>();
+}
 
-void Context::InitAudio() {
+void Context::InitAudio(AudioSettings settings) {
     if (GetAudio() != nullptr) {
         return;
     }
 
-    mAudio = std::make_shared<Audio>();
+    mAudio = std::make_shared<Audio>(settings);
     GetAudio()->Init();
 }
 
-// void Context::InitConsole() {
-    // if (GetConsole() != nullptr) {
-    //    return;
-    // }
+void Context::InitGfxDebugger() {
+    if (GetGfxDebugger() != nullptr) {
+        return;
+    }
 
-    // mConsole = std::make_shared<Console>();
-    // GetConsole()->Init();
-// }
+    mGfxDebugger = std::make_shared<Fast::GfxDebugger>();
+}
 
-void Context::InitWindow() {
+void Context::InitConsole() {
+    if (GetConsole() != nullptr) {
+        return;
+    }
+
+    mConsole = std::make_shared<Console>();
+    GetConsole()->Init();
+}
+
+void Context::InitWindow(std::vector<std::shared_ptr<GuiWindow>> guiWindows) {
     if (GetWindow() != nullptr) {
         return;
     }
 
-    mWindow = std::make_shared<Window>();
+    mWindow = std::make_shared<Fast::Fast3dWindow>(guiWindows);
     GetWindow()->Init();
 }
 
@@ -285,21 +292,25 @@ std::shared_ptr<ControlDeck> Context::GetControlDeck() {
     return mControlDeck;
 }
 
-//std::shared_ptr<CrashHandler>Context::GetCrashHandler() {
-    //;return mCrashHandler;
-// }
+std::shared_ptr<CrashHandler> Context::GetCrashHandler() {
+    return mCrashHandler;
+}
 
 std::shared_ptr<Window> Context::GetWindow() {
     return mWindow;
 }
 
-// std::shared_ptr<Console> Context::GetConsole() {
-    // return mConsole;
-// }
+std::shared_ptr<Console> Context::GetConsole() {
+    return mConsole;
+}
 
-//;std::shared_ptr<Audio> Context::GetAudio() {
-    // return mAudio;
-// }
+std::shared_ptr<Audio> Context::GetAudio() {
+    return mAudio;
+}
+
+std::shared_ptr<Fast::GfxDebugger> Context::GetGfxDebugger() {
+    return mGfxDebugger;
+}
 
 std::string Context::GetConfigFilePath() {
     return mConfigFilePath;
@@ -317,6 +328,12 @@ std::string Context::GetAppBundlePath() {
 #if defined(__ANDROID__)
     return GetAppDirectoryPath();
 #endif
+
+#ifdef __IOS__
+    const char* home = getenv("HOME");
+    return std::string(home) + "/Documents";
+#endif
+
 #ifdef NON_PORTABLE
     return CMAKE_INSTALL_PREFIX;
 #else
@@ -360,6 +377,11 @@ std::string Context::GetAppDirectoryPath(std::string appName) {
     javaEnv->ReleaseStringUTFChars(externalAssetsPath_jstr, externalAssetsPath_cstr);
 
     return externalAssetsPath;
+#endif
+
+#ifdef __IOS__
+    const char* home = getenv("HOME");
+    return std::string(home) + "/Documents";
 #endif
 
 #if defined(__linux__) || defined(__APPLE__)
@@ -409,4 +431,4 @@ std::string Context::LocateFileAcrossAppDirs(const std::string path, std::string
     return "./" + std::string(path);
 }
 
-} // namespace LUS
+} // namespace Ship

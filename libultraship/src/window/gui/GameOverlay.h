@@ -3,10 +3,12 @@
 #include <vector>
 #include <memory>
 
-// #include "debug/Console.h"
+#include "debug/Console.h"
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#define IMGUI_DEFINE_MATH_OPERATORS
+#endif
 #include <imgui.h>
 #include <unordered_map>
-#include "resource/ResourceManager.h"
 
 namespace Ship {
 
@@ -22,11 +24,10 @@ struct Overlay {
 class GameOverlay {
   public:
     GameOverlay();
-    virtual ~GameOverlay();
+    ~GameOverlay();
 
     void Init();
-    void LoadFont(const std::string& name, float fontSize, const ResourceIdentifier& identifier);
-    void LoadFont(const std::string& name, float fontSize, const std::string& path);
+    void LoadFont(const std::string& name, const std::string& path, float fontSize);
     void SetCurrentFont(const std::string& name);
     void Draw();
     void DrawSettings();
@@ -36,7 +37,6 @@ class GameOverlay {
     void TextDraw(float x, float y, bool shadow, ImVec4 color, const char* text, ...);
     void TextDrawNotification(float duration, bool shadow, const char* fmt, ...);
     void ClearNotifications();
-    ImGuiID GetID();
 
   protected:
     float GetScreenWidth();

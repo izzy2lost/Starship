@@ -4,8 +4,9 @@
 #include "window/gui/IconsFontAwesome4.h"
 
 namespace Ship {
-SDLAxisDirectionToAnyMapping::SDLAxisDirectionToAnyMapping(int32_t sdlControllerAxis, int32_t axisDirection)
-    : ControllerInputMapping(PhysicalDeviceType::SDLGamepad) {
+SDLAxisDirectionToAnyMapping::SDLAxisDirectionToAnyMapping(ShipDeviceIndex shipDeviceIndex, int32_t sdlControllerAxis,
+                                                           int32_t axisDirection)
+    : ControllerInputMapping(shipDeviceIndex), SDLMapping(shipDeviceIndex) {
     mControllerAxis = static_cast<SDL_GameControllerAxis>(sdlControllerAxis);
     mAxisDirection = static_cast<AxisDirection>(axisDirection);
 }
@@ -16,22 +17,44 @@ SDLAxisDirectionToAnyMapping::~SDLAxisDirectionToAnyMapping() {
 std::string SDLAxisDirectionToAnyMapping::GetPhysicalInputName() {
     switch (mControllerAxis) {
         case SDL_CONTROLLER_AXIS_LEFTX:
-            return StringHelper::Sprintf("Left Stick %s",
+            return StringHelper::Sprintf(UsesGameCubeLayout() ? "Analog Stick %s" : "Left Stick %s",
                                          mAxisDirection == NEGATIVE ? ICON_FA_ARROW_LEFT : ICON_FA_ARROW_RIGHT);
         case SDL_CONTROLLER_AXIS_LEFTY:
-            return StringHelper::Sprintf("Left Stick %s",
+            return StringHelper::Sprintf(UsesGameCubeLayout() ? "Analog Stick %s" : "Left Stick %s",
                                          mAxisDirection == NEGATIVE ? ICON_FA_ARROW_UP : ICON_FA_ARROW_DOWN);
         case SDL_CONTROLLER_AXIS_RIGHTX:
-            return StringHelper::Sprintf("Right Stick %s",
+            return StringHelper::Sprintf(UsesGameCubeLayout() ? "C Stick %s" : "Right Stick %s",
                                          mAxisDirection == NEGATIVE ? ICON_FA_ARROW_LEFT : ICON_FA_ARROW_RIGHT);
         case SDL_CONTROLLER_AXIS_RIGHTY:
-            return StringHelper::Sprintf("Right Stick %s",
+            return StringHelper::Sprintf(UsesGameCubeLayout() ? "C Stick %s" : "Right Stick %s",
                                          mAxisDirection == NEGATIVE ? ICON_FA_ARROW_UP : ICON_FA_ARROW_DOWN);
         case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-            return "LT";
+            if (UsesPlaystationLayout()) {
+                return "L2";
+            }
+            if (UsesSwitchLayout()) {
+                return "LR";
+            }
+            if (UsesXboxLayout()) {
+                return "LT";
+            }
+            if (UsesGameCubeLayout()) {
+                return "L";
+            }
             break;
         case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-            return "RT";
+            if (UsesPlaystationLayout()) {
+                return "R2";
+            }
+            if (UsesSwitchLayout()) {
+                return "ZR";
+            }
+            if (UsesXboxLayout()) {
+                return "RT";
+            }
+            if (UsesGameCubeLayout()) {
+                return "R";
+            }
             break;
         default:
             break;
@@ -42,7 +65,11 @@ std::string SDLAxisDirectionToAnyMapping::GetPhysicalInputName() {
 }
 
 std::string SDLAxisDirectionToAnyMapping::GetPhysicalDeviceName() {
-    return "SDL Gamepad";
+    return GetSDLDeviceName();
+}
+
+bool SDLAxisDirectionToAnyMapping::PhysicalDeviceIsConnected() {
+    return ControllerLoaded();
 }
 
 bool SDLAxisDirectionToAnyMapping::AxisIsTrigger() {

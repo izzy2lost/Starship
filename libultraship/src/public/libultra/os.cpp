@@ -9,11 +9,15 @@ typedef std::chrono::duration<long long, n64CycleRate> n64CycleRateDuration;
 
 extern "C" {
 uint8_t __osMaxControllers = MAXCONTROLLERS;
-uint64_t __osCurrentTime = 0;
 
 int32_t osContInit(OSMesgQueue* mq, uint8_t* controllerBits, OSContStatus* status) {
     *controllerBits = 0;
     status->status |= 1;
+
+    if (SDL_Init(SDL_INIT_GAMECONTROLLER) != 0) {
+        SPDLOG_ERROR("Failed to initialize SDL game controllers ({})", SDL_GetError());
+        exit(EXIT_FAILURE);
+    }
 
     std::string controllerDb = Ship::Context::LocateFileAcrossAppDirs("gamecontrollerdb.txt");
     int mappingsAdded = SDL_GameControllerAddMappingsFromFile(controllerDb.c_str());
@@ -21,12 +25,6 @@ int32_t osContInit(OSMesgQueue* mq, uint8_t* controllerBits, OSContStatus* statu
         SPDLOG_INFO("Added SDL game controllers from \"{}\" ({})", controllerDb, mappingsAdded);
     } else {
         SPDLOG_ERROR("Failed add SDL game controller mappings from \"{}\" ({})", controllerDb, SDL_GetError());
-    }
-
-    SDL_SetHint(SDL_HINT_JOYSTICK_THREAD, "1");
-    if (SDL_Init(SDL_INIT_GAMECONTROLLER) != 0) {
-        SPDLOG_ERROR("Failed to initialize SDL game controllers ({})", SDL_GetError());
-        exit(EXIT_FAILURE);
     }
 
     Ship::Context::GetInstance()->GetControlDeck()->Init(controllerBits);
@@ -44,26 +42,20 @@ void osContGetReadData(OSContPad* pad) {
     Ship::Context::GetInstance()->GetControlDeck()->WriteToPad(pad);
 }
 
-void osSetTime(OSTime time) {
-    __osCurrentTime =
-        std::chrono::duration_cast<n64CycleRateDuration>(std::chrono::steady_clock::now().time_since_epoch()).count() +
-        time;
-}
-
 // Returns the OS time matching the N64 46.875MHz cycle rate
-uint64_t osGetTime() {
-    return std::chrono::duration_cast<n64CycleRateDuration>(std::chrono::steady_clock::now().time_since_epoch())
-               .count() -
-           __osCurrentTime;
-}
-
-// Returns the CPU clock count matching the N64 46.875Mhz cycle rate
-uint32_t osGetCount() {
+// LUSTODO: This should be adjusted to return the time since "boot"
+uint64_t osGetTime(void) {
     return std::chrono::duration_cast<n64CycleRateDuration>(std::chrono::steady_clock::now().time_since_epoch())
         .count();
 }
 
-OSPiHandle* osCartRomInit() {
+// Returns the CPU clock count matching the N64 46.875Mhz cycle rate
+uint32_t osGetCount(void) {
+    return std::chrono::duration_cast<n64CycleRateDuration>(std::chrono::steady_clock::now().time_since_epoch())
+        .count();
+}
+
+OSPiHandle* osCartRomInit(void) {
     return NULL;
 }
 

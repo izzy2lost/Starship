@@ -15,17 +15,17 @@
 namespace Ship {
 struct File;
 
-class O2rArchive final : virtual public Archive {
+class O2rArchive : virtual public Archive {
   public:
     O2rArchive(const std::string& archivePath);
     ~O2rArchive();
 
     bool Open();
     bool Close();
-    bool WriteFile(const std::string& filename, const std::vector<uint8_t>& data);
 
-    std::shared_ptr<File> LoadFile(const std::string& filePath);
-    std::shared_ptr<File> LoadFile(uint64_t hash);
+  protected:
+    std::shared_ptr<File> LoadFileRaw(const std::string& filePath);
+    std::shared_ptr<File> LoadFileRaw(uint64_t hash);
 
   private:
     zip_t* mZipArchive;

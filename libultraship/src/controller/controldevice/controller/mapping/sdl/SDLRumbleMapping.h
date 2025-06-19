@@ -2,9 +2,9 @@
 #include "SDLMapping.h"
 
 namespace Ship {
-class SDLRumbleMapping final : public ControllerRumbleMapping {
+class SDLRumbleMapping final : public ControllerRumbleMapping, public SDLMapping {
   public:
-    SDLRumbleMapping(uint8_t portIndex, uint8_t lowFrequencyIntensityPercentage,
+    SDLRumbleMapping(ShipDeviceIndex shipDeviceIndex, uint8_t portIndex, uint8_t lowFrequencyIntensityPercentage,
                      uint8_t highFrequencyIntensityPercentage);
 
     void StartRumble() override;
@@ -17,6 +17,7 @@ class SDLRumbleMapping final : public ControllerRumbleMapping {
     void EraseFromConfig() override;
 
     std::string GetPhysicalDeviceName() override;
+    bool PhysicalDeviceIsConnected() override;
 
   private:
     uint16_t mLowFrequencyIntensity;

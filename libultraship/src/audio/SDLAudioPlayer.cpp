@@ -8,17 +8,16 @@ SDLAudioPlayer::~SDLAudioPlayer() {
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
 }
 
-bool SDLAudioPlayer::DoInit() {
+bool SDLAudioPlayer::DoInit(void) {
     if (SDL_Init(SDL_INIT_AUDIO) != 0) {
         SPDLOG_ERROR("SDL init error: %s\n", SDL_GetError());
         return false;
     }
-    mNumChannels = this->GetAudioChannels() == AudioChannelsSetting::audioSurround51 ? 6 : 2;
     SDL_AudioSpec want, have;
     SDL_zero(want);
     want.freq = this->GetSampleRate();
     want.format = AUDIO_S16SYS;
-    want.channels = mNumChannels;
+    want.channels = 2;
     want.samples = this->GetSampleLength();
     want.callback = NULL;
     mDevice = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
@@ -30,8 +29,9 @@ bool SDLAudioPlayer::DoInit() {
     return true;
 }
 
-int SDLAudioPlayer::Buffered() {
-    return SDL_GetQueuedAudioSize(mDevice) / (sizeof(int16_t) * mNumChannels);
+int SDLAudioPlayer::Buffered(void) {
+    // 4 is sizeof(int16_t) * num_channels (2 for stereo)
+    return SDL_GetQueuedAudioSize(mDevice) / 4;
 }
 
 void SDLAudioPlayer::Play(const uint8_t* buf, size_t len) {

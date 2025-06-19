@@ -62,10 +62,10 @@ void ControllerLED::ClearAllMappings() {
     SaveLEDMappingIdsToConfig();
 }
 
-void ControllerLED::ClearAllMappingsForDeviceType(PhysicalDeviceType physicalDeviceType) {
+void ControllerLED::ClearAllMappingsForDevice(ShipDeviceIndex lusIndex) {
     std::vector<std::string> mappingIdsToRemove;
     for (auto [id, mapping] : mLEDMappings) {
-        if (mapping->GetPhysicalDeviceType() == physicalDeviceType) {
+        if (mapping->GetShipDeviceIndex() == lusIndex) {
             mapping->EraseFromConfig();
             mappingIdsToRemove.push_back(id);
         }
@@ -130,9 +130,8 @@ bool ControllerLED::AddLEDMappingFromRawPress() {
     return true;
 }
 
-bool ControllerLED::HasMappingsForPhysicalDeviceType(PhysicalDeviceType physicalDeviceType) {
-    return std::any_of(mLEDMappings.begin(), mLEDMappings.end(), [physicalDeviceType](const auto& mapping) {
-        return mapping.second->GetPhysicalDeviceType() == physicalDeviceType;
-    });
+bool ControllerLED::HasMappingsForShipDeviceIndex(ShipDeviceIndex lusIndex) {
+    return std::any_of(mLEDMappings.begin(), mLEDMappings.end(),
+                       [lusIndex](const auto& mapping) { return mapping.second->GetShipDeviceIndex() == lusIndex; });
 }
 } // namespace Ship

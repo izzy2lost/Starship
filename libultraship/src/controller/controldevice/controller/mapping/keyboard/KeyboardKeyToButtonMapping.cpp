@@ -2,14 +2,13 @@
 #include <spdlog/spdlog.h>
 #include "utils/StringHelper.h"
 #include "public/bridge/consolevariablebridge.h"
-#include "controller/controldeck/ControlDeck.h"
 #include "Context.h"
 
 namespace Ship {
 KeyboardKeyToButtonMapping::KeyboardKeyToButtonMapping(uint8_t portIndex, CONTROLLERBUTTONS_T bitmask,
                                                        KbScancode scancode)
-    : ControllerInputMapping(PhysicalDeviceType::Keyboard), KeyboardKeyToAnyMapping(scancode),
-      ControllerButtonMapping(PhysicalDeviceType::Keyboard, portIndex, bitmask) {
+    : ControllerInputMapping(ShipDeviceIndex::Keyboard), KeyboardKeyToAnyMapping(scancode),
+      ControllerButtonMapping(ShipDeviceIndex::Keyboard, portIndex, bitmask) {
 }
 
 void KeyboardKeyToButtonMapping::UpdatePad(CONTROLLERBUTTONS_T& padButtons) {
@@ -24,7 +23,7 @@ void KeyboardKeyToButtonMapping::UpdatePad(CONTROLLERBUTTONS_T& padButtons) {
     padButtons |= mBitmask;
 }
 
-int8_t KeyboardKeyToButtonMapping::GetMappingType() {
+uint8_t KeyboardKeyToButtonMapping::GetMappingType() {
     return MAPPING_TYPE_KEYBOARD;
 }
 
@@ -49,13 +48,5 @@ void KeyboardKeyToButtonMapping::EraseFromConfig() {
     CVarClear(StringHelper::Sprintf("%s.KeyboardScancode", mappingCvarKey.c_str()).c_str());
 
     CVarSave();
-}
-
-std::string KeyboardKeyToButtonMapping::GetPhysicalDeviceName() {
-    return KeyboardKeyToAnyMapping::GetPhysicalDeviceName();
-}
-
-std::string KeyboardKeyToButtonMapping::GetPhysicalInputName() {
-    return KeyboardKeyToAnyMapping::GetPhysicalInputName();
 }
 } // namespace Ship

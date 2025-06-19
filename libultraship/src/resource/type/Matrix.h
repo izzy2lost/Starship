@@ -3,7 +3,7 @@
 #include "resource/Resource.h"
 #include "libultraship/libultra/types.h"
 
-namespace Fast {
+namespace LUS {
 class Matrix : public Ship::Resource<Mtx> {
   public:
     using Resource::Resource;
@@ -15,4 +15,4 @@ class Matrix : public Ship::Resource<Mtx> {
 
     Mtx Matrx;
 };
-} // namespace Fast
+} // namespace LUS

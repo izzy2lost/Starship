@@ -1,20 +1,18 @@
 include(FetchContent)
 
-##=================== SDL2 ===================
+#=================== SDL2 ===================
 find_package(SDL2 QUIET)
 if (NOT ${SDL2_FOUND})
+    # if SDL_SHARED_ENABLED_BY_DEFAULT unset, for me libSDL2.so entirely failed to build and link, causing a vague runtime error:
+    # java.lang.NullPointerException: Attempt to invoke virtual method 'void android.view.ViewGroup.addView(android.view.View)' on a null object reference
+    set(SDL_SHARED_ENABLED_BY_DEFAULT ON)
     FetchContent_Declare(
         SDL2
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG release-2.28.1
+        GIT_TAG release-2.32.0
         OVERRIDE_FIND_PACKAGE
     )
     FetchContent_MakeAvailable(SDL2)
-    if(EXISTS "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c")
-        file(READ "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" _sdlfile)
-        string(REPLACE "ALooper_pollAll" "ALooper_pollOnce" _sdlfile "${_sdlfile}")
-        file(WRITE "${sdl2_SOURCE_DIR}/src/sensor/android/SDL_androidsensor.c" "${_sdlfile}")
-    endif()
 endif()
 
 #=================== nlohmann-json ===================
@@ -36,7 +34,14 @@ if (NOT ${tinyxml2_FOUND})
     FetchContent_Declare(
         tinyxml2
         GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
-        GIT_TAG 10.0.0
+        # last currently good commit of tinyxml2 at time of writing for 32-bit android 5 & 6
+        # see discussion here
+        # https://github.com/leethomason/tinyxml2/pull/945
+        # https://github.com/leethomason/tinyxml2/pull/973
+        # 32-bit bionic libc documentation and test code sample for targeting 32-bit android 5 & 6
+        # is helpful for debugging this and identifying good commits:
+        # https://android.googlesource.com/platform/bionic/+/master/docs/32-bit-abi.md
+        GIT_TAG a977397
         OVERRIDE_FIND_PACKAGE
     )
     FetchContent_MakeAvailable(tinyxml2)
@@ -69,17 +74,6 @@ if (NOT ${libzip_FOUND})
         GIT_REPOSITORY https://github.com/nih-at/libzip.git
         GIT_TAG v1.10.1
         OVERRIDE_FIND_PACKAGE
-        CMAKE_ARGS
-            -DENABLE_COMMONCRYPTO=OFF
-            -DENABLE_GNUTLS=OFF
-            -DENABLE_MBEDTLS=OFF
-            -DENABLE_OPENSSL=OFF
-            -DBUILD_TOOLS=OFF
-            -DBUILD_REGRESS=OFF
-            -DBUILD_EXAMPLES=OFF
-            -DBUILD_DOC=OFF
-            -DBUILD_OSSFUZZ=OFF
-            -DBUILD_SHARED_LIBS=OFF
     )
     FetchContent_MakeAvailable(libzip)
     list(APPEND ADDITIONAL_LIB_INCLUDES ${libzip_SOURCE_DIR}/lib ${libzip_BINARY_DIR})

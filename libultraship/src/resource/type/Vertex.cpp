@@ -1,7 +1,7 @@
 #include "resource/type/Vertex.h"
 #include "libultraship/libultra/gbi.h"
 
-namespace Fast {
+namespace LUS {
 Vertex::Vertex() : Resource(std::shared_ptr<Ship::ResourceInitData>()) {
 }
 
@@ -12,4 +12,4 @@ Vtx* Vertex::GetPointer() {
 size_t Vertex::GetPointerSize() {
     return VertexList.size() * sizeof(Vtx);
 }
-} // namespace Fast
+} // namespace LUS

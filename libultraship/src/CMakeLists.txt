@@ -62,11 +62,11 @@ source_group("public/bridge" FILES ${Source_Files__Public__Bridge})
 target_sources(libultraship PRIVATE ${Source_Files__Public__Libultra} ${Source_Files__Public__Bridge})
 
 #=================== Debug ===================
-# (Disabled debug sources - missing files and not needed for Android build)
 
-# file(GLOB Source_Files__Debug RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/*.h" "debug/*.cpp")
-# source_group("debug" FILES ${Source_Files__Debug})
-# target_sources(libultraship PRIVATE ${Source_Files__Debug})
+file(GLOB Source_Files__Debug RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "debug/*.h" "debug/*.cpp")
+
+source_group("debug" FILES ${Source_Files__Debug})
+target_sources(libultraship PRIVATE ${Source_Files__Debug})
 
 #=================== Log ===================
 
@@ -101,13 +101,6 @@ else()
     list(REMOVE_ITEM Header_Files__include ${CMAKE_CURRENT_SOURCE_DIR}/utils/AppleFolderManager.h)
 endif()
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    list(APPEND Source_Files__Utils ${CMAKE_CURRENT_SOURCE_DIR}/utils/macUtils.mm)
-    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/utils/macUtils.mm PROPERTIES COMPILE_FLAGS -fno-objc-arc)
-else()
-    list(REMOVE_ITEM Header_Files__include ${CMAKE_CURRENT_SOURCE_DIR}/utils/macUtils.h)
-endif()
-
 source_group("utils" FILES ${Source_Files__Utils})
 target_sources(libultraship PRIVATE ${Source_Files__Utils})
 
@@ -125,14 +118,7 @@ target_sources(libultraship PRIVATE ${Source_Files__Port})
 
 #=================== Resource ===================
 
-file(GLOB_RECURSE Source_Files__Resource RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/*.h" "resource/*.cpp")
-
-# Only filter for Android
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    # This will filter out anything with vorbis or SampleFactory in the path/filename
-    list(FILTER Source_Files__Resource EXCLUDE REGEX "vorbis")
-    list(FILTER Source_Files__Resource EXCLUDE REGEX "SampleFactory")
-endif()
+file(GLOB Source_Files__Resource RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/*.h" "resource/*.cpp")
 source_group("resource" FILES ${Source_Files__Resource})
 
 file(GLOB Source_Files__Resource__Types RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/type/*.h" "resource/type/*.cpp")
@@ -144,29 +130,25 @@ source_group("resource/factory" FILES ${Source_Files__Resource__Factories})
 file(GLOB Source_Files__Resource__Archive RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "resource/archive/*.h" "resource/archive/*.cpp")
 source_group("resource/archive" FILES ${Source_Files__Resource__Archive})
 
-target_sources(libultraship PRIVATE
-    ${Source_Files__Resource}
-    ${Source_Files__Resource__Types}
-    ${Source_Files__Resource__Factories}
-    ${Source_Files__Resource__Archive}
-)
+target_sources(libultraship PRIVATE ${Source_Files__Resource} ${Source_Files__Resource__Types} ${Source_Files__Resource__Factories} ${Source_Files__Resource__Archive})
 
 #=================== Graphic ===================
 
-file(GLOB Source_Files__Graphic RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "graphic/Fast3D/*.h" "graphic/Fast3D/*.cpp" "graphic/Fast3D/*.c" "graphic/Fast3D/backends/*.cpp" "graphic/Fast3D/debug/*.h" "graphic/Fast3D/debug/*.cpp" "graphic/Fast3D/debug/*.c")
+file(GLOB Source_Files__Graphic RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "graphic/Fast3D/*.h" "graphic/Fast3D/*.cpp" "graphic/Fast3D/*.c")
+file(GLOB Source_Files__Graphic_Debug RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "graphic/Fast3D/debug/*.h" "graphic/Fast3D/debug/*.cpp" "graphic/Fast3D/debug/*.c")
 
 if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/backends/gfx_dxgi*")
-    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/backends/gfx_direct3d*")
-    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/backends/dxsdk/*")
+    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/gfx_dxgi*")
+    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/gfx_direct3d*")
+    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/dxsdk/*")
 endif()
 
 if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/backends/gfx_metal*")
+    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/gfx_metal*")
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/backends/gfx_opengl*")
+    list(FILTER Source_Files__Graphic EXCLUDE REGEX "graphic/Fast3D/gfx_opengl*")
 endif()
 
 source_group("graphic" FILES ${Source_Files__Graphic})
@@ -183,7 +165,7 @@ target_include_directories(libultraship
 
 #=================== Linking ===================
 if(NOT EXCLUDE_MPQ_SUPPORT)
-    if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows" AND NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
         target_link_libraries(libultraship PUBLIC "$<LINK_LIBRARY:WHOLE_ARCHIVE,storm>")
     else()
         target_link_libraries(libultraship PUBLIC storm)
@@ -212,13 +194,14 @@ target_link_libraries(libultraship PUBLIC tinyxml2::tinyxml2)
 find_package(spdlog REQUIRED)
 target_link_libraries(libultraship PUBLIC spdlog::spdlog)
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Android")
+    target_link_libraries(libultraship PRIVATE log)
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
     target_link_libraries(libultraship PRIVATE Threads::Threads)
-    find_library(COCOA Cocoa)
-    target_link_libraries(libultraship PRIVATE ${COCOA})
-
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
@@ -238,8 +221,6 @@ if (USE_OPENGLES)
         target_link_libraries(libultraship PRIVATE GLESv2)
     endif()
 endif()
-
-target_link_libraries(libultraship PUBLIC prism)
 
 #=================== Compile Options & Defs ===================
 
@@ -299,6 +280,7 @@ else()
         $<$<NOT:$<CONFIG:Debug>>:SPDLOG_ACTIVE_LEVEL=1>
         $<$<BOOL:${USE_OPENGLES}>:USE_OPENGLES>
         $<$<BOOL:${GFX_DEBUG_DISASSEMBLER}>:GFX_DEBUG_DISASSEMBLER>
+        "-DANDROID_APPNAME=\"${ANDROID_APPNAME}\""
     )
 endif()
 
@@ -339,12 +321,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang")
 		-Wno-parentheses
 		-Wno-narrowing
 		-Wno-missing-field-initializers
-        $<$<COMPILE_LANGUAGE:C,OBJC>:-Wno-implicit-function-declaration>
+        -Wno-implicit-function-declaration
         $<$<COMPILE_LANGUAGE:C,OBJC>:-Wno-int-conversion>
 	)
-    if (MSVC)
-    target_compile_options(libultraship PRIVATE
-        -Wno-implicit-function-declaration
-    )
-    endif()
 endif()
