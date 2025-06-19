@@ -215,8 +215,8 @@ struct LoadedVertex {
 struct RawTexMetadata {
     uint16_t width, height;
     float h_byte_scale = 1, v_pixel_scale = 1;
-    std::shared_ptr<Fast::Texture> resource;
-    Fast::TextureType type;
+    std::shared_ptr<LUS::Texture> resource;
+    LUS::TextureType type;
 };
 
 struct ShaderMod {
