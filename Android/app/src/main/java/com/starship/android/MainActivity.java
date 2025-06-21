@@ -1,7 +1,8 @@
-package com.starship.android;
 
+package com.starship.android;
 import org.libsdl.app.SDLActivity;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,16 +11,20 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.IOException;
+import java.io.FileOutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+
 import android.Manifest;
 import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.os.Build;
 import android.widget.Toast;
+
 import android.util.Log;
 
 import android.view.ViewGroup;
@@ -30,57 +35,43 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
-public class MainActivity extends SDLActivity {
-
-    static {
-        System.loadLibrary("native-lib");
-    }
-
-    // Native extraction bridge: JNI function
-    public native boolean extractAssets(String romPath, String outDir, String yamlDir);
-
-    private static final int PICK_ROM_REQUEST = 1;
-    private static final int STORAGE_PERMISSION_REQUEST_CODE = 2296;
+//This class is the main SDLActivity and just sets up a bunch of default files and the input overlay
+public class MainActivity extends SDLActivity{
 
     SharedPreferences preferences;
-
-    // Controller overlay variables
-    private Button buttonA, buttonB, buttonX, buttonY;
-    private Button buttonDpadUp, buttonDpadDown, buttonDpadLeft, buttonDpadRight;
-    private Button buttonLB, buttonRB, buttonZ, buttonStart, buttonBack, buttonToggle;
-    private FrameLayout leftJoystick;
-    private ImageView leftJoystickKnob;
-    private View overlayView;
-    boolean TouchAreaEnabled = true;
-
-    private boolean permissionPopupIsOpen = false;
-    private boolean permissionPopupWasDeclined = false;
-    private boolean hasInstalledExternalAssetFiles = false;
+    private static final CountDownLatch setupLatch = new CountDownLatch(1);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
 
-        preferences = getSharedPreferences("com.starship.prefs", Context.MODE_PRIVATE);
+        preferences = getSharedPreferences("com.starship.android.prefs",Context.MODE_PRIVATE);
 
-        doVersionCheck();
-        setupControllerOverlay();
-
-        if (!hasSpecialExternalStoragePermission()) {
-            requestSpecialExternalStoragePermission();
+        // Check if storage permissions are granted
+        if (hasStoragePermission()) {
+            doVersionCheck();
+            checkAndSetupFiles();
+        } else {
+            requestStoragePermission();
         }
 
-        attachController();
+        super.onCreate(savedInstanceState);
 
-        if (hasSpecialExternalStoragePermission()) {
-            setupFiles(getExternalAssetsPath());
-            pickRomIfNeeded();
+        setupControllerOverlay();
+        attachController();
+    }
+
+    public static void waitForSetupFromNative() {
+        try {
+            setupLatch.await();  // Block until setup is complete
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
     private void doVersionCheck(){
         int currentVersion = BuildConfig.VERSION_CODE;
         int storedVersion = preferences.getInt("appVersion", 1);
+
         if (currentVersion > storedVersion) {
             deleteOutdatedAssets();
             preferences.edit().putInt("appVersion", currentVersion).apply();
@@ -88,197 +79,295 @@ public class MainActivity extends SDLActivity {
     }
 
     private void deleteOutdatedAssets() {
-        File rootFolder = new File(getExternalAssetsPath());
-        File romFile = new File(rootFolder, "baserom.z64");
-        romFile.delete();
-        File assetsFolder = new File(rootFolder, "assets");
-        deleteRecursive(assetsFolder);
+        File targetRootFolder = new File(Environment.getExternalStorageDirectory(), "Starship");
+
+        File starshipFile = new File(targetRootFolder, "starship.o2r");
+        File sfFile = new File(targetRootFolder, "sf.o2r");
+        File assetsFolder = new File(targetRootFolder, "assets");
+
+        deleteIfExists(starshipFile);
+        deleteIfExists(sfFile);
+        deleteRecursiveIfExists(assetsFolder);
+    }
+
+    private void deleteIfExists(File file) {
+        if (file.exists()) {
+            if (file.delete()) {
+                Log.i("deleteAssets", "Deleted file: " + file.getAbsolutePath());
+            } else {
+                Log.w("deleteAssets", "Failed to delete file: " + file.getAbsolutePath());
+            }
+        } else {
+            Log.i("deleteAssets", "File not found (skipped): " + file.getAbsolutePath());
+        }
+    }
+
+    private void deleteRecursiveIfExists(File dir) {
+        if (dir.exists()) {
+            deleteRecursive(dir);
+            Log.i("deleteAssets", "Deleted directory: " + dir.getAbsolutePath());
+        } else {
+            Log.i("deleteAssets", "Directory not found (skipped): " + dir.getAbsolutePath());
+        }
     }
 
     private void deleteRecursive(File fileOrDirectory) {
-        if (fileOrDirectory != null && fileOrDirectory.exists()) {
-            if (fileOrDirectory.isDirectory()) {
-                for (File child : fileOrDirectory.listFiles()) {
+        if (fileOrDirectory.isDirectory()) {
+            File[] children = fileOrDirectory.listFiles();
+            if (children != null) {
+                for (File child : children) {
                     deleteRecursive(child);
                 }
             }
-            fileOrDirectory.delete();
         }
+        fileOrDirectory.delete();
     }
 
-    // Gets the external Starship path if possible, else fallback to internal
-    private String getExternalAssetsPath() {
-        String packageRoot = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Starship";
-        if (hasSpecialExternalStoragePermission()) {
-            File dir = new File(packageRoot);
-            if (!dir.exists()) dir.mkdirs();
-            return dir.getAbsolutePath();
-        } else {
-            // fallback to internal app dir
-            return getFilesDir().getAbsolutePath();
-        }
+
+
+    // Check if storage permission is granted
+    private boolean hasStoragePermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        == PackageManager.PERMISSION_GRANTED;
     }
 
-    private boolean hasSpecialExternalStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-            return Environment.isExternalStorageManager();
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
-    }
+    private static final int STORAGE_PERMISSION_REQUEST_CODE = 2296;
+    private static final int FILE_PICKER_REQUEST_CODE = 0;
 
-    private void requestSpecialExternalStoragePermission() {
-        // Android 11+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
-            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-            intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivityForResult(intent, STORAGE_PERMISSION_REQUEST_CODE);
-            permissionPopupIsOpen = true;
+    private void requestStoragePermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ → MANAGE_EXTERNAL_STORAGE
+            if (!Environment.isExternalStorageManager()) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.setData(Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, STORAGE_PERMISSION_REQUEST_CODE);
+            } else {
+                // Already granted
+                checkAndSetupFiles();
+            }
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android 6–10 → request READ/WRITE at runtime
             ActivityCompat.requestPermissions(this,
                     new String[]{
                             Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.WRITE_EXTERNAL_STORAGE
                     },
                     STORAGE_PERMISSION_REQUEST_CODE);
-            permissionPopupIsOpen = true;
+        } else {
+            // Below Android 6 → permissions granted at install time
+            checkAndSetupFiles();
         }
     }
 
-    private void setupFiles(String assetsPath) {
-        File targetRootFolder = new File(assetsPath);
+    public void checkAndSetupFiles() {
+        File targetRootFolder = new File(Environment.getExternalStorageDirectory(), "Starship");
+        File assetsFolder = new File(targetRootFolder, "assets");
+        File starshipOtrFile = new File(targetRootFolder, "starship.o2r");
+
+        boolean isMissingAssets = !assetsFolder.exists() || assetsFolder.listFiles() == null || assetsFolder.listFiles().length == 0;
+        boolean isMissingStarshipOtr = !starshipOtrFile.exists();
+
+        if (!targetRootFolder.exists() || isMissingAssets || isMissingStarshipOtr) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Setup Required")
+                    .setMessage("Some required files are missing. The app will create them (~30s). Press OK to begin.")
+                    .setCancelable(false)
+                    .setPositiveButton("OK", (dialog, which) -> {
+                        Executors.newSingleThreadExecutor().execute(() -> {
+                            runOnUiThread(() -> Toast.makeText(this, "Setting up files...", Toast.LENGTH_SHORT).show());
+                            setupFilesInBackground(targetRootFolder);
+                        });
+                    })
+                    .show();
+        } else {
+            // No setup needed, still need to count down
+            setupLatch.countDown();
+        }
+    }
+
+
+    private void setupFilesInBackground(File targetRootFolder) {
+
+        File sourceOldRoot = getExternalFilesDir(null);
+        File sourceSavesDir = new File(sourceOldRoot, "saves"); // how to tell if there's anything to migrate
+
+        // === Migration from old Android/data/.../files/ directory ===
+        if (sourceOldRoot != null && sourceSavesDir.isDirectory()) {
+            Log.i("setupFiles", "Migrating old data from: " + sourceOldRoot.getAbsolutePath());
+
+            File[] sourceFiles = sourceOldRoot.listFiles();
+            if (sourceFiles != null) {
+                for (File file : sourceFiles) {
+                    String name = file.getName();
+                    if (name.equals("assets") || name.equals("starship.o2r") || name.equals("sf.o2r")) {
+                        continue; // Skip these
+                    }
+
+                    File dest = new File(targetRootFolder, name);
+                    try {
+                        if (file.isDirectory()) {
+                            AssetCopyUtil.copyDirectory(file, dest);
+                        } else {
+                            AssetCopyUtil.copyFile(file, dest);
+                        }
+                        Log.i("setupFiles", "Migrated: " + name);
+                    } catch (IOException e) {
+                        Log.e("setupFiles", "Failed to migrate: " + name, e);
+                    }
+                }
+            }
+
+            runOnUiThread(() -> Toast.makeText(this, "Save data migrated", Toast.LENGTH_SHORT).show());
+        }
+
+        // Ensure root folder exists
         if (!targetRootFolder.exists()) {
-            boolean created = targetRootFolder.mkdirs();
-            if (!created) {
-                Log.e("setupFiles", "Failed to create Starship folder: " + assetsPath);
+            if (!targetRootFolder.mkdirs()) {
+                Log.e("setupFiles", "Failed to create root folder");
+                runOnUiThread(() -> Toast.makeText(this, "Failed to create folder", Toast.LENGTH_LONG).show());
+                setupLatch.countDown();
                 return;
             }
-            Toast.makeText(this, "Setting up files in " + assetsPath, Toast.LENGTH_SHORT).show();
-        } else {
-            Log.i("setupFiles", "Starship folder already exists: " + assetsPath);
         }
-        hasInstalledExternalAssetFiles = true;
-    }
 
-    private void pickRomIfNeeded() {
-        File romFile = new File(getExternalAssetsPath(), "baserom.z64");
-        if (!romFile.exists()) {
-            pickRom();
-        } else {
-            // If assets don't exist, extract them now
-            File assetsDir = new File(getExternalAssetsPath(), "assets");
-            if (!assetsDir.exists() || assetsDir.list().length == 0) {
-                extractAssetsAfterRom(romFile.getAbsolutePath());
-            } else {
-                nativeInit(romFile.getAbsolutePath());
-            }
+        // Always ensure mods folder exists
+        File targetModsDir = new File(targetRootFolder, "mods");
+        if (!targetModsDir.exists()) {
+            targetModsDir.mkdirs();
         }
-    }
 
-    private void pickRom() {
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        intent.setType("*/*");
-        intent.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(intent, PICK_ROM_REQUEST);
-    }
-
-    // NEW: Copy YAMLs from assets/yamls/ to internal storage for extraction
-    private String copyYamlAssetsToInternal() {
+        // Copy assets/ from internal
+        File targetAssetsDir = new File(targetRootFolder, "assets");
         try {
-            String yamlFolderName = "yamls";
-            String[] yamlFiles = getAssets().list(yamlFolderName);
-            File yamlDir = new File(getFilesDir(), yamlFolderName);
-            if (!yamlDir.exists()) yamlDir.mkdirs();
-            for (String yaml : yamlFiles) {
-                File outFile = new File(yamlDir, yaml);
-                if (outFile.exists()) continue;
-                InputStream in = getAssets().open(yamlFolderName + "/" + yaml);
-                OutputStream out = new FileOutputStream(outFile);
-                byte[] buffer = new byte[4096];
-                int len;
-                while ((len = in.read(buffer)) > 0) out.write(buffer, 0, len);
-                in.close();
-                out.close();
+            if (!targetAssetsDir.exists()) {
+                targetAssetsDir.mkdirs();
             }
-            return yamlDir.getAbsolutePath();
-        } catch (Exception e) {
+            AssetCopyUtil.copyAssetsToExternal(this, "assets", targetAssetsDir.getAbsolutePath());
+            runOnUiThread(() -> Toast.makeText(this, "Assets copied", Toast.LENGTH_SHORT).show());
+        } catch (IOException e) {
             e.printStackTrace();
-            return null;
+            runOnUiThread(() -> Toast.makeText(this, "Error copying assets", Toast.LENGTH_LONG).show());
         }
+
+        // Copy starship.o2r from internal assets
+        File targetOtrFile = new File(targetRootFolder, "starship.o2r");
+        try (InputStream in = getAssets().open("starship.o2r");
+             OutputStream out = new FileOutputStream(targetOtrFile)) {
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
+            }
+
+            runOnUiThread(() -> Toast.makeText(this, "starship.o2r copied", Toast.LENGTH_SHORT).show());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            runOnUiThread(() -> Toast.makeText(this, "Error copying starship.o2r", Toast.LENGTH_LONG).show());
+        }
+
+        setupLatch.countDown();
     }
 
-    // NEW: Call extraction, then nativeInit if successful
-    private void extractAssetsAfterRom(String romPath) {
-        String yamlDir = copyYamlAssetsToInternal();
-        if (yamlDir == null) {
-            Toast.makeText(this, "Failed to copy YAMLs.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        String outputDir = new File(getExternalAssetsPath(), "assets").getAbsolutePath();
-        boolean ok = extractAssets(romPath, outputDir, yamlDir);
-        if (ok) {
-            Toast.makeText(this, "Asset extraction complete!", Toast.LENGTH_SHORT).show();
-            nativeInit(romPath);
-        } else {
-            Toast.makeText(this, "Asset extraction failed (bad ROM?)", Toast.LENGTH_LONG).show();
-        }
-    }
+
+    private native void nativeHandleSelectedFile(String filePath);
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_ROM_REQUEST && resultCode == RESULT_OK && data != null) {
-            Uri uri = data.getData();
-            try {
-                // Copy ROM to Starship directory
-                File romFile = new File(getExternalAssetsPath(), "baserom.z64");
-                InputStream inputStream = getContentResolver().openInputStream(uri);
-                FileOutputStream outputStream = new FileOutputStream(romFile);
+        if (requestCode == FILE_PICKER_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            // Handle file selection
+            Uri selectedFileUri = data.getData();
+            String fileName = "SF.z64";
 
-                byte[] buffer = new byte[4096];
-                int length;
-                while ((length = inputStream.read(buffer)) > 0) {
-                    outputStream.write(buffer, 0, length);
+            File destinationDirectory = new File(Environment.getExternalStorageDirectory(), "Starship");
+            File destinationFile = new File(destinationDirectory, fileName);
+
+            if (destinationDirectory != null && selectedFileUri != null) {
+                try {
+                    InputStream in = getContentResolver().openInputStream(selectedFileUri);
+                    OutputStream out = new FileOutputStream(destinationFile);
+
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+
+                    in.close();
+                    out.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-
-                inputStream.close();
-                outputStream.close();
-
-                // Extract assets, then launch game
-                extractAssetsAfterRom(romFile.getAbsolutePath());
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Failed to load ROM", Toast.LENGTH_LONG).show();
             }
+
+            // Now pass the path of the file in the new folder
+            nativeHandleSelectedFile(destinationFile.getPath());
+
         } else if (requestCode == STORAGE_PERMISSION_REQUEST_CODE) {
-            if (hasSpecialExternalStoragePermission()) {
-                setupFiles(getExternalAssetsPath());
-                pickRomIfNeeded();
-            } else {
-                Toast.makeText(this, "Storage permission is required to access files.", Toast.LENGTH_LONG).show();
+            // Handle MANAGE_EXTERNAL_STORAGE result
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                if (Environment.isExternalStorageManager()) {
+                    checkAndSetupFiles();
+                } else {
+                    Toast.makeText(this, "Storage permission is required to access files.", Toast.LENGTH_LONG).show();
+                }
             }
-            permissionPopupIsOpen = false;
         }
     }
 
-    // --- Controller overlay methods below this line ---
 
-    public native void nativeInit(String romPath);
+    public void openFilePicker() {
+        // Create an Intent to open the file picker dialog
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+
+        // Start the file picker dialog
+        startActivityForResult(intent, 0);
+    }
+
+    // Check if external storage is available and writable
+    private boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state);
+    }
+
+
     public native void attachController();
     public native void detachController();
+    // Native method for setting button state
     public native void setButton(int button, boolean value);
     public native void setCameraState(int axis, float value);
+
+    // Native method for setting joystick axis value
     public native void setAxis(int axis, short value);
 
+    private Button button1, button2, button3, button4;
+    private Button buttonA, buttonB, buttonX, buttonY;
+    private Button buttonDpadUp, buttonDpadDown, buttonDpadLeft, buttonDpadRight;
+    private Button buttonLB, buttonRB, buttonZ, buttonStart, buttonBack;
+    private Button buttonToggle;
+    private FrameLayout leftJoystick;
+    private ImageView leftJoystickKnob;
+    private View overlayView;
+
+    // Function to set up the controller overlay (inflate layout and initialize buttons)
     private void setupControllerOverlay() {
+        // Inflate the touchcontrol_overlay layout
         LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
         overlayView = inflater.inflate(R.layout.touchcontrol_overlay, null);
 
+        // Set layout params for overlayView to control positioning and sizing
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
                 FrameLayout.LayoutParams.MATCH_PARENT
         );
         overlayView.setLayoutParams(layoutParams);
+        // Add overlay view to the main layout (you may need to add it to a container like FrameLayout)
         ViewGroup view = (ViewGroup) getContentView();
         view.addView(overlayView);
 
@@ -303,53 +392,64 @@ public class MainActivity extends SDLActivity {
 
         buttonToggle = overlayView.findViewById(R.id.buttonToggle);
 
+        // Initialize joysticks and joystick knobs from the inflated layout
         leftJoystick = overlayView.findViewById(R.id.left_joystick);
         leftJoystickKnob = overlayView.findViewById(R.id.left_joystick_knob);
 
         FrameLayout rightScreenArea = overlayView.findViewById(R.id.right_screen_area);
 
-        // Button handlers
-        addTouchListener(buttonA, ControllerButtons.BUTTON_A);
-        addTouchListener(buttonB, ControllerButtons.BUTTON_B);
-        addTouchListener(buttonX, ControllerButtons.BUTTON_X);
-        addTouchListener(buttonY, ControllerButtons.BUTTON_Y);
+        // Set OnTouchListeners for the Xbox controller buttons
+        addTouchListener(buttonA, ControllerButtons.BUTTON_A); // SDL Button 0 (A)
+        addTouchListener(buttonB, ControllerButtons.BUTTON_B); // SDL Button 1 (B)
+        addTouchListener(buttonX, ControllerButtons.BUTTON_X); // SDL Button 2 (X)
+        addTouchListener(buttonY, ControllerButtons.BUTTON_Y); // SDL Button 3 (Y)
 
-        setupCButtons(buttonDpadUp, ControllerButtons.AXIS_RY, 1);
-        setupCButtons(buttonDpadDown, ControllerButtons.AXIS_RY, -1);
-        setupCButtons(buttonDpadLeft, ControllerButtons.AXIS_RX, 1);
-        setupCButtons(buttonDpadRight, ControllerButtons.AXIS_RX, -1);
+        setupCButtons(buttonDpadUp, ControllerButtons.AXIS_RY, 1); // SDL Button 10 (D-Pad Up)
+        setupCButtons(buttonDpadDown, ControllerButtons.AXIS_RY , -1); // SDL Button 11 (D-Pad Down)
+        setupCButtons(buttonDpadLeft, ControllerButtons.AXIS_RX, 1); // SDL Button 12 (D-Pad Left)
+        setupCButtons(buttonDpadRight, ControllerButtons.AXIS_RX, -1); // SDL Button 13 (D-Pad Right)
 
-        addTouchListener(buttonLB, ControllerButtons.BUTTON_LB);
-        addTouchListener(buttonRB, ControllerButtons.BUTTON_RB);
-        addTouchListener(buttonZ, ControllerButtons.AXIS_RT);
+        addTouchListener(buttonLB, ControllerButtons.BUTTON_LB); // SDL Button 4 (LB)
+        addTouchListener(buttonRB, ControllerButtons.BUTTON_RB); // SDL Button 5 (RB)
+        addTouchListener(buttonZ, ControllerButtons.AXIS_RT); // SDL Button 5 (Z)
 
-        addTouchListener(buttonStart, ControllerButtons.BUTTON_START);
-        addTouchListener(buttonBack, ControllerButtons.BUTTON_BACK);
+        addTouchListener(buttonStart, ControllerButtons.BUTTON_START); // SDL Button 7 (Start)
+        addTouchListener(buttonBack, ControllerButtons.BUTTON_BACK); // SDL Button 6 (Back)
 
-        // Joysticks and look/aim area
-        setupJoystick(leftJoystick, leftJoystickKnob, true);
+
+        // Setup joystick movement
+        setupJoystick(leftJoystick, leftJoystickKnob, true); // Left joystick
+
         setupLookAround(rightScreenArea);
-        setupToggleButton(buttonToggle, buttonGroup);
+
+        setupToggleButton(buttonToggle,buttonGroup);
+
     }
 
     private void setupToggleButton(Button button, ViewGroup uiGroup){
-        boolean isHidden = preferences.getBoolean("controlsVisible", false);
-        uiGroup.setVisibility(isHidden ? View.INVISIBLE : View.VISIBLE);
+        boolean isHidden = preferences.getBoolean("controlsVisible", false); // Default to 'false' (visible)
+        uiGroup.setVisibility(isHidden ? View.INVISIBLE : View.VISIBLE); // Set the initial visibility based on the saved state
+        /*if(isHidden){
+            detachController();
+        }*/
         button.setOnClickListener(new View.OnClickListener() {
             boolean isHidden = false;
             @Override
             public void onClick(View v) {
                 if (isHidden) {
-                    uiGroup.setVisibility(View.VISIBLE);
+                    uiGroup.setVisibility(View.VISIBLE); // Show UI elements
+                    //attachController();
                 } else {
-                    uiGroup.setVisibility(View.INVISIBLE);
+                    uiGroup.setVisibility(View.INVISIBLE); // Hide UI elements
+                    //detachController();
                 }
                 preferences.edit().putBoolean("controlsVisible", !isHidden).apply();
-                isHidden = !isHidden;
+                isHidden = !isHidden; // Toggle state
             }
         });
     }
 
+    // Function to set a touch listener for each button
     private void addTouchListener(Button button, int buttonNum) {
         button.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -394,6 +494,8 @@ public class MainActivity extends SDLActivity {
         });
     }
 
+    boolean TouchAreaEnabled = true;
+
     void DisableTouchArea(){
         TouchAreaEnabled = false;
     }
@@ -411,6 +513,7 @@ public class MainActivity extends SDLActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        // Start tracking the finger's position
                         lastX = event.getX();
                         lastY = event.getY();
                         isTouching = true;
@@ -418,77 +521,101 @@ public class MainActivity extends SDLActivity {
 
                     case MotionEvent.ACTION_MOVE:
                         if (isTouching) {
+                            // Calculate the change in position (delta)
                             float deltaX = event.getX() - lastX;
                             float deltaY = event.getY() - lastY;
 
+                            // Update the last position
                             lastX = event.getX();
                             lastY = event.getY();
 
-                            float sensitivityMultiplier = 15;
+                            // Increase sensitivity by using a larger multiplier
+                            // Adjust these multipliers to suit your needs
+                            float sensitivityMultiplier = 15; // Higher value for more sensitivity
                             float rx = (deltaX * sensitivityMultiplier);
                             float ry = (deltaY * sensitivityMultiplier);
 
-                            setCameraState(0, rx);
-                            setCameraState(1, ry);
+                            // Send the mapped values to the joystick axes
+                            setCameraState(0, rx); // Right stick X axis
+                            setCameraState(1, ry); // Right stick Y axis
                         }
                         break;
 
                     case MotionEvent.ACTION_UP:
                     case MotionEvent.ACTION_CANCEL:
+                        // Stop tracking the finger's position and reset joystick input
                         isTouching = false;
-                        setCameraState(0, 0.0f);
-                        setCameraState(1, 0.0f);
+                        setCameraState(0, 0.0f); // Reset right stick X axis
+                        setCameraState(1, 0.0f); // Reset right stick Y axis
                         break;
                 }
-                return TouchAreaEnabled;
+                return TouchAreaEnabled; // Event full handled
             }
         });
     }
 
+
+
+
+
+    // Function to set joystick movement with reset to center when not touched
     private void setupJoystick(FrameLayout joystickLayout, ImageView joystickKnob, boolean isLeft) {
-    joystickLayout.post(() -> {
-        final float joystickCenterX = joystickLayout.getWidth() / 2f;
-        final float joystickCenterY = joystickLayout.getHeight() / 2f;
+        joystickLayout.post(() -> {
+            // Calculate the joystick center once, before any events
+            final float joystickCenterX = joystickLayout.getWidth() / 2f;
+            final float joystickCenterY = joystickLayout.getHeight() / 2f;
 
-        joystickLayout.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                    case MotionEvent.ACTION_MOVE:
-                        float deltaX = event.getX() - joystickCenterX;
-                        float deltaY = event.getY() - joystickCenterY;
+            joystickLayout.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                        case MotionEvent.ACTION_MOVE:
+                            // Calculate the joystick movement and move the knob
+                            float deltaX = event.getX() - joystickCenterX;
+                            float deltaY = event.getY() - joystickCenterY;
 
-                        float maxRadius = joystickLayout.getWidth() / 2f - joystickKnob.getWidth() / 2f;
-                        float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                        if (distance > maxRadius) {
-                            float scale = maxRadius / distance;
-                            deltaX *= scale;
-                            deltaY *= scale;
-                        }
+                            // Clamp the joystick movement to prevent it from going outside the area
+                            float maxRadius = joystickLayout.getWidth() / 2f - joystickKnob.getWidth() / 2f;
+                            float distance = (float) Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+                            if (distance > maxRadius) {
+                                float scale = maxRadius / distance;
+                                deltaX *= scale;
+                                deltaY *= scale;
+                            }
 
-                        joystickKnob.setX(joystickCenterX + deltaX - joystickKnob.getWidth() / 2f);
-                        joystickKnob.setY(joystickCenterY + deltaY - joystickKnob.getHeight() / 2f);
+                            joystickKnob.setX(joystickCenterX + deltaX - joystickKnob.getWidth() / 2f);
+                            joystickKnob.setY(joystickCenterY + deltaY - joystickKnob.getHeight() / 2f);
 
-                        short x = (short) (deltaX / maxRadius * Short.MAX_VALUE);
-                        short y = (short) (deltaY / maxRadius * Short.MAX_VALUE);
+                            // Send joystick values to native C code
+                            short x = (short) (deltaX / maxRadius * Short.MAX_VALUE);
+                            short y = (short) (deltaY / maxRadius * Short.MAX_VALUE);
 
-                        setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, x);
-                        setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, y);
-                        break;
+                            // Send X-axis and Y-axis values
+                            setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, x); // X-axis
+                            setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, y); // Y-axis
+                            break;
 
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        joystickKnob.setX(joystickCenterX - joystickKnob.getWidth() / 2f);
-                        joystickKnob.setY(joystickCenterY - joystickKnob.getHeight() / 2f);
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            // Reset joystick knob to the center position (ensure it's placed correctly)
+                            joystickKnob.setX(joystickCenterX - joystickKnob.getWidth() / 2f);
+                            joystickKnob.setY(joystickCenterY - joystickKnob.getHeight() / 2f);
 
-                        setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, (short) 0);
-                        setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, (short) 0);
-                        break;
+                            // Reset joystick values to 0 when released or canceled
+                            setAxis(isLeft ? ControllerButtons.AXIS_LX : ControllerButtons.AXIS_RX, (short) 0); // X-axis
+                            setAxis(isLeft ? ControllerButtons.AXIS_LY : ControllerButtons.AXIS_RY, (short) 0); // Y-axis
+                            break;
+                    }
+                    return true;
                 }
-                return true; // <--- You should return a value for onTouch!
-            }
+            });
         });
-    });
-    }
+
+
+
+}
+
+
+
 }
