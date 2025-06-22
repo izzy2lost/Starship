@@ -15,10 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
       - name: Install dependencies
-        run: sudo apt-get install gcc g++ git cmake ninja-build lsb-release
+        run: |
+          sudo apt update
+          sudo apt-get install -y gcc g++ git cmake ninja-build lsb-release
 
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.13
@@ -57,10 +59,12 @@ jobs:
       - name: Checkout repository (with submodules)
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
 
       - name: Install build dependencies
-        run: sudo apt-get update && sudo apt-get install -y ninja-build      
+        run: |
+          sudo apt update
+          sudo apt-get install -y ninja-build      
 
       - name: Download starship.o2r
         uses: actions/download-artifact@v4
