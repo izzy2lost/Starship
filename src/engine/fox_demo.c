@@ -22,13 +22,7 @@
 #include "fox_co.h"
 #include "fox_record.h"
 
-void UpdateVisPerFrameFromRecording(u8* record, s32 maxFrames) {
-    if (gCsFrameCount < maxFrames) {
-        gVIsPerFrame = record[gCsFrameCount];
-    }
-}
-
-void UpdateVisPerFrameFromRecording2(Record* record, s32 maxFrames) {
+void UpdateVisPerFrameFromRecording(Record* record, s32 maxFrames) {
     int i;
 
     if (gCsFrameCount > record[maxFrames - 1].frame) {

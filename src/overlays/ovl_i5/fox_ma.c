@@ -61,26 +61,26 @@ Vec3f D_i5_801BE6A0[12];
 s32 D_i5_801BE734[4];
 
 // Train cutscene timings recorded from a real N64
-Record sf64_virecord_macbeth_records[] = {
+Record gMacbethCutsceneRecord[] = {
     // Train breaking barriers
-    { 0x02, 0x000000 },
-    { 0x03, 0x000002 },
-    { 0x02, 0x00001F },
-    { 0x03, 0x000190 },
-    { 0x02, 0x0001A2 },
-    { 0x03, 0x0001B1 },
-    { 0x04, 0x0001B3 },
-    { 0x03, 0x0001BC },
-    { 0x02, 0x0001FD },
-    // { 0x03, 0x00022F },
-    // { 0x02, 0x000245 },
-    // { 0x03, 0x00024B },
+    { 2, 0 },
+    { 3, 2 },
+    { 2, 31 },
+    { 3, 400 },
+    { 2, 418 },
+    { 3, 433 },
+    { 4, 435 },
+    { 3, 444 },
+    { 2, 509 },
+    // { 3, 559 },
+    // { 2, 581 },
+    // { 3, 587 },
     // Explosions
-    { 0x02, 0x00024D },
-    { 0x03, 0x0002CA },
-    { 0x04, 0x000335 },
-    { 0x05, 0x000351 },
-    { 0x02, 0x0003AE },
+    { 2, 589 },
+    { 3, 714 },
+    { 4, 821 },
+    { 5, 849 },
+    { 2, 942 },
 };
 
 UnkStruct_D_i5_801B8E50 D_i5_801B8E50[156] = {
@@ -6509,7 +6509,7 @@ void Macbeth_LevelComplete2(Player* player) {
     Vec3f spD8;
     f32 zeroVar = 0.0f;
 
-    UpdateVisPerFrameFromRecording2(sf64_virecord_macbeth_records, ARRAY_COUNT(sf64_virecord_macbeth_records));
+    UpdateVisPerFrameFromRecording(gMacbethCutsceneRecord, ARRAY_COUNT(gMacbethCutsceneRecord));
 
     switch (player->csState) {
         case 0:
