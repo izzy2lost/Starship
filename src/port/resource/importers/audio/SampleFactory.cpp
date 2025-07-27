@@ -8,7 +8,9 @@
 #define DR_MP3_IMPLEMENTATION
 #include <dr_mp3.h>
 
-#include "vorbis/vorbisfile.h"
+#if !defined(EXCLUDE_OGG) && !defined(EXCLUDE_VORBIS)
+#include <vorbis/vorbisfile.h>
+#endif
 
 namespace SF64 {
 std::shared_ptr<Ship::IResource> ResourceFactoryBinarySampleV1::ReadResource(std::shared_ptr<Ship::File> file,
