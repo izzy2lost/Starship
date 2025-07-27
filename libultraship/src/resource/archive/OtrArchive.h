@@ -1,4 +1,5 @@
 #ifndef EXCLUDE_MPQ_SUPPORT
+#define OTR_ARCHIVE_INCLUDED
 
 #pragma once
 
