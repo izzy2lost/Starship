@@ -334,40 +334,47 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
 	)
 endif()
 
-
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     find_package(Ogg CONFIG REQUIRED)
     link_libraries(Ogg::ogg)
 
     find_package(Vorbis CONFIG REQUIRED)
     link_libraries(Vorbis::vorbisfile)
-	set(ADDITIONAL_LIBRARY_DEPENDENCIES
+
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net-static>"
         "Ogg::ogg"
         "Vorbis::vorbis"
         "Vorbis::vorbisenc"
         "Vorbis::vorbisfile"
     )
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
     set(THREADS_PREFER_PTHREAD_FLAG ON)
     find_package(Threads REQUIRED)
+
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
         SDL2::SDL2
         Threads::Threads
     )
+
+    add_compile_definitions(EXCLUDE_OGG)
+    add_compile_definitions(EXCLUDE_VORBIS)
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
-    find_package(SDL2)
-	find_package(Vorbis REQUIRED)
-	link_libraries(Vorbis::vorbisfile)
-	find_package(Ogg REQUIRED)
-	link_libraries(Ogg::ogg)
+    find_package(SDL2 REQUIRED)
+    find_package(Ogg REQUIRED)
+    find_package(Vorbis REQUIRED)
+    link_libraries(Ogg::ogg Vorbis::vorbisfile)
+
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         -lglad
         SDL2::SDL2
         "Ogg::ogg"
         "Vorbis::vorbisfile"
     )
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<CONFIG:Debug>:-Wl,--wrap=abort>"
@@ -375,16 +382,18 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     target_include_directories(${PROJECT_NAME} PRIVATE
         ${DEVKITPRO}/portlibs/wiiu/include/
     )
-else()
+
+else() # Linux and others
     find_package(Ogg REQUIRED)
     find_package(Vorbis REQUIRED)
- 	set(ADDITIONAL_LIBRARY_DEPENDENCIES
+
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "$<$<BOOL:${USE_NETWORKING}>:SDL2_net::SDL2_net>"
         "Ogg::ogg"
         "Vorbis::vorbis"
         "Vorbis::vorbisenc"
         "Vorbis::vorbisfile"
-	)
+    )
 endif()
 
 if(USE_NETWORKING)
