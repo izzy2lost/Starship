@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16.0 FATAL_ERROR)
 
 # Set the project version and language
 project(Starship VERSION 2.0.0 LANGUAGES C CXX ASM)
+set(EXCLUDE_MPQ_SUPPORT ON)
 include(FetchContent)
 
 set(NATO_PHONETIC_ALPHABET
