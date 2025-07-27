@@ -158,8 +158,7 @@ public void checkAndSetupFiles() {
         .setPositiveButton("Select File", (dialog, which) -> openFilePicker())
         .show());
 }
-    //
- Helper methods for asset copying
+    // Helper methods for asset copying
     private void copyAssetFolder(String assetFolderName, String destPath) {
         try {
             File dest = new File(destPath);
