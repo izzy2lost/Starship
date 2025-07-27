@@ -1,0 +1,72 @@
+name: Android Build
+
+on:
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-port-o2r:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: sudo apt-get install gcc g++ git cmake ninja-build lsb-release
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2.13
+      with:
+        key: ${{ runner.os }}-o2r-ccache-${{ github.ref }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-o2r-ccache-${{ github.ref }}
+          ${{ runner.os }}-o2r-ccache-
+    - name: Cache build folders
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-o2r-build-${{ github.ref }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-o2r-build-${{ github.ref }}
+          ${{ runner.os }}-o2r-build-
+        path: |
+          tools/Torch/cmake-build-release
+    - name: Generate starship.o2r
+      run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+        make -C tools/Torch type=release -j3
+        tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
+    - uses: actions/upload-artifact@v4
+      with:
+        name: starship.o2r
+        path: starship.o2r
+        retention-days: 1
+
+  build-android:
+    needs: generate-port-o2r
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: sudo apt-get install -y ninja-build
+    - name: Download starship.o2r
+      uses: actions/download-artifact@v4
+      with:
+        name: starship.o2r
+        path: android/app/src/main/assets 
+    - name: Configure Gradle permissions
+      run: chmod +x android/gradlew
+    - name: Build Starship
+      run: |
+        cd android/
+        ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
+        mv app/build/outputs/apk/debug/app-debug.apk ../starship.apk
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: starship-apk
+        path: starship.apk
+        
