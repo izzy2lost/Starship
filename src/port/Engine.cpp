@@ -27,7 +27,7 @@
 #include "resource/importers/audio/EnvelopeFactory.h"
 #include "resource/importers/audio/InstrumentFactory.h"
 #include "resource/importers/audio/LoopFactory.h"
-#include "resource/importers/audio/SampleFactory.h"
+// #include "resource/importers/audio/SampleFactory.h"
 #include "resource/importers/audio/SoundFontFactory.h"
 
 #include "port/interpolation/FrameInterpolation.h"
