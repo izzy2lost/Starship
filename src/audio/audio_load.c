@@ -625,7 +625,7 @@ void AudioLoad_RelocateFont(s32 fontId, uintptr_t fontBaseAddr, SampleBankRelocI
 }
 
 void AudioLoad_SyncDma(uintptr_t devAddr, u8* ramAddr, u32 size, s32 medium) {
-    memcpy(ramAddr, devAddr, size);
+    memcpy(ramAddr, (void*)devAddr, size);
 
     return;
     size = ALIGN16(size);
@@ -934,7 +934,7 @@ s32 AudioLoad_SlowLoadSample(s32 fontId, u8 instId, s8* status) {
     slowLoad->bytesRemaining = ALIGN16(sample->size);
     slowLoad->ramAddr = slowLoad->curRamAddr;
     slowLoad->curDevAddr = GameEngine_Malloc(sample->size * 2);
-    memcpy(slowLoad->curDevAddr, sample->sampleAddr, sample->size);
+    memcpy((void*)slowLoad->curDevAddr, (void*)sample->sampleAddr, sample->size);
     slowLoad->medium = sample->medium;
     slowLoad->seqOrFontId = fontId;
     slowLoad->instId = instId;
