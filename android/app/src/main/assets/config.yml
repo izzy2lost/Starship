@@ -1,0 +1,150 @@
+# Supported Star Fox 64 Versions: US, JP
+
+# US 1.1
+09f0d105f476b00efa5303a3ebc42e60a7753b7a:
+  name: Star Fox 64 (U) (V1.1) (Compressed)
+  preprocess:
+    decompress_mio0:
+      method: mio0-comptool
+      type: decompress
+      target: f7475fb11e7e6830f82883412638e8390791ab87
+      restart: true
+
+f7475fb11e7e6830f82883412638e8390791ab87:
+  name: Star Fox 64 (U) (V1.1)
+  path: assets/yaml/us/rev1
+  config:
+    gbi: F3DEX
+    sort: OFFSET
+    logging: INFO
+    output:
+      binary: sf64.o2r
+      code: src/assets
+      headers: include/assets
+      modding: src/assets
+    # enums:
+    #   - include/sf64object.h
+    #   - include/sf64level.h
+    #   - include/sf64mesg.h
+    #   - include/sf64audio_external.h
+    #   - include/sf64event.h
+    #   - include/sf64player.h
+
+# US 1.0
+d8b1088520f7c5f81433292a9258c1184afa1457:
+  name: Star Fox 64 (U) (V1.0) (Compressed)
+  preprocess:
+    decompress_mio0:
+      method: mio0-comptool
+      type: decompress
+      target: 63b69f0ef36306257481afc250f9bc304c7162b2
+      restart: true
+
+63b69f0ef36306257481afc250f9bc304c7162b2:
+  name: Star Fox 64 (U) (V1.0)
+  path: assets/yaml/us/rev0
+  config:
+    gbi: F3DEX
+    sort: OFFSET
+    logging: INFO
+    output:
+      binary: sf64.o2r
+      code: src/assets
+      headers: include/assets
+      modding: src/assets
+    # enums:
+    #   - include/sf64object.h
+    #   - include/sf64level.h
+    #   - include/sf64mesg.h
+    #   - include/sf64audio_external.h
+    #   - include/sf64event.h
+    #   - include/sf64player.h
+
+# JP 1.0
+9bd71afbecf4d0a43146e4e7a893395e19bf3220:
+  name: Star Fox 64 (JP) (V1.0) (Compressed)
+  preprocess:
+    decompress_mio0:
+      method: mio0-comptool
+      type: decompress
+      target: d064229a32cc05ab85e2381ce07744eb3ffaf530
+      restart: true
+
+d064229a32cc05ab85e2381ce07744eb3ffaf530:
+  name: Star Fox 64 (JP) (V1.0)
+  path: assets/yaml/jp/rev0
+  config:
+    gbi: F3DEX
+    sort: OFFSET
+    logging: INFO
+    output:
+      binary: ./mods/sf64jp.o2r
+      code: src/jp/assets
+      headers: include/assets
+      modding: src/jp/assets
+    # enums:
+    #   - include/sf64object.h
+    #   - include/sf64level.h
+    #   - include/sf64mesg.h
+    #   - include/sf64audio_external.h
+    #   - include/sf64event.h
+    #   - include/sf64player.
+
+# EU 1.0
+05b307b8804f992af1a1e2fbafbd588501fdf799:
+  name: Star Fox 64 (EU) (V1.0) (Compressed)
+  preprocess:
+    decompress_mio0:
+      method: mio0-comptool
+      type: decompress
+      target: 09f5d5c14219fc77a36c5a6ad5e63f7abd8b3385
+      restart: true
+
+09f5d5c14219fc77a36c5a6ad5e63f7abd8b3385:
+  name: Star Fox 64 (EU) (V1.0)
+  path: assets/yaml/eu/rev0
+  config:
+    gbi: F3DEX
+    sort: OFFSET
+    logging: INFO
+    output:
+      binary: ./mods/sf64eu.o2r
+      code: src/eu/assets
+      headers: include/assets
+      modding: src/eu/assets
+    # enums:
+    #   - include/sf64object.h
+    #   - include/sf64level.h
+    #   - include/sf64mesg.h
+    #   - include/sf64audio_external.h
+    #   - include/sf64event.h
+    #   - include/sf64player.h
+
+c8a10699dea52f4bb2e2311935c1376dfb352e7a:
+  name: Star Fox 64 (CN) (V1.1) (Compressed)
+  preprocess:
+    decompress_mio0:
+      method: mio0-comptool
+      type: decompress
+      target: 3a05aba5549fa71e8b16a0c6e2c8481b070818a9
+      restart: true
+
+3a05aba5549fa71e8b16a0c6e2c8481b070818a9:
+  name: Star Fox 64 (CN) (V1.1)
+  path: assets/yaml/cn/rev1
+  config:
+    gbi: F3DEX
+    sort: OFFSET
+    logging: INFO
+    output:
+      binary: ./mods/sf64cn.o2r
+      code: src/cn/assets
+      headers: include/assets
+      modding: src/cn/assets
+    # enums:
+    #   - include/sf64object.h
+    #   - include/sf64level.h
+    #   - include/sf64mesg.h
+    #   - include/sf64audio_external.h
+    #   - include/sf64event.h
+    #   - include/sf64player.h

@@ -88,7 +88,7 @@ endif()
 ################################################################################
 # Global configuration types
 ################################################################################
-if (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+if (CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch|Android")
 set(CMAKE_C_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -ffast-math -DDEBUG")
 set(CMAKE_C_FLAGS_RELEASE "-O3 -ffast-math -DNDEBUG")
@@ -119,7 +119,7 @@ add_compile_definitions(
 )
 
 # Find necessary libraries
-if (UNIX AND NOT APPLE)
+if (UNIX AND NOT APPLE AND NOT ANDROID)
 find_package(OpenGL REQUIRED)
 endif()
 
@@ -240,6 +240,11 @@ FetchContent_MakeAvailable(dr_libs)
 # Libultraship Integration                                                     #
 #==============================================================================#
 
+
+if(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch|Android")
+    find_package(SDL2)
+endif()
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -340,6 +345,14 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         "Vorbis::vorbis"
         "Vorbis::vorbisenc"
         "Vorbis::vorbisfile"
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    set(THREADS_PREFER_PTHREAD_FLAG ON)
+    find_package(Threads REQUIRED)
+    set(ADDITIONAL_LIBRARY_DEPENDENCIES
+        "libultraship;"
+        SDL2::SDL2
+        Threads::Threads
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(SDL2)
@@ -567,6 +580,28 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
               -Wno-stringop-overflow
           >
       )
+   elseif (CMAKE_SYSTEM_NAME STREQUAL "Android")
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            -O2
+
+            -Wno-error
+            -Wno-format-security
+            -Wno-multichar
+            -Wno-return-type
+            -Wno-narrowing
+            -Wno-switch-outside-range
+            $<$<COMPILE_LANGUAGE:C>:
+                -Werror-implicit-function-declaration
+                -Wno-incompatible-pointer-types
+                -Wno-discarded-array-qualifiers
+                -Wno-discarded-qualifiers
+                -Wno-int-conversion
+                -Wno-builtin-declaration-mismatch
+                -Wno-switch-unreachable
+                -Wno-stringop-overflow
+                -Wno-implicit-int
+            >
+        )   
   else()
       if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
         set(CPU_OPTION -msse2 -mfpmath=sse)
