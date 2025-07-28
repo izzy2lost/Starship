@@ -84,9 +84,7 @@ GameEngine::GameEngine() {
         fs::create_directories(modDir);
     }
 
-    // Set external storage as app/user directory path for Ship::Context
-    Ship::Context::SetAppDirectoryPath(baseDir);
-    Ship::Context::SetUserDirectoryPath(baseDir);
+    // Note: Ship::Context will handle directory paths internally
 
     // Add sf64.o2r if it exists, otherwise prompt for extraction
     if (std::filesystem::exists(main_path)) {
