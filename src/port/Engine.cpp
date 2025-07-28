@@ -69,19 +69,26 @@ GameEngine::GameEngine() {
 #endif
 
     std::vector<std::string> archiveFiles;
+
+#ifdef __ANDROID__
+    const std::string baseDir = "/storage/emulated/0/Starship/";
+    const std::string main_path = baseDir + "sf64.o2r";
+    const std::string assets_path = baseDir + "starship.o2r";
+    const std::string modDir = baseDir + "mods";
+#else
     const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
 #ifdef __linux__
     const std::string assets_path = Ship::Context::GetPathRelativeToAppBundle("starship.o2r");
 #else
     const std::string assets_path = Ship::Context::GetPathRelativeToAppDirectory("starship.o2r");
 #endif
-
+    const std::string modDir = Ship::Context::GetPathRelativeToAppDirectory("mods");
+#endif
 
 #ifdef _WIN32
     AllocConsole();
 #endif
 
-    const std::string modDir = "/sdcard/Starship/mods";
     if (!fs::exists(modDir)) {
         fs::create_directories(modDir);
     }
@@ -90,16 +97,16 @@ GameEngine::GameEngine() {
         archiveFiles.push_back(main_path);
     } else {
         if (ShowYesNoBox("Starship - Asset Extraction", "Please provide a Starfox 64 ROM.\n\nSupported Versions:\nUS 1.0\nUS 1.1\n\nAssets will be extracted into an O2R file.") == IDYES) {
-            if(!GenAssetFile()){
-                ShowMessage("Error", "An error occured, no O2R file was generated.\n\nExiting...");
+            if (!GenAssetFile()) {
+                ShowMessage("Error", "An error occurred, no O2R file was generated.\n\nExiting...");
                 exit(1);
             } else {
                 archiveFiles.push_back(main_path);
             }
 
-            if (ShowYesNoBox("Extraction Complete", "ROM Extracted. Extract another?\n\n Starship supports JP and EU ROMs for voice replacement.\n Voice replacement ROM assets can also be installed in:\n Settings->Language->Install JP/EU Audio") == IDYES) {
-                if(!GenAssetFile()){
-                    ShowMessage("Error", "An error occured, no O2R file was generated.");
+            if (ShowYesNoBox("Extraction Complete", "ROM Extracted. Extract another?\n\nStarship supports JP and EU ROMs for voice replacement.\nVoice replacement ROM assets can also be installed in:\nSettings -> Language -> Install JP/EU Audio") == IDYES) {
+                if (!GenAssetFile()) {
+                    ShowMessage("Error", "An error occurred, no O2R file was generated.");
                 }
             }
         } else {
@@ -111,10 +118,9 @@ GameEngine::GameEngine() {
         archiveFiles.push_back(assets_path);
     }
 
-    if (const std::string patches_path = Ship::Context::GetPathRelativeToAppDirectory("mods");
-        !patches_path.empty() && std::filesystem::exists(patches_path)) {
-        if (std::filesystem::is_directory(patches_path)) {
-            for (const auto& p : std::filesystem::recursive_directory_iterator(patches_path)) {
+    if (!modDir.empty() && std::filesystem::exists(modDir)) {
+        if (std::filesystem::is_directory(modDir)) {
+            for (const auto& p : std::filesystem::recursive_directory_iterator(modDir)) {
                 const auto ext = p.path().extension().string();
                 if (StringHelper::IEquals(ext, ".otr") || StringHelper::IEquals(ext, ".o2r")) {
                     archiveFiles.push_back(p.path().generic_string());
@@ -131,8 +137,9 @@ GameEngine::GameEngine() {
     this->context = Ship::Context::CreateUninitializedInstance("Starship", "ship", "starship.cfg.json");
 
     this->context->InitConfiguration();    // without this line InitConsoleVariables fails at Config::Reload()
-    this->context->InitConsoleVariables(); // without this line the controldeck constructor failes in
+    this->context->InitConsoleVariables(); // without this line the controldeck constructor fails in
                                            // ShipDeviceIndexMappingManager::UpdateControllerNamesFromConfig()
+}
 
     auto defaultMappings = std::make_shared<Ship::ControllerDefaultMappings>(
         // KeyboardKeyToButtonMappings - use built-in LUS defaults
