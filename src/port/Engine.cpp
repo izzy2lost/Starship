@@ -81,8 +81,9 @@ GameEngine::GameEngine() {
     AllocConsole();
 #endif
 
-    if (!fs::exists("mods")) {
-        fs::create_directories("mods");
+    const std::string modDir = "/sdcard/Starship/mods";
+    if (!fs::exists(modDir)) {
+        fs::create_directories(modDir);
     }
 
     if (std::filesystem::exists(main_path)) {
