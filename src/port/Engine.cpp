@@ -110,7 +110,7 @@ GameEngine::GameEngine() {
         archiveFiles.push_back(assets_path);
     }
 
-    if (const std::string patches_path = "/storage/emulated/0/Starship/mods";
+    if (const std::string patches_path = Ship::Context::GetPathRelativeToAppDirectory("mods");
         !patches_path.empty() && std::filesystem::exists(patches_path)) {
         if (std::filesystem::is_directory(patches_path)) {
             for (const auto& p : std::filesystem::recursive_directory_iterator(patches_path)) {
