@@ -104,28 +104,31 @@ if (NOT libzip_FOUND)
     list(APPEND ADDITIONAL_LIB_INCLUDES ${libzip_SOURCE_DIR}/lib ${libzip_BINARY_DIR})
 endif()
 
-# =========== Ogg ===========
-find_package(Ogg QUIET)
-if (NOT Ogg_FOUND)
-    FetchContent_Declare(
-        ogg
-        GIT_REPOSITORY https://github.com/xiph/ogg.git
-        GIT_TAG v1.3.5
-        OVERRIDE_FIND_PACKAGE
+#=================== ogg ===================
+
+if(NOT TARGET Ogg::ogg)
+    add_library(Ogg::ogg STATIC IMPORTED GLOBAL)
+    set_target_properties(Ogg::ogg PROPERTIES
+        IMPORTED_LOCATION "${ogg_BINARY_DIR}/lib/libogg.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${ogg_SOURCE_DIR}/include"
     )
-    FetchContent_MakeAvailable(ogg)
 endif()
 
-# =========== Vorbis ===========
-find_package(Vorbis QUIET)
-if (NOT Vorbis_FOUND)
-    FetchContent_Declare(
-        vorbis
-        GIT_REPOSITORY https://github.com/xiph/vorbis.git
-        GIT_TAG v1.3.7
-        OVERRIDE_FIND_PACKAGE
+#=================== vorbis ===================
+if(NOT TARGET Vorbis::vorbis)
+    add_library(Vorbis::vorbis STATIC IMPORTED GLOBAL)
+    set_target_properties(Vorbis::vorbis PROPERTIES
+        IMPORTED_LOCATION "${vorbis_BINARY_DIR}/lib/libvorbis.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${vorbis_SOURCE_DIR}/include"
     )
-    FetchContent_MakeAvailable(vorbis)
+endif()
+
+if(NOT TARGET Vorbis::vorbisfile)
+    add_library(Vorbis::vorbisfile STATIC IMPORTED GLOBAL)
+    set_target_properties(Vorbis::vorbisfile PROPERTIES
+        IMPORTED_LOCATION "${vorbis_BINARY_DIR}/lib/libvorbisfile.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${vorbis_SOURCE_DIR}/include"
+    )
 endif()
 
 target_link_libraries(ImGui PUBLIC SDL2::SDL2)
