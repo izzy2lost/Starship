@@ -104,8 +104,31 @@ if (NOT libzip_FOUND)
     list(APPEND ADDITIONAL_LIB_INCLUDES ${libzip_SOURCE_DIR}/lib ${libzip_BINARY_DIR})
 endif()
 
-#=================== ogg ===================
+# =========== Ogg ===========
+find_package(Ogg QUIET)
+if (NOT Ogg_FOUND)
+    FetchContent_Declare(
+        ogg
+        GIT_REPOSITORY https://github.com/xiph/ogg.git
+        GIT_TAG v1.3.5
+        OVERRIDE_FIND_PACKAGE
+    )
+    FetchContent_MakeAvailable(ogg)
+endif()
 
+# =========== Vorbis ===========
+find_package(Vorbis QUIET)
+if (NOT Vorbis_FOUND)
+    FetchContent_Declare(
+        vorbis
+        GIT_REPOSITORY https://github.com/xiph/vorbis.git
+        GIT_TAG v1.3.7
+        OVERRIDE_FIND_PACKAGE
+    )
+    FetchContent_MakeAvailable(vorbis)
+endif()
+
+# =========== Ogg::ogg Target ===========
 if(NOT TARGET Ogg::ogg)
     add_library(Ogg::ogg STATIC IMPORTED GLOBAL)
     set_target_properties(Ogg::ogg PROPERTIES
@@ -114,7 +137,7 @@ if(NOT TARGET Ogg::ogg)
     )
 endif()
 
-#=================== vorbis ===================
+# =========== Vorbis::vorbis Target ===========
 if(NOT TARGET Vorbis::vorbis)
     add_library(Vorbis::vorbis STATIC IMPORTED GLOBAL)
     set_target_properties(Vorbis::vorbis PROPERTIES
@@ -123,6 +146,7 @@ if(NOT TARGET Vorbis::vorbis)
     )
 endif()
 
+# =========== Vorbis::vorbisfile Target ===========
 if(NOT TARGET Vorbis::vorbisfile)
     add_library(Vorbis::vorbisfile STATIC IMPORTED GLOBAL)
     set_target_properties(Vorbis::vorbisfile PROPERTIES
