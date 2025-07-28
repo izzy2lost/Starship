@@ -85,8 +85,8 @@ GameEngine::GameEngine() {
     }
 
     // Set external storage as app/user directory path for Ship::Context
-    Ship::Context::AppDirectoryPath = baseDir;
-    Ship::Context::UserDirectoryPath = baseDir;
+    Ship::Context::SetAppDirectoryPath(baseDir);
+    Ship::Context::SetUserDirectoryPath(baseDir);
 
     // Add sf64.o2r if it exists, otherwise prompt for extraction
     if (std::filesystem::exists(main_path)) {
@@ -138,8 +138,7 @@ GameEngine::GameEngine() {
     // Initialize configuration and console variables
     this->context->InitConfiguration();
     this->context->InitConsoleVariables();
-}
-	
+
     auto defaultMappings = std::make_shared<Ship::ControllerDefaultMappings>(
         // KeyboardKeyToButtonMappings - use built-in LUS defaults
         std::unordered_map<CONTROLLERBUTTONS_T, std::unordered_set<Ship::KbScancode>>(),
