@@ -198,6 +198,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:textColor="#25FFFFFF"/>
+
+    <!-- Menu Button (Escape) -->
+    <Button
+        android:id="@+id/buttonMenu"
+        android:layout_width="60dp"
+        android:layout_height="35dp"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/ic_rectangular_button"
+        android:text="Menu"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:textColor="#25FFFFFF"
+        android:textSize="12sp"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Toggle Button -->
