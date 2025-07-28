@@ -172,13 +172,6 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    list(REMOVE_ITEM ALL_FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/resource/importers/audio/SampleFactory.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/port/resource/importers/audio/SampleFactory.h
-    )
-endif()
-
 if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(IOS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/ios)
 
@@ -366,10 +359,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         "libultraship;"
         SDL2::SDL2
         Threads::Threads
+        "Ogg::ogg"
+        "Vorbis::vorbisfile"
     )
-
-    add_compile_definitions(EXCLUDE_OGG)
-    add_compile_definitions(EXCLUDE_VORBIS)
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(SDL2 REQUIRED)
