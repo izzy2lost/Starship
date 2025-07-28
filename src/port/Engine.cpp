@@ -63,7 +63,6 @@ std::vector<uint8_t*> MemoryPool;
 GameEngine* GameEngine::Instance;
 
 GameEngine::GameEngine() {
-GameEngine::GameEngine() {
 #ifdef __SWITCH__
     Ship::Switch::Init(Ship::PreInitPhase);
     Ship::Switch::Init(Ship::PostInitPhase);
