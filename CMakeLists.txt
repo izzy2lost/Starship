@@ -360,6 +360,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
         SDL2::SDL2
         Threads::Threads
         "Ogg::ogg"
+	"Vorbis::vorbis"
         "Vorbis::vorbisfile"
     )
 
