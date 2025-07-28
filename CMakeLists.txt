@@ -197,6 +197,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
         MACOSX_BUNDLE_INFO_PLIST ${IOS_DIR}/plist.in
         RESOURCE "${IMAGE_FILES};${STORYBOARD_FILE};${ICON_FILES}"
     )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 else()
     add_executable(${PROJECT_NAME} ${ALL_FILES})
 endif()
