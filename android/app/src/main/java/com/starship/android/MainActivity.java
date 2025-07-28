@@ -376,7 +376,7 @@ public void checkAndSetupFiles() {
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
-                        onNativeKeyDown(KeyEvent.KEYCODE_ESCAPE);
+                        onNativeKeyDown(KeyEvent.KEYCODE_F1);
                         button.setPressed(true);
                         // Toggle menu state and controls
                         MenuOpen = !MenuOpen;
@@ -387,11 +387,11 @@ public void checkAndSetupFiles() {
                         }
                         return true;
                     case MotionEvent.ACTION_UP:
-                        onNativeKeyUp(KeyEvent.KEYCODE_ESCAPE);
+                        onNativeKeyUp(KeyEvent.KEYCODE_F1);
                         button.setPressed(false);
                         return true;
                     case MotionEvent.ACTION_CANCEL:
-                        onNativeKeyUp(KeyEvent.KEYCODE_ESCAPE);
+                        onNativeKeyUp(KeyEvent.KEYCODE_F1);
                         return true;
                 }
                 return false;
