@@ -230,8 +230,9 @@ public static void waitForSetupFromNative() {
     try { 
         setupLatch.await(); 
     } catch (InterruptedException ignored) {}
-}// ==
-=== Asset seeding (optional, safe if assets not present) =====
+}
+
+// ===== Asset seeding (optional, safe if assets not present) =====
 private boolean assetExists(String name) {
     try { 
         getAssets().open(name).close(); 
@@ -421,8 +422,9 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     } else if (requestCode == REQ_PICK_SF64) {
         handleRomFileSelection(data.getData());
     }
-}// ==
-=== Folder selection & copy (SAF) =====
+}
+
+// ===== Folder selection & copy (SAF) =====
 private void handleFolderSelection(Uri treeUri, int returnedFlags) {
     if (treeUri == null) { 
         showToast("No folder selected."); 
@@ -592,8 +594,9 @@ private void handleRomFileSelection(Uri selectedFileUri) {
         Log.e(TAG, "handleRomFileSelection", e);
         showToast("Failed to copy sf64.o2r: " + e.getMessage());
     }
-}// ===
-== SAF copy helpers =====
+}
+
+// ===== SAF copy helpers =====
 private boolean copyFileToTree(File src, DocumentFile dstParent, String mimeGuess) {
     try {
         // Overwrite if present
