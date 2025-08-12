@@ -29,6 +29,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.view.KeyEvent;
+import android.content.pm.ActivityInfo;
+import android.view.KeyEvent;
 
 public class MainActivity extends SDLActivity {
 static {
