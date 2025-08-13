@@ -93,6 +93,20 @@ GameEngine::GameEngine() {
     // Note: Ship::Context will handle directory paths internally
     // Android: MainActivity handles file management via SAF
 
+#ifdef __ANDROID__
+    // Wait for MainActivity to finish setting up files via SAF
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (env) {
+        jclass activityClass = env->FindClass("com/starship/android/MainActivity");
+        if (activityClass) {
+            jmethodID waitMethod = env->GetStaticMethodID(activityClass, "waitForSetupFromNative", "()V");
+            if (waitMethod) {
+                env->CallStaticVoidMethod(activityClass, waitMethod);
+            }
+        }
+    }
+#endif
+
     // Add sf64.o2r if it exists, otherwise prompt for extraction
     if (std::filesystem::exists(main_path)) {
         archiveFiles.push_back(main_path);
