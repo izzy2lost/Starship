@@ -847,12 +847,12 @@ typedef struct {
 typedef struct {
     /* 0x00 */ s16 numEntries;
     /* 0x02 */ s16 unkMediumParam;
-    /* 0x04 */ uintptr_t romAddr;
+    /* 0x04 */ u64 romAddr;
     /* 0x08 */ char pad[8];
 } AudioTableBase;
 
 typedef struct {
-    /* 0x00 */ uintptr_t romAddr;
+    /* 0x00 */ u64 romAddr;
     /* 0x04 */ u32 size;
     /* 0x08 */ s8 medium;
     /* 0x09 */ s8 cachePolicy;
