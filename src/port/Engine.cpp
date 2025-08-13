@@ -98,18 +98,23 @@ void waitForSetupFromNative() {
 }
 #endif
 
+
 GameEngine::GameEngine() {
+#ifdef __ANDROID__
+    const char* sdlInternal = SDL_AndroidGetInternalStoragePath();
+    const std::string appDir = (sdlInternal && *sdlInternal) ? std::string(sdlInternal) : std::string(".");
+    const std::string main_path = appDir + "/sf64.o2r";
+    const std::string assets_path = appDir + "/starship.o2r";
+#else
     const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
     const std::string assets_path = Ship::Context::LocateFileAcrossAppDirs("starship.o2r");
+#endif
     std::vector<std::string> archiveFiles;
-
-
 #ifdef __ANDROID__
 {
     const char* sdlInternal = SDL_AndroidGetInternalStoragePath();
     if (sdlInternal && *sdlInternal) {
-        auto* pm = Ship::Context::GetInstance()->GetPathManager();
-        pm->SetAppDirectoryPath(sdlInternal);
+pm->SetAppDirectoryPath(sdlInternal);
         pm->SetUserDirectoryPath(sdlInternal);
         SPDLOG_INFO("Android app/user dir set to: {}", sdlInternal);
     } else {
@@ -898,13 +903,8 @@ extern "C" void GameEngine_Free(void* ptr) {
 #ifdef __ANDROID__
 extern "C" JNIEXPORT void JNICALL
 Java_com_starship_android_MainActivity_nativeSetAppDirs(JNIEnv* env, jclass, jstring jpath) {
-    if (!jpath) return;
-    const char* p = env->GetStringUTFChars(jpath, nullptr);
-    if (p) {
-        auto* pm = Ship::Context::GetInstance()->GetPathManager();
-        pm->SetAppDirectoryPath(p);
-        pm->SetUserDirectoryPath(p);
-        SPDLOG_INFO("JNI set app/user dir to {}", p);
+    // No-op: paths resolved via SDL_AndroidGetInternalStoragePath in GameEngine::GameEngine
+}", p);
         env->ReleaseStringUTFChars(jpath, p);
     }
 }

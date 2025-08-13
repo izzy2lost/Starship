@@ -33,8 +33,6 @@ import android.content.pm.ActivityInfo;
 import android.view.KeyEvent;
 
 public class MainActivity extends SDLActivity {
-    public static native void nativeSetAppDirs(String internal);
-
 static {
     System.loadLibrary("Starship");
 }
