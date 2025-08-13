@@ -56,13 +56,14 @@ public native void setButton(int button, boolean value);
 public native void setCameraState(int axis, float value);
 public native void setAxis(int axis, short value);
 
-// ===== Save dir for the engine (internal only; no extra subfolder) =====
+// ===== Save dir for the engine (external storage to match C++ GetAppDirectoryPath) =====
 public static String getSaveDir() {
     Context ctx = SDLActivity.getContext();
-    File internal = ctx.getFilesDir(); // /data/data/<pkg>/files
-    if (!internal.exists()) internal.mkdirs();
-    Log.i(TAG, "getSaveDir -> " + internal.getAbsolutePath());
-    return internal.getAbsolutePath();
+    File external = ctx.getExternalFilesDir(null); // /storage/emulated/0/Android/data/<pkg>/files
+    if (external != null && !external.exists()) external.mkdirs();
+    String path = external != null ? external.getAbsolutePath() : ctx.getFilesDir().getAbsolutePath();
+    Log.i(TAG, "getSaveDir -> " + path);
+    return path;
 }
 
 private Uri getUserFolderUri() {
@@ -103,7 +104,7 @@ private void syncModsFromUserFolder() {
             return;
         }
 
-        File internalModsFolder = new File(getFilesDir(), "mods");
+        File internalModsFolder = new File(getExternalFilesDir(null), "mods");
         if (!internalModsFolder.exists()) {
             internalModsFolder.mkdirs();
         }
@@ -113,7 +114,7 @@ private void syncModsFromUserFolder() {
 
         // Copy all files from user mods folder to internal mods folder
         copyModsRecursively(userModsFolder, internalModsFolder);
-        Log.i(TAG, "Mods synced from user folder to internal storage");
+        Log.i(TAG, "Mods synced from user folder to external storage");
     } catch (Exception e) {
         Log.e(TAG, "Error syncing mods from user folder", e);
     }
@@ -182,23 +183,21 @@ setupControllerOverlay();
     // Seed internal directory with assets if they exist (optional)
     seedInternalFromAssetsIfPresent();
 
-    File internal = getFilesDir();
     File external = getExternalFilesDir(null);
-    Log.i(TAG, "Internal root: " + internal);
     Log.i(TAG, "External root: " + external);
 
-    // Check for sf64.o2r in internal storage first
-    File internalSf64 = new File(internal, "sf64.o2r");
+    // Check for sf64.o2r in external storage first
+    File externalSf64 = new File(external, "sf64.o2r");
 
-    // If not in internal, check if it exists in user's chosen folder and copy it
-    if (!internalSf64.exists() && userFolderUri != null) {
+    // If not in external, check if it exists in user's chosen folder and copy it
+    if (!externalSf64.exists() && userFolderUri != null) {
         DocumentFile userRoot = DocumentFile.fromTreeUri(this, userFolderUri);
         if (userRoot != null) {
             DocumentFile userSf64 = userRoot.findFile("sf64.o2r");
             if (userSf64 != null && userSf64.exists()) {
-                Log.i(TAG, "Found sf64.o2r in user folder, copying to internal storage");
+                Log.i(TAG, "Found sf64.o2r in user folder, copying to external storage");
                 try (InputStream in = getContentResolver().openInputStream(userSf64.getUri());
-                     FileOutputStream out = new FileOutputStream(internalSf64)) {
+                     FileOutputStream out = new FileOutputStream(externalSf64)) {
                     byte[] buf = new byte[8192];
                     int r;
                     while ((r = in.read(buf)) != -1) { 
@@ -206,7 +205,7 @@ setupControllerOverlay();
                     }
                     out.flush();
                     out.getFD().sync();
-                    Log.i(TAG, "sf64.o2r copied from user folder to internal storage");
+                    Log.i(TAG, "sf64.o2r copied from user folder to external storage");
                 
 } catch (IOException e) {
                     Log.e(TAG, "Failed to copy sf64.o2r from user folder", e);
@@ -215,13 +214,13 @@ setupControllerOverlay();
         }
     }
 
-    // Always sync mods folder from user's chosen folder to internal storage
+    // Always sync mods folder from user's chosen folder to external storage
     if (userFolderUri != null) {
         syncModsFromUserFolder();
     }
 
-    // Now check if sf64.o2r exists in internal storage
-    if (!internalSf64.exists()) {
+    // Now check if sf64.o2r exists in external storage
+    if (!externalSf64.exists()) {
         Log.i(TAG, "sf64.o2r not found. Prompting for folder.");
         if (userFolderUri == null) {
             // First time - need to select folder
@@ -233,7 +232,7 @@ setupControllerOverlay();
                 DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND);
         }
     } else {
-        Log.i(TAG, "sf64.o2r found in internal storage, game should start normally.");
+        Log.i(TAG, "sf64.o2r found in external storage, game should start normally.");
     }
 }
 
