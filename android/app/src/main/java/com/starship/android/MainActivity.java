@@ -235,12 +235,17 @@ setupControllerOverlay();
     } else {
         Log.i(TAG, "sf64.o2r found in internal storage, game should start normally.");
     }
+    
+    // Signal to C++ that setup is complete
+    setupLatch.countDown();
 }
 
 public static void waitForSetupFromNative() {
-    // This method is called from C++ but we don't need it anymore
-    // The C++ polling system handles waiting for the file
-    Log.i(TAG, "waitForSetupFromNative() called from C++ - using polling system");
+    try { 
+        setupLatch.await(); 
+    } catch (InterruptedException ignored) {
+        Log.w(TAG, "waitForSetupFromNative interrupted");
+    }
 }
 
 // ===== Asset seeding (optional, safe if assets not present) =====
