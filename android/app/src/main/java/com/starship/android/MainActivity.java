@@ -33,6 +33,8 @@ import android.content.pm.ActivityInfo;
 import android.view.KeyEvent;
 
 public class MainActivity extends SDLActivity {
+    public static native void nativeSetAppDirs(String internal);
+
 static {
     System.loadLibrary("Starship");
 }
@@ -175,7 +177,9 @@ protected void onCreate(Bundle savedInstanceState) {
     userFolderUri = getUserFolderUri();
 
     super.onCreate(savedInstanceState);
-    setupControllerOverlay();
+    
+        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
+setupControllerOverlay();
     attachController();
 
     // Seed internal directory with assets if they exist (optional)
@@ -206,7 +210,9 @@ protected void onCreate(Bundle savedInstanceState) {
                     out.flush();
                     out.getFD().sync();
                     Log.i(TAG, "sf64.o2r copied from user folder to internal storage");
-                } catch (IOException e) {
+                
+        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
+} catch (IOException e) {
                     Log.e(TAG, "Failed to copy sf64.o2r from user folder", e);
                 }
             }
@@ -512,7 +518,9 @@ private void handleFolderSelection(Uri treeUri, int returnedFlags) {
             out.getFD().sync();
             Log.i(TAG, "sf64.o2r copied from user folder to internal storage during folder selection");
             
-            // Also sync mods
+            
+        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
+// Also sync mods
             syncModsFromUserFolder();
             
             showToast("Files copied. Game should start now.");
@@ -628,7 +636,9 @@ private void handleRomFileSelection(Uri selectedFileUri) {
         out.getFD().sync();
         Log.i(TAG, "sf64.o2r copied to internal (" + total + " bytes): " + dest.getAbsolutePath());
 
-        runOnUiThread(() -> showPortraitDialog("sf64.o2r ready",
+        
+        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
+runOnUiThread(() -> showPortraitDialog("sf64.o2r ready",
             "sf64.o2r copied. Restart to load the game.",
             DialogActivity.DIALOG_TYPE_FILE_READY));
     } catch (IOException e) {
