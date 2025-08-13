@@ -53,10 +53,12 @@ public class DialogActivity extends Activity {
                 
             case DIALOG_TYPE_FILE_NOT_FOUND:
                 builder.setPositiveButton("Download Torch App", (d, w) -> {
+                    android.util.Log.i("DialogActivity", "Torch download button pressed");
                     setResult(RESULT_TORCH_DOWNLOAD);
                     finish();
                 });
                 builder.setNegativeButton("Select sf64.o2r File", (d, w) -> {
+                    android.util.Log.i("DialogActivity", "File picker button pressed");
                     setResult(RESULT_FILE_PICKER);
                     finish();
                 });

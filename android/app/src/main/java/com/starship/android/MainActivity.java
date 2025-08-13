@@ -221,7 +221,16 @@ protected void onCreate(Bundle savedInstanceState) {
     // Now check if sf64.o2r exists in internal storage
     if (!internalSf64.exists()) {
         Log.i(TAG, "sf64.o2r not found. Prompting for folder.");
-        promptForUserFolder();
+        if (userFolderUri == null) {
+            // First time - need to select folder
+            promptForUserFolder();
+        } else {
+            // Folder already selected but no ROM - show file not found dialog
+            showPortraitDialog("sf64.o2r not found in selected folder",
+                "Pick an existing sf64.o2r file or use Torch to create one. It will be copied to your selected folder.",
+                DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND);
+        }
+        // Don't count down the latch yet - wait for user to provide ROM
     } else {
         Log.i(TAG, "sf64.o2r found in internal storage, game should start normally.");
         setupLatch.countDown();
@@ -395,7 +404,7 @@ public void openFilePickerForSf64() {
 
 private void openTorchDownload() {
     try {
-        Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/HarbourMasters/Torch/releases"));
+        Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/izzy2lost/Torch/releases"));
         Intent chooser = Intent.createChooser(browser, "Open Torch download page with:");
         chooser.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(chooser);
@@ -408,7 +417,7 @@ private void openTorchDownload() {
         }, 2000);
     } catch (Exception e) {
         Log.e(TAG, "openTorchDownload", e);
-        showToast("Visit: https://github.com/HarbourMasters/Torch/releases");
+        showToast("Visit: https://github.com/izzy2lost/Torch/releases");
     }
 }
 
@@ -417,15 +426,20 @@ private void openTorchDownload() {
 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
 
+    Log.i(TAG, "onActivityResult: requestCode=" + requestCode + ", resultCode=" + resultCode);
+
     // Handle DialogActivity results
     if (requestCode == DialogActivity.DIALOG_TYPE_FOLDER_PROMPT && resultCode == DialogActivity.RESULT_FOLDER_PICKER) {
+        Log.i(TAG, "Opening folder picker");
         openFolderPicker();
         return;
     }
     if (requestCode == DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND) {
         if (resultCode == DialogActivity.RESULT_TORCH_DOWNLOAD) {
+            Log.i(TAG, "Opening Torch download");
             openTorchDownload();
         } else if (resultCode == DialogActivity.RESULT_FILE_PICKER) {
+            Log.i(TAG, "Opening file picker for sf64");
             openFilePickerForSf64();
         }
         return;
