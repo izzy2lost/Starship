@@ -498,9 +498,34 @@ private void handleFolderSelection(Uri treeUri, int returnedFlags) {
 
     boolean anyCopied = copyFromBestSourceToSaf(userRoot);
 
-    // Check if sf64.o2r exists in the user's chosen folder
+    // Check if sf64.o2r exists in the user's chosen folder and copy it to internal storage
     DocumentFile sf64InUserFolder = userRoot.findFile("sf64.o2r");
-    if (sf64InUserFolder == null || !sf64InUserFolder.exists()) {
+    if (sf64InUserFolder != null && sf64InUserFolder.exists()) {
+        // Copy sf64.o2r to internal storage
+        File internalSf64 = new File(getFilesDir(), "sf64.o2r");
+        try (InputStream in = getContentResolver().openInputStream(sf64InUserFolder.getUri());
+             FileOutputStream out = new FileOutputStream(internalSf64)) {
+            byte[] buf = new byte[8192];
+            int r;
+            while ((r = in.read(buf)) != -1) { 
+                out.write(buf, 0, r); 
+            }
+            out.flush();
+            out.getFD().sync();
+            Log.i(TAG, "sf64.o2r copied from user folder to internal storage during folder selection");
+            
+            // Also sync mods
+            syncModsFromUserFolder();
+            
+            // Now the game can start - count down the latch
+            setupLatch.countDown();
+            
+            showToast("Files copied. Game should start now.");
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to copy sf64.o2r during folder selection", e);
+            showToast("Failed to copy sf64.o2r: " + e.getMessage());
+        }
+    } else {
         runOnUiThread(() -> showPortraitDialog("sf64.o2r not found in selected folder",
             "Pick an existing sf64.o2r file or use Torch to create one. It will be copied to your selected folder.",
             DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND));
