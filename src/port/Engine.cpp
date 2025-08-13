@@ -2,6 +2,11 @@
 #include "ui/ImguiUI.h"
 #include "StringHelper.h"
 
+#ifdef __ANDROID__
+#include <jni.h>
+#include <SDL.h>
+#endif
+
 #include "extractor/GameExtractor.h"
 #include "libultraship/src/Context.h"
 #include "libultraship/src/controller/controldevice/controller/mapping/ControllerDefaultMappings.h"
