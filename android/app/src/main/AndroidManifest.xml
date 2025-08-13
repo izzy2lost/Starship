@@ -109,6 +109,13 @@
             </intent-filter>
             -->
         </activity>
+
+        <activity
+            android:name=".DialogActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/RoundedDialog"
+            android:exported="false" />
+    </application>
     </application>
 
 </manifest>

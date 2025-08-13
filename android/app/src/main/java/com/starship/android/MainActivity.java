@@ -340,11 +340,13 @@ private void copyAssetFolderRecursive(String assetDir, File destDir) {
 }
 
 // ===== UI helpers =====
-private AlertDialog.Builder createPortraitDialog() {
-    setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-    AlertDialog.Builder b = new AlertDialog.Builder(this, R.style.RoundedDialog);
-    b.setOnDismissListener(d -> setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
-    return b;
+private void showPortraitDialog(String title, String message, int dialogType) {
+    Intent intent = new Intent(this, DialogActivity.class);
+    intent.putExtra(DialogActivity.EXTRA_TITLE, title);
+    intent.putExtra(DialogActivity.EXTRA_MESSAGE, message);
+    intent.putExtra(DialogActivity.EXTRA_DIALOG_TYPE, dialogType);
+    intent.putExtra(DialogActivity.EXTRA_CANCELABLE, false);
+    startActivityForResult(intent, dialogType);
 }
 
 private void showToast(String msg) {
@@ -368,12 +370,9 @@ private void restartApp() {
 
 // ===== Folder / File pickers =====
 private void promptForUserFolder() {
-    runOnUiThread(() -> createPortraitDialog()
-        .setTitle("Choose Your Folder")
-        .setMessage("Select a folder for your sf64.o2r file and mods location. This will be your main Starship folder where you can add mods and manage game files.")
-        .setCancelable(false)
-        .setPositiveButton("Select Folder", (d, w) -> openFolderPicker())
-        .show());
+    showPortraitDialog("Choose Your Folder", 
+        "Select a folder for your sf64.o2r file and mods location. This will be your main Starship folder where you can add mods and manage game files.",
+        DialogActivity.DIALOG_TYPE_FOLDER_PROMPT);
 }
 
 public void openFolderPicker() {
@@ -417,6 +416,27 @@ private void openTorchDownload() {
 @Override
 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
+
+    // Handle DialogActivity results
+    if (requestCode == DialogActivity.DIALOG_TYPE_FOLDER_PROMPT && resultCode == DialogActivity.RESULT_FOLDER_PICKER) {
+        openFolderPicker();
+        return;
+    }
+    if (requestCode == DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND) {
+        if (resultCode == DialogActivity.RESULT_TORCH_DOWNLOAD) {
+            openTorchDownload();
+        } else if (resultCode == DialogActivity.RESULT_FILE_PICKER) {
+            openFilePickerForSf64();
+        }
+        return;
+    }
+    if ((requestCode == DialogActivity.DIALOG_TYPE_COPY_COMPLETE || requestCode == DialogActivity.DIALOG_TYPE_FILE_READY) 
+        && resultCode == DialogActivity.RESULT_RESTART) {
+        restartApp();
+        return;
+    }
+
+    // Handle file/folder picker results
     if (resultCode != RESULT_OK || data == null) return;
 
     if (requestCode == REQ_PICK_FOLDER) {
@@ -467,22 +487,13 @@ private void handleFolderSelection(Uri treeUri, int returnedFlags) {
     // Check if sf64.o2r exists in the user's chosen folder
     DocumentFile sf64InUserFolder = userRoot.findFile("sf64.o2r");
     if (sf64InUserFolder == null || !sf64InUserFolder.exists()) {
-        runOnUiThread(() -> createPortraitDialog()
-            .setTitle("sf64.o2r not found in selected folder")
-            .setMessage("Pick an existing sf64.o2r file or use Torch to create one. It will be copied to your selected folder.")
-            .setCancelable(false)
-            .setPositiveButton("Download Torch App", (d, w) -> openTorchDownload())
-            .setNegativeButton("Select sf64.o2r File", (d, w) -> openFilePickerForSf64())
-            .show());
+        runOnUiThread(() -> showPortraitDialog("sf64.o2r not found in selected folder",
+            "Pick an existing sf64.o2r file or use Torch to create one. It will be copied to your selected folder.",
+            DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND));
     } else {
         final String msg = anyCopied ? "Files copied. Restart to load the game."
                                     : "Nothing copied (sources not found).";
-        runOnUiThread(() -> createPortraitDialog()
-            .setTitle("Copy complete")
-            .setMessage(msg)
-            .setPositiveButton("Restart", (d, w) -> restartApp())
-            .setNegativeButton("Later", null)
-            .show());
+        runOnUiThread(() -> showPortraitDialog("Copy complete", msg, DialogActivity.DIALOG_TYPE_COPY_COMPLETE));
     }
 }
 
@@ -587,11 +598,9 @@ private void handleRomFileSelection(Uri selectedFileUri) {
         out.getFD().sync();
         Log.i(TAG, "sf64.o2r copied to internal (" + total + " bytes): " + dest.getAbsolutePath());
 
-        runOnUiThread(() -> createPortraitDialog()
-            .setTitle("sf64.o2r ready")
-            .setMessage("sf64.o2r copied. Restart to load the game.")
-            .setPositiveButton("Restart", (d, w) -> restartApp())
-            .show());
+        runOnUiThread(() -> showPortraitDialog("sf64.o2r ready",
+            "sf64.o2r copied. Restart to load the game.",
+            DialogActivity.DIALOG_TYPE_FILE_READY));
     } catch (IOException e) {
         Log.e(TAG, "handleRomFileSelection", e);
         showToast("Failed to copy sf64.o2r: " + e.getMessage());

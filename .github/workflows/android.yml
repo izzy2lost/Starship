@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get install gcc g++ git cmake ninja-build lsb-release
     - name: ccache
-      uses: hendrikmuhs/ccache-action@v1.2.13
+      uses: hendrikmuhs/ccache-action@v1.2.18
       with:
         key: ${{ runner.os }}-o2r-ccache-${{ github.ref }}-${{ github.sha }}
         restore-keys: |
