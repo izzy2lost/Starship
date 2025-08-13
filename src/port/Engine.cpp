@@ -3,8 +3,8 @@
 #include "StringHelper.h"
 
 #ifdef __ANDROID__
-#include <jni.h>
-#include <SDL.h>
+#include <thread>
+#include <chrono>
 #endif
 
 #include "extractor/GameExtractor.h"
@@ -67,6 +67,32 @@ void AudioThread_CreateNextAudioBuffer(int16_t* samples, uint32_t num_samples);
 std::vector<uint8_t*> MemoryPool;
 GameEngine* GameEngine::Instance;
 
+#ifdef __ANDROID__
+extern "C" {
+void waitForSetupFromNative() {
+    // Simple polling approach - wait for the file to exist
+    const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
+    SPDLOG_INFO("Waiting for sf64.o2r file selection...");
+    
+    // Poll for the file existence with a timeout
+    int timeout_seconds = 300; // 5 minutes timeout
+    int poll_count = 0;
+    while (!std::filesystem::exists(main_path) && poll_count < timeout_seconds * 10) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        poll_count++;
+    }
+    
+    if (std::filesystem::exists(main_path)) {
+        SPDLOG_INFO("sf64.o2r file found, continuing...");
+        // Add a small delay to ensure file operations are complete
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    } else {
+        SPDLOG_ERROR("Timeout waiting for sf64.o2r file selection");
+    }
+}
+}
+#endif
+
 GameEngine::GameEngine() {
 #ifdef __SWITCH__
     Ship::Switch::Init(Ship::PreInitPhase);
@@ -99,18 +125,18 @@ GameEngine::GameEngine() {
     // Android: MainActivity handles file management via SAF
 
 #ifdef __ANDROID__
-    // Wait for MainActivity to finish setting up files via SAF
-    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
-    if (env) {
-        jclass activityClass = env->FindClass("com/starship/android/MainActivity");
-        if (activityClass) {
-            jmethodID waitMethod = env->GetStaticMethodID(activityClass, "waitForSetupFromNative", "()V");
-            if (waitMethod) {
-                env->CallStaticVoidMethod(activityClass, waitMethod);
-            }
-        }
+    // On Android, always wait for the user to select the file through the UI first
+    extern "C" void waitForSetupFromNative();
+    waitForSetupFromNative();
+    
+    // After waiting, check if the file exists
+    if (std::filesystem::exists(main_path)) {
+        archiveFiles.push_back(main_path);
+    } else {
+        SPDLOG_ERROR("sf64.o2r file still not found after user selection");
+        exit(1);
     }
-#endif
+#else
 
     // Add sf64.o2r if it exists, otherwise prompt for extraction
     if (std::filesystem::exists(main_path)) {
@@ -135,6 +161,7 @@ GameEngine::GameEngine() {
             exit(1);
         }
     }
+#endif
 
     // Add starship.o2r if it exists
     if (std::filesystem::exists(assets_path)) {
