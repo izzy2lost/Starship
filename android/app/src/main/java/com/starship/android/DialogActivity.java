@@ -45,7 +45,7 @@ public class DialogActivity extends Activity {
         // Set up buttons based on dialog type
         switch (dialogType) {
             case DIALOG_TYPE_FOLDER_PROMPT:
-                builder.setPositiveButton(positiveButton, (d, w) -> {
+                builder.setPositiveButton("Select Folder", (d, w) -> {
                     setResult(RESULT_FOLDER_PICKER);
                     finish();
                 });
