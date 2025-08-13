@@ -529,10 +529,6 @@ private void handleFolderSelection(Uri treeUri, int returnedFlags) {
         runOnUiThread(() -> showPortraitDialog("sf64.o2r not found in selected folder",
             "Pick an existing sf64.o2r file or use Torch to create one. It will be copied to your selected folder.",
             DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND));
-    } else {
-        final String msg = anyCopied ? "Files copied. Restart to load the game."
-                                    : "Nothing copied (sources not found).";
-        runOnUiThread(() -> showPortraitDialog("Copy complete", msg, DialogActivity.DIALOG_TYPE_COPY_COMPLETE));
     }
 }
 
