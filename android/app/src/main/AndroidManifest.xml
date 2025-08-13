@@ -116,6 +116,5 @@
             android:theme="@style/RoundedDialog"
             android:exported="false" />
     </application>
-    </application>
 
 </manifest>
