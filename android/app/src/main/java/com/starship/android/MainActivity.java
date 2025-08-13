@@ -230,17 +230,15 @@ protected void onCreate(Bundle savedInstanceState) {
                 "Pick an existing sf64.o2r file or use Torch to create one. It will be copied to your selected folder.",
                 DialogActivity.DIALOG_TYPE_FILE_NOT_FOUND);
         }
-        // Don't count down the latch yet - wait for user to provide ROM
     } else {
         Log.i(TAG, "sf64.o2r found in internal storage, game should start normally.");
-        setupLatch.countDown();
     }
 }
 
 public static void waitForSetupFromNative() {
-    try { 
-        setupLatch.await(); 
-    } catch (InterruptedException ignored) {}
+    // This method is called from C++ but we don't need it anymore
+    // The C++ polling system handles waiting for the file
+    Log.i(TAG, "waitForSetupFromNative() called from C++ - using polling system");
 }
 
 // ===== Asset seeding (optional, safe if assets not present) =====
@@ -516,9 +514,6 @@ private void handleFolderSelection(Uri treeUri, int returnedFlags) {
             
             // Also sync mods
             syncModsFromUserFolder();
-            
-            // Now the game can start - count down the latch
-            setupLatch.countDown();
             
             showToast("Files copied. Game should start now.");
         } catch (IOException e) {
