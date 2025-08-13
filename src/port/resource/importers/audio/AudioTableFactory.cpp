@@ -26,8 +26,8 @@ std::shared_ptr<Ship::IResource> ResourceFactoryBinaryAudioTableV0::ReadResource
         int16_t sd3 = reader->ReadInt16();
 
         table->mEntries.push_back({
-            (uintptr_t) crc,
-            size, medium, policy, sd1, sd2, sd3
+            crc, size, medium,
+            policy, sd1, sd2, sd3
         });
     }
 
