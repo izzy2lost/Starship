@@ -72,22 +72,25 @@ extern "C" {
 void waitForSetupFromNative() {
     // Simple polling approach - wait for the file to exist
     const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
-    SPDLOG_INFO("Waiting for sf64.o2r file selection...");
+    SPDLOG_INFO("waitForSetupFromNative: Looking for sf64.o2r at: {}", main_path);
     
     // Poll for the file existence with a timeout
     int timeout_seconds = 300; // 5 minutes timeout
     int poll_count = 0;
     while (!std::filesystem::exists(main_path) && poll_count < timeout_seconds * 10) {
+        if (poll_count % 50 == 0) { // Log every 5 seconds
+            SPDLOG_INFO("waitForSetupFromNative: Still waiting for sf64.o2r... ({}s)", poll_count / 10);
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         poll_count++;
     }
     
     if (std::filesystem::exists(main_path)) {
-        SPDLOG_INFO("sf64.o2r file found, continuing...");
+        SPDLOG_INFO("waitForSetupFromNative: sf64.o2r file found at: {}", main_path);
         // Add a small delay to ensure file operations are complete
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     } else {
-        SPDLOG_ERROR("Timeout waiting for sf64.o2r file selection");
+        SPDLOG_ERROR("waitForSetupFromNative: Timeout waiting for sf64.o2r at: {}", main_path);
     }
 }
 }
@@ -126,14 +129,16 @@ GameEngine::GameEngine() {
 
 #ifdef __ANDROID__
     // On Android, always wait for the user to select the file through the UI first
+    SPDLOG_INFO("Android: Starting file check. Looking for sf64.o2r at: {}", main_path);
     extern void waitForSetupFromNative();
     waitForSetupFromNative();
     
     // After waiting, check if the file exists
     if (std::filesystem::exists(main_path)) {
+        SPDLOG_INFO("Android: sf64.o2r found at: {}", main_path);
         archiveFiles.push_back(main_path);
     } else {
-        SPDLOG_ERROR("sf64.o2r file still not found after user selection");
+        SPDLOG_ERROR("Android: sf64.o2r file still not found at: {}", main_path);
         exit(1);
     }
 #else
