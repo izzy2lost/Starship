@@ -114,8 +114,6 @@ GameEngine::GameEngine() {
 {
     const char* sdlInternal = SDL_AndroidGetInternalStoragePath();
     if (sdlInternal && *sdlInternal) {
-pm->SetAppDirectoryPath(sdlInternal);
-        pm->SetUserDirectoryPath(sdlInternal);
         SPDLOG_INFO("Android app/user dir set to: {}", sdlInternal);
     } else {
         SPDLOG_WARN("SDL_AndroidGetInternalStoragePath() returned null; using defaults");
@@ -903,10 +901,6 @@ extern "C" void GameEngine_Free(void* ptr) {
 #ifdef __ANDROID__
 extern "C" JNIEXPORT void JNICALL
 Java_com_starship_android_MainActivity_nativeSetAppDirs(JNIEnv* env, jclass, jstring jpath) {
-    // No-op: paths resolved via SDL_AndroidGetInternalStoragePath in GameEngine::GameEngine
-}", p);
-        env->ReleaseStringUTFChars(jpath, p);
-    }
+    // No-op: paths resolved via SDL_AndroidGetInternalStoragePath in GameEngine::GameEngine()
 }
 #endif
-

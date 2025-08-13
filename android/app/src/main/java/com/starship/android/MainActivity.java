@@ -176,7 +176,6 @@ protected void onCreate(Bundle savedInstanceState) {
 
     super.onCreate(savedInstanceState);
     
-        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
 setupControllerOverlay();
     attachController();
 
@@ -209,7 +208,6 @@ setupControllerOverlay();
                     out.getFD().sync();
                     Log.i(TAG, "sf64.o2r copied from user folder to internal storage");
                 
-        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
 } catch (IOException e) {
                     Log.e(TAG, "Failed to copy sf64.o2r from user folder", e);
                 }
@@ -517,7 +515,6 @@ private void handleFolderSelection(Uri treeUri, int returnedFlags) {
             Log.i(TAG, "sf64.o2r copied from user folder to internal storage during folder selection");
             
             
-        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
 // Also sync mods
             syncModsFromUserFolder();
             
@@ -635,7 +632,6 @@ private void handleRomFileSelection(Uri selectedFileUri) {
         Log.i(TAG, "sf64.o2r copied to internal (" + total + " bytes): " + dest.getAbsolutePath());
 
         
-        try { nativeSetAppDirs(getSaveDir()); } catch (Throwable t) { Log.w(TAG, "nativeSetAppDirs failed", t); }
 runOnUiThread(() -> showPortraitDialog("sf64.o2r ready",
             "sf64.o2r copied. Restart to load the game.",
             DialogActivity.DIALOG_TYPE_FILE_READY));
