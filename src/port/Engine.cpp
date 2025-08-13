@@ -126,7 +126,7 @@ GameEngine::GameEngine() {
 
 #ifdef __ANDROID__
     // On Android, always wait for the user to select the file through the UI first
-    extern "C" void waitForSetupFromNative();
+    extern void waitForSetupFromNative();
     waitForSetupFromNative();
     
     // After waiting, check if the file exists
