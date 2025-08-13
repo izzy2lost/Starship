@@ -97,70 +97,42 @@ void waitForSetupFromNative() {
 #endif
 
 GameEngine::GameEngine() {
+    const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
+    const std::string assets_path = Ship::Context::LocateFileAcrossAppDirs("starship.o2r");
+    std::vector<std::string> archiveFiles;
+
 #ifdef __SWITCH__
     Ship::Switch::Init(Ship::PreInitPhase);
     Ship::Switch::Init(Ship::PostInitPhase);
-#endif
-
-    std::vector<std::string> archiveFiles;
-
-#ifdef __ANDROID__
-    // Android uses internal app storage - paths are managed by MainActivity
-    // Files are copied to internal storage by the Java SAF system
-    const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
-    const std::string assets_path = Ship::Context::GetPathRelativeToAppDirectory("starship.o2r");
-    const std::string modDir = Ship::Context::GetPathRelativeToAppDirectory("mods");
-#else
-    const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
-#ifdef __linux__
-    const std::string assets_path = Ship::Context::GetPathRelativeToAppBundle("starship.o2r");
-#else
-    const std::string assets_path = Ship::Context::GetPathRelativeToAppDirectory("starship.o2r");
-#endif
-    const std::string modDir = Ship::Context::GetPathRelativeToAppDirectory("mods");
 #endif
 
 #ifdef _WIN32
     AllocConsole();
 #endif
 
-    // Note: Ship::Context will handle directory paths internally
-    // Android: MainActivity handles file management via SAF
-
 #ifdef __ANDROID__
     // On Android, always wait for the user to select the file through the UI first
-    SPDLOG_INFO("Android: Starting file check. Looking for sf64.o2r at: {}", main_path);
     extern void waitForSetupFromNative();
     waitForSetupFromNative();
     
     // After waiting, check if the file exists
     if (std::filesystem::exists(main_path)) {
-        SPDLOG_INFO("Android: sf64.o2r found at: {}", main_path);
         archiveFiles.push_back(main_path);
     } else {
-        SPDLOG_ERROR("Android: sf64.o2r file still not found at: {}", main_path);
+        SPDLOG_ERROR("sf64.o2r file still not found after user selection");
         exit(1);
     }
 #else
 
-    // Add sf64.o2r if it exists, otherwise prompt for extraction
     if (std::filesystem::exists(main_path)) {
         archiveFiles.push_back(main_path);
     } else {
-        if (ShowYesNoBox("Starship - Asset Extraction",
-                         "Please provide a Starfox 64 ROM.\n\nSupported Versions:\nUS 1.0\nUS 1.1\n\nAssets will be extracted into an O2R file.") == IDYES) {
+        if (ShowYesNoBox("No O2R Files", "No O2R files found. Generate one now?") == IDYES) {
             if (!GenAssetFile()) {
-                ShowMessage("Error", "An error occurred, no O2R file was generated.\n\nExiting...");
+                ShowMessage("Error", "An error occured, no O2R file was generated.\n\nExiting...");
                 exit(1);
             } else {
                 archiveFiles.push_back(main_path);
-            }
-
-            if (ShowYesNoBox("Extraction Complete",
-                             "ROM Extracted. Extract another?\n\nStarship supports JP and EU ROMs for voice replacement.\nVoice replacement ROM assets can also be installed in:\nSettings -> Language -> Install JP/EU Audio") == IDYES) {
-                if (!GenAssetFile()) {
-                    ShowMessage("Error", "An error occurred, no O2R file was generated.");
-                }
             }
         } else {
             exit(1);
@@ -168,30 +140,23 @@ GameEngine::GameEngine() {
     }
 #endif
 
-    // Add starship.o2r if it exists
     if (std::filesystem::exists(assets_path)) {
         archiveFiles.push_back(assets_path);
     }
 
-    // Add any mods from external modDir
-    if (std::filesystem::exists(modDir) && std::filesystem::is_directory(modDir)) {
-        for (const auto& p : std::filesystem::recursive_directory_iterator(modDir)) {
-            const auto ext = p.path().extension().string();
-            if (StringHelper::IEquals(ext, ".otr") || StringHelper::IEquals(ext, ".o2r")) {
-                archiveFiles.push_back(p.path().generic_string());
-            }
-
-            if (StringHelper::IEquals(ext, ".zip")) {
-                SPDLOG_WARN("Zip files should be only used for development purposes, not for distribution");
-                archiveFiles.push_back(p.path().generic_string());
+    if (const std::string patches_path = Ship::Context::GetPathRelativeToAppDirectory("mods");
+        !patches_path.empty() && std::filesystem::exists(patches_path)) {
+        if (std::filesystem::is_directory(patches_path)) {
+            for (const auto& p : std::filesystem::recursive_directory_iterator(patches_path)) {
+                auto ext = p.path().extension().string();
+                if (StringHelper::IEquals(ext, ".zip") || StringHelper::IEquals(ext, ".o2r")) {
+                    archiveFiles.push_back(p.path().generic_string());
+                }
             }
         }
     }
 
-    // Create the context using the overridden external storage paths
-    this->context = Ship::Context::CreateUninitializedInstance("Starship", "ship", "starship.cfg.json");
-
-    // Initialize configuration and console variables
+    this->context = Ship::Context::CreateUninitializedInstance("Starship", "starship", "starship.cfg.json");
     this->context->InitConfiguration();
     this->context->InitConsoleVariables();
 
