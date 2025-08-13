@@ -70,21 +70,28 @@ GameEngine::GameEngine() {
 
     std::vector<std::string> archiveFiles;
 
-    const std::string baseDir = "/storage/emulated/0/Starship/";
-    const std::string main_path = baseDir + "sf64.o2r";
-    const std::string assets_path = baseDir + "starship.o2r";
-    const std::string modDir = baseDir + "mods";
+#ifdef __ANDROID__
+    // Android uses internal app storage - paths are managed by MainActivity
+    // Files are copied to internal storage by the Java SAF system
+    const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
+    const std::string assets_path = Ship::Context::GetPathRelativeToAppDirectory("starship.o2r");
+    const std::string modDir = Ship::Context::GetPathRelativeToAppDirectory("mods");
+#else
+    const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
+#ifdef __linux__
+    const std::string assets_path = Ship::Context::GetPathRelativeToAppBundle("starship.o2r");
+#else
+    const std::string assets_path = Ship::Context::GetPathRelativeToAppDirectory("starship.o2r");
+#endif
+    const std::string modDir = Ship::Context::GetPathRelativeToAppDirectory("mods");
+#endif
 
 #ifdef _WIN32
     AllocConsole();
 #endif
 
-    // Ensure mod directory exists
-    if (!fs::exists(modDir)) {
-        fs::create_directories(modDir);
-    }
-
     // Note: Ship::Context will handle directory paths internally
+    // Android: MainActivity handles file management via SAF
 
     // Add sf64.o2r if it exists, otherwise prompt for extraction
     if (std::filesystem::exists(main_path)) {
