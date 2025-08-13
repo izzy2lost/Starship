@@ -608,7 +608,7 @@ private boolean copyFromBestSourceToSaf(DocumentFile userRoot) {
     return copied > 0;
 }
 
-// When user picks sf64.o2r via SAF, copy into INTERNAL (engine reads from here)
+// When user picks sf64.o2r via SAF, copy into INTERNAL (engine reads from here) AND user folder (for persistence)
 private void handleRomFileSelection(Uri selectedFileUri) {
     if (selectedFileUri == null) { 
         showToast("No sf64.o2r selected."); 
@@ -631,8 +631,19 @@ private void handleRomFileSelection(Uri selectedFileUri) {
         out.getFD().sync();
         Log.i(TAG, "sf64.o2r copied to internal (" + total + " bytes): " + dest.getAbsolutePath());
 
-        
-runOnUiThread(() -> showPortraitDialog("sf64.o2r ready",
+        // Also copy to user's selected folder if one exists
+        if (userFolderUri != null) {
+            DocumentFile userRoot = DocumentFile.fromTreeUri(this, userFolderUri);
+            if (userRoot != null) {
+                if (copyFileToTree(dest, userRoot, "application/octet-stream")) {
+                    Log.i(TAG, "sf64.o2r also copied to user's selected folder");
+                } else {
+                    Log.w(TAG, "Failed to copy sf64.o2r to user's selected folder");
+                }
+            }
+        }
+
+        runOnUiThread(() -> showPortraitDialog("sf64.o2r ready",
             "sf64.o2r copied. Restart to load the game.",
             DialogActivity.DIALOG_TYPE_FILE_READY));
     } catch (IOException e) {
