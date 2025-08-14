@@ -73,13 +73,12 @@ android {
             jniDebuggable false
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Use less aggressive ProGuard rules for native apps
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             
-            // R8 full mode is enabled by default in newer AGP versions
-            
-            // Optimize native libraries
+            // Keep some debug info for crash reports
             ndk {
-                debugSymbolLevel 'NONE'
+                debugSymbolLevel 'SYMBOL_TABLE'
             }
             
             // Sign the release build
