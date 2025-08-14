@@ -72,27 +72,41 @@ GameEngine* GameEngine::Instance;
 #ifdef __ANDROID__
 extern "C" {
 void waitForSetupFromNative() {
-    // Simple polling approach - wait for the file to exist
-    const std::string main_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
-    SPDLOG_INFO("waitForSetupFromNative: Looking for sf64.o2r at: {}", main_path);
-    
-    // Poll for the file existence with a timeout
-    int timeout_seconds = 300; // 5 minutes timeout
+    // Poll for the file to exist in either of the two common internal paths
+    // 1) Ship::Context app directory (used in various parts of the engine)
+    // 2) SDL internal storage directory (used by Android path setup below)
+    const std::string ship_path = Ship::Context::GetPathRelativeToAppDirectory("sf64.o2r");
+    const char* sdlInternal = SDL_AndroidGetInternalStoragePath();
+    const std::string sdl_path = (sdlInternal && *sdlInternal)
+        ? (std::string(sdlInternal) + "/sf64.o2r")
+        : ship_path; // fallback to ship_path if SDL path unavailable
+
+    SPDLOG_INFO("waitForSetupFromNative: Looking for sf64.o2r at ship_path='{}' and sdl_path='{}'",
+                ship_path, sdl_path);
+
+    auto exists_any = [&](void) -> bool {
+        return std::filesystem::exists(ship_path) || std::filesystem::exists(sdl_path);
+    };
+
+    // Poll for existence with a timeout
+    int timeout_seconds = 300; // 5 minutes
     int poll_count = 0;
-    while (!std::filesystem::exists(main_path) && poll_count < timeout_seconds * 10) {
+    while (!exists_any() && poll_count < timeout_seconds * 10) {
         if (poll_count % 50 == 0) { // Log every 5 seconds
             SPDLOG_INFO("waitForSetupFromNative: Still waiting for sf64.o2r... ({}s)", poll_count / 10);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         poll_count++;
     }
-    
-    if (std::filesystem::exists(main_path)) {
-        SPDLOG_INFO("waitForSetupFromNative: sf64.o2r file found at: {}", main_path);
-        // Add a small delay to ensure file operations are complete
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    if (exists_any()) {
+        const std::string found = std::filesystem::exists(ship_path) ? ship_path : sdl_path;
+        SPDLOG_INFO("waitForSetupFromNative: sf64.o2r found at: {}", found);
+        // small delay to ensure file operations are complete
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
     } else {
-        SPDLOG_ERROR("waitForSetupFromNative: Timeout waiting for sf64.o2r at: {}", main_path);
+        SPDLOG_ERROR("waitForSetupFromNative: Timeout waiting for sf64.o2r. ship_path='{}' sdl_path='{}'",
+                     ship_path, sdl_path);
     }
 }
 }
