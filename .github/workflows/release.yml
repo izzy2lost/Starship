@@ -102,7 +102,7 @@ jobs:
       run: |
         cd android/
         ./gradlew clean
-        ./gradlew assembleRelease -P elfBuildType=Release --no-daemon
+        ./gradlew assembleRelease -P elfBuildType=RelWithDebInfo --no-daemon
         
     - name: Verify APK signing
       run: |

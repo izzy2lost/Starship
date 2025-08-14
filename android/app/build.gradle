@@ -71,12 +71,11 @@ android {
         release {
             debuggable false
             jniDebuggable false
-            minifyEnabled true
-            shrinkResources true
-            // Use less aggressive ProGuard rules for native apps
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Disable minification temporarily to isolate the issue
+            minifyEnabled false
+            shrinkResources false
             
-            // Keep some debug info for crash reports
+            // Keep debug symbols for crash analysis
             ndk {
                 debugSymbolLevel 'SYMBOL_TABLE'
             }
