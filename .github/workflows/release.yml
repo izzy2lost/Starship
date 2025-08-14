@@ -1,0 +1,165 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.1)'
+        required: true
+        default: '1.0.1'
+      prerelease:
+        description: 'Mark as pre-release'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  generate-port-o2r:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+    - name: Install dependencies
+      run: sudo apt-get install gcc g++ git cmake ninja-build lsb-release
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1.2.18
+      with:
+        key: ${{ runner.os }}-o2r-ccache-${{ github.ref }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-o2r-ccache-${{ github.ref }}
+          ${{ runner.os }}-o2r-ccache-
+    - name: Cache build folders
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-o2r-build-${{ github.ref }}-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-o2r-build-${{ github.ref }}
+          ${{ runner.os }}-o2r-build-
+        path: |
+          tools/Torch/cmake-build-release
+    - name: Generate starship.o2r
+      run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+        make -C tools/Torch type=release -j3
+        tools/Torch/cmake-build-release/torch pack port starship.o2r o2r
+    - uses: actions/upload-artifact@v4
+      with:
+        name: starship.o2r
+        path: starship.o2r
+        retention-days: 1
+
+  build-release:
+    needs: generate-port-o2r
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+        
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Install dependencies
+      run: sudo apt-get install -y ninja-build
+      
+    - name: Download starship.o2r
+      uses: actions/download-artifact@v4
+      with:
+        name: starship.o2r
+        path: android/app/src/main/assets 
+        
+    - name: Update version in build.gradle
+      run: |
+        sed -i "s/versionName \".*\"/versionName \"${{ github.event.inputs.version }}\"/" android/app/build.gradle
+        # Increment version code
+        CURRENT_CODE=$(grep "versionCode" android/app/build.gradle | sed 's/.*versionCode \([0-9]*\).*/\1/')
+        NEW_CODE=$((CURRENT_CODE + 1))
+        sed -i "s/versionCode $CURRENT_CODE/versionCode $NEW_CODE/" android/app/build.gradle
+        echo "Updated to version ${{ github.event.inputs.version }} with code $NEW_CODE"
+        
+    - name: Configure Gradle permissions
+      run: chmod +x android/gradlew
+      
+    - name: Setup Gradle cache
+      uses: gradle/actions/setup-gradle@v3
+      
+    - name: Setup signing keystore
+      if: env.KEYSTORE_FILE != ''
+      run: |
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/starship-release-key.keystore
+        echo "STARSHIP_STORE_FILE=starship-release-key.keystore" >> android/keystore.properties
+        echo "STARSHIP_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/keystore.properties
+        echo "STARSHIP_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/keystore.properties
+        echo "STARSHIP_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/keystore.properties
+      env:
+        KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+      
+    - name: Build Release
+      run: |
+        cd android/
+        ./gradlew clean
+        ./gradlew assembleRelease -P elfBuildType=Release --no-daemon
+        
+    - name: Verify APK signing
+      run: |
+        if [ -f android/starship-release-key.keystore ]; then
+          echo "✅ APK will be signed with release keystore"
+        else
+          echo "⚠️ APK will be signed with debug keystore (unsigned release)"
+        fi
+        
+    - name: Prepare release files
+      run: |
+        mkdir -p release
+        cp android/app/build/outputs/apk/release/app-release.apk release/starship-v${{ github.event.inputs.version }}.apk
+        
+    - name: Generate checksums
+      run: |
+        cd release
+        sha256sum *.apk > checksums.txt
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ github.event.inputs.version }}
+        name: Starship v${{ github.event.inputs.version }}
+        body: |
+          ## 🚀 Starship v${{ github.event.inputs.version }}
+          
+          ### 📱 Android Release
+          
+          **What's New:**
+          - Optimized release build with R8 code shrinking
+          - Improved performance and reduced APK size
+          - Enhanced file management with SAF integration
+          
+          ### 📦 Downloads
+          - **APK**: `starship-v${{ github.event.inputs.version }}.apk` - Direct install for Android devices
+          
+          ### 🔧 Installation Instructions
+          1. Download the APK file
+          2. Enable "Install from unknown sources" in Android settings
+          3. Install the APK on your Android device
+          4. Use [Torch](https://github.com/izzy2lost/Torch/releases) to extract your Star Fox 64 ROM
+          5. Launch Starship and select your game folder
+          
+          ### ✅ Requirements
+          - Android 7.0 (API 24) or higher
+          - ARM64 or ARMv7 processor
+          - Star Fox 64 ROM (US 1.0 or 1.1)
+          
+          ### 🔒 Security
+          SHA256 checksums are provided in `checksums.txt`
+          
+          ---
+          Built from commit: ${{ github.sha }}
+        files: |
+          release/*
+        draft: false
+        prerelease: ${{ github.event.inputs.prerelease }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

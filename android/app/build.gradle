@@ -7,10 +7,29 @@ else {
     apply plugin: 'com.android.library'
 }
 
+// Load keystore properties
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace("com.starship.android")
     buildFeatures {
         buildConfig true
+    }
+    
+    // Signing configuration
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['STARSHIP_STORE_FILE'])
+                storePassword keystoreProperties['STARSHIP_STORE_PASSWORD']
+                keyAlias keystoreProperties['STARSHIP_KEY_ALIAS']
+                keyPassword keystoreProperties['STARSHIP_KEY_PASSWORD']
+            }
+        }
     }
     ndkVersion "26.0.10792818"
     compileSdkVersion 33
@@ -20,13 +39,18 @@ android {
         }
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 5
-        versionName "1.0.0"
+        versionCode 6
+        versionName "1.0.1"
         externalNativeBuild {
             cmake {
                  arguments "-DSDL_SHARED=ON", "-DANDROID_STL=c++_static", "-DHAVE_LD_VERSION_SCRIPT=OFF",'-DUSE_OPENGLES=ON'
                  abiFilters 'arm64-v8a', 'armeabi-v7a'
             }
+        }
+        
+        // Optimize APK size
+        vectorDrawables {
+            useSupportLibrary true
         }
     }
 
@@ -38,9 +62,31 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
+            debuggable true
+            jniDebuggable true
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            shrinkResources false
+        }
+        release {
+            debuggable false
+            jniDebuggable false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // Enable R8 full mode for better optimization
+            android.enableR8.fullMode = true
+            
+            // Optimize native libraries
+            ndk {
+                debugSymbolLevel 'NONE'
+            }
+            
+            // Sign the release build
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     applicationVariants.all { variant ->
@@ -60,7 +106,25 @@ android {
     }
     lintOptions {
         abortOnError false
+        checkReleaseBuilds false
     }
+    
+    // Additional optimizations
+    packagingOptions {
+        // Exclude unnecessary files to reduce APK size
+        excludes += [
+            'META-INF/DEPENDENCIES',
+            'META-INF/LICENSE',
+            'META-INF/LICENSE.txt',
+            'META-INF/NOTICE',
+            'META-INF/NOTICE.txt',
+            'META-INF/*.kotlin_module'
+        ]
+        // Pick first occurrence of duplicate files
+        pickFirsts += ['**/libc++_shared.so', '**/libjsc.so']
+    }
+    
+
     
     if (buildAsLibrary) {
         libraryVariants.all { variant ->

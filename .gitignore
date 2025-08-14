@@ -18,6 +18,11 @@ ctx.c.m2c
 *.otr
 *.o2r
 *.log
+
+# Android signing
+*.keystore
+*.jks
+keystore.properties
 *.eeprom
 assets/yaml/us/ast_test.yaml
 /audio_data

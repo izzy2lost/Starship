@@ -2,6 +2,11 @@ name: Android Build
 
 on:
   push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [ published ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -46,27 +51,77 @@ jobs:
   build-android:
     needs: generate-port-o2r
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        build-type: [debug, release]
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: true
+        
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
     - name: Install dependencies
       run: sudo apt-get install -y ninja-build
+      
     - name: Download starship.o2r
       uses: actions/download-artifact@v4
       with:
         name: starship.o2r
         path: android/app/src/main/assets 
+        
     - name: Configure Gradle permissions
       run: chmod +x android/gradlew
-    - name: Build Starship
+      
+    - name: Setup Gradle cache
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+        
+    - name: Build Debug APK
+      if: matrix.build-type == 'debug'
       run: |
         cd android/
         ./gradlew assembleDebug -P elfBuildType=RelWithDebInfo
-        mv app/build/outputs/apk/debug/app-debug.apk ../starship.apk
-    - name: Upload APK artifact
+        mv app/build/outputs/apk/debug/app-debug.apk ../starship-debug.apk
+        
+    - name: Setup signing keystore
+      if: matrix.build-type == 'release' && env.KEYSTORE_FILE != ''
+      run: |
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/starship-release-key.keystore
+        echo "STARSHIP_STORE_FILE=starship-release-key.keystore" >> android/keystore.properties
+        echo "STARSHIP_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/keystore.properties
+        echo "STARSHIP_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/keystore.properties
+        echo "STARSHIP_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/keystore.properties
+      env:
+        KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+        
+    - name: Build Release APK
+      if: matrix.build-type == 'release'
+      run: |
+        cd android/
+        ./gradlew assembleRelease -P elfBuildType=Release
+        mv app/build/outputs/apk/release/app-release.apk ../starship-release.apk
+        
+    - name: Upload Debug APK
+      if: matrix.build-type == 'debug'
       uses: actions/upload-artifact@v4
       with:
-        name: starship-apk
-        path: starship.apk
+        name: starship-debug-apk
+        path: starship-debug.apk
+        retention-days: 7
+        
+    - name: Upload Release APK
+      if: matrix.build-type == 'release'
+      uses: actions/upload-artifact@v4
+      with:
+        name: starship-release-apk
+        path: starship-release.apk
+        retention-days: 30
+        
+
         
