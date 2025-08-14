@@ -75,8 +75,7 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             
-            // Enable R8 full mode for better optimization
-            android.enableR8.fullMode = true
+            // R8 full mode is enabled by default in newer AGP versions
             
             // Optimize native libraries
             ndk {
