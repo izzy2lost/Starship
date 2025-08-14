@@ -92,7 +92,7 @@ jobs:
     - name: Setup signing keystore
       if: matrix.build-type == 'release' && env.KEYSTORE_FILE != ''
       run: |
-        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/starship-release-key.keystore
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/app/starship-release-key.keystore
         echo "STARSHIP_STORE_FILE=starship-release-key.keystore" >> android/keystore.properties
         echo "STARSHIP_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/keystore.properties
         echo "STARSHIP_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/keystore.properties
