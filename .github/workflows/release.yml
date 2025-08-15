@@ -131,6 +131,9 @@ jobs:
           ## 🚀 Starship v${{ github.event.inputs.version }}
           
           ### 📱 Android Release
+
+          > [!IMPORTANT]
+          > **🔥 Mods now working!** Put your mods in the `mods/` folder.
           
           **What's New:**
           - Optimized release build with R8 code shrinking
