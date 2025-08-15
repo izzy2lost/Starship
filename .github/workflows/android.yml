@@ -76,11 +76,6 @@ jobs:
         
     - name: Configure Gradle permissions
       run: chmod +x android/gradlew
-      
-    - name: Setup Gradle cache
-      uses: gradle/actions@v4.4.2
-      with:
-        cache-read-only: ${{ github.ref != 'refs/heads/main' }}
         
     - name: Build Debug APK
       if: matrix.build-type == 'debug'
