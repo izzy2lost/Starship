@@ -78,7 +78,7 @@ jobs:
       run: chmod +x android/gradlew
       
     - name: Setup Gradle cache
-      uses: gradle/actions/setup-gradle@v3
+      uses: gradle/actions@v4.4.2
       with:
         cache-read-only: ${{ github.ref != 'refs/heads/main' }}
         
