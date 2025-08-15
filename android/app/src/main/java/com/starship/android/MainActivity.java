@@ -103,17 +103,24 @@ private void syncModsFromUserFolder() {
             return;
         }
 
-        File internalModsFolder = new File(getFilesDir(), "mods");
-        if (!internalModsFolder.exists()) {
-            internalModsFolder.mkdirs();
+        // Prefer external app-specific storage so the engine (which uses SDL_AndroidGetExternalStoragePath)
+        // can discover mods at /Android/data/<pkg>/files/mods. Fallback to internal if external is unavailable.
+        File targetRoot = getExternalFilesDir(null);
+        if (targetRoot == null) {
+            Log.w(TAG, "External files dir is null, falling back to internal files dir for mods");
+            targetRoot = getFilesDir();
+        }
+        File targetModsFolder = new File(targetRoot, "mods");
+        if (!targetModsFolder.exists()) {
+            targetModsFolder.mkdirs();
         }
 
-        // Clear existing mods in internal storage first
-        clearDirectory(internalModsFolder);
+        // Clear existing mods in target storage first
+        clearDirectory(targetModsFolder);
 
-        // Copy all files from user mods folder to internal mods folder
-        copyModsRecursively(userModsFolder, internalModsFolder);
-        Log.i(TAG, "Mods synced from user folder to internal storage");
+        // Copy all files from user mods folder to target mods folder
+        copyModsRecursively(userModsFolder, targetModsFolder);
+        Log.i(TAG, "Mods synced from user folder to: " + targetModsFolder.getAbsolutePath());
     } catch (Exception e) {
         Log.e(TAG, "Error syncing mods from user folder", e);
     }
