@@ -1,6 +1,7 @@
 #include "libultraship/libultraship.h"
 #include "Context.h"
 #include <string>
+#include <filesystem>
 
 extern "C" {
 

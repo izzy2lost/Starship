@@ -126,6 +126,68 @@ private void syncModsFromUserFolder() {
     }
 }
 
+private void syncSaveFileFromUserFolder() {
+    try {
+        if (userFolderUri == null) return;
+        
+        DocumentFile userRoot = DocumentFile.fromTreeUri(this, userFolderUri);
+        if (userRoot == null) return;
+
+        DocumentFile userSaveFile = userRoot.findFile("default.sav");
+        if (userSaveFile != null && userSaveFile.exists()) {
+            // Copy save file from user folder to external storage where the engine expects it
+            File targetRoot = getExternalFilesDir(null);
+            if (targetRoot == null) {
+                targetRoot = getFilesDir();
+            }
+            File targetSaveFile = new File(targetRoot, "default.sav");
+            
+            try (InputStream in = getContentResolver().openInputStream(userSaveFile.getUri());
+                 FileOutputStream out = new FileOutputStream(targetSaveFile)) {
+                byte[] buf = new byte[8192];
+                int r;
+                while ((r = in.read(buf)) != -1) { 
+                    out.write(buf, 0, r); 
+                }
+                out.flush();
+                out.getFD().sync();
+                Log.i(TAG, "Save file synced from user folder to: " + targetSaveFile.getAbsolutePath());
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to sync save file from user folder", e);
+            }
+        }
+    } catch (Exception e) {
+        Log.e(TAG, "Error syncing save file from user folder", e);
+    }
+}
+
+private void syncSaveFileToUserFolder() {
+    try {
+        if (userFolderUri == null) return;
+        
+        DocumentFile userRoot = DocumentFile.fromTreeUri(this, userFolderUri);
+        if (userRoot == null) return;
+
+        // Find the save file in external storage
+        File sourceRoot = getExternalFilesDir(null);
+        if (sourceRoot == null) {
+            sourceRoot = getFilesDir();
+        }
+        File sourceSaveFile = new File(sourceRoot, "default.sav");
+        
+        if (sourceSaveFile.exists()) {
+            // Copy save file to user's SAF folder for persistence
+            if (copyFileToTree(sourceSaveFile, userRoot, "application/octet-stream")) {
+                Log.i(TAG, "Save file backed up to user folder");
+            } else {
+                Log.w(TAG, "Failed to backup save file to user folder");
+            }
+        }
+    } catch (Exception e) {
+        Log.e(TAG, "Error backing up save file to user folder", e);
+    }
+}
+
 private void clearDirectory(File dir) {
     if (dir.exists() && dir.isDirectory()) {
         File[] files = dir.listFiles();
@@ -222,9 +284,10 @@ setupControllerOverlay();
         }
     }
 
-    // Always sync mods folder from user's chosen folder to internal storage
+    // Always sync mods and save file from user's chosen folder
     if (userFolderUri != null) {
         syncModsFromUserFolder();
+        syncSaveFileFromUserFolder();
     }
 
     // Now check if sf64.o2r exists in internal storage
@@ -245,6 +308,24 @@ setupControllerOverlay();
     
     // Signal to C++ that setup is complete
     setupLatch.countDown();
+}
+
+@Override
+protected void onPause() {
+    super.onPause();
+    // Backup save file to user's SAF folder when app is paused
+    if (userFolderUri != null) {
+        syncSaveFileToUserFolder();
+    }
+}
+
+@Override
+protected void onStop() {
+    super.onStop();
+    // Backup save file to user's SAF folder when app is stopped
+    if (userFolderUri != null) {
+        syncSaveFileToUserFolder();
+    }
 }
 
 public static void waitForSetupFromNative() {
