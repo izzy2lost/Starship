@@ -1,6 +1,27 @@
 #include "libultraship/libultraship.h"
+#include <string>
+
+#ifdef __ANDROID__
+#include <SDL2/SDL.h>
+#endif
 
 extern "C" {
+
+// Get the proper save file path for the current platform
+static std::string GetSaveFilePath() {
+#ifdef __ANDROID__
+    // On Android, use the internal storage path
+    const char* internalPath = SDL_AndroidGetInternalStoragePath();
+    if (internalPath) {
+        return std::string(internalPath) + "/default.sav";
+    }
+    // Fallback to current directory if SDL path fails
+    return "default.sav";
+#else
+    // On other platforms, use current directory
+    return "default.sav";
+#endif
+}
 
 int32_t osEepromProbe(OSMesgQueue* mq) {
     return EEPROM_TYPE_4K;
@@ -10,7 +31,8 @@ int32_t osEepromLongRead(OSMesgQueue* mq, uint8_t address, uint8_t* buffer, int3
     u8 content[512];
     s32 ret = -1;
 
-    FILE* fp = fopen("default.sav", "rb");
+    std::string savePath = GetSaveFilePath();
+    FILE* fp = fopen(savePath.c_str(), "rb");
     if (fp == NULL) {
         return -1;
     }
@@ -34,7 +56,8 @@ int32_t osEepromLongWrite(OSMesgQueue* mq, uint8_t address, uint8_t* buffer, int
     }
     memcpy(content + address * 8, buffer, length);
 
-    FILE* fp = fopen("default.sav", "wb");
+    std::string savePath = GetSaveFilePath();
+    FILE* fp = fopen(savePath.c_str(), "wb");
     if (fp == NULL) {
         return -1;
     }
