@@ -65,6 +65,14 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
         
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+      
+    - name: Install NDK 28
+      run: |
+        echo "y" | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;28.2.12604990" || \
+        echo "y" | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;28.0.12433566"
+        
     - name: Install dependencies
       run: sudo apt-get install -y ninja-build
       
