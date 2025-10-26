@@ -913,6 +913,51 @@ extern "C" void GameEngine_Free(void* ptr) {
 
 
 #ifdef __ANDROID__
+#include <jni.h>
+
+static const char* sCachedSaveDir = nullptr;
+
+extern "C" const char* Android_GetSaveDir() {
+    if (sCachedSaveDir != nullptr) {
+        return sCachedSaveDir;
+    }
+
+    JNIEnv* env = (JNIEnv*)SDL_AndroidGetJNIEnv();
+    if (env == nullptr) {
+        return nullptr;
+    }
+
+    jclass mainActivityClass = env->FindClass("com/starship/android/MainActivity");
+    if (mainActivityClass == nullptr) {
+        return nullptr;
+    }
+
+    jmethodID getSaveDirMethod = env->GetStaticMethodID(mainActivityClass, "getSaveDir", "()Ljava/lang/String;");
+    if (getSaveDirMethod == nullptr) {
+        env->DeleteLocalRef(mainActivityClass);
+        return nullptr;
+    }
+
+    jstring jSaveDir = (jstring)env->CallStaticObjectMethod(mainActivityClass, getSaveDirMethod);
+    if (jSaveDir == nullptr) {
+        env->DeleteLocalRef(mainActivityClass);
+        return nullptr;
+    }
+
+    const char* saveDirCStr = env->GetStringUTFChars(jSaveDir, nullptr);
+    if (saveDirCStr != nullptr) {
+        // Cache the save directory path
+        static std::string cachedPath = saveDirCStr;
+        sCachedSaveDir = cachedPath.c_str();
+        env->ReleaseStringUTFChars(jSaveDir, saveDirCStr);
+    }
+
+    env->DeleteLocalRef(jSaveDir);
+    env->DeleteLocalRef(mainActivityClass);
+
+    return sCachedSaveDir;
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_starship_android_MainActivity_nativeSetAppDirs(JNIEnv* env, jclass, jstring jpath) {
     // No-op: paths resolved via SDL_AndroidGetInternalStoragePath in GameEngine::GameEngine()
