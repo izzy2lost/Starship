@@ -843,6 +843,25 @@ public void onWindowFocusChanged(boolean hasFocus) {
     }
 }
 
+@Override
+public void onBackPressed() {
+    // Show confirmation dialog before exiting
+    new AlertDialog.Builder(this)
+        .setTitle("Exit Game")
+        .setMessage("Are you sure you want to quit?")
+        .setPositiveButton("Yes", (dialog, which) -> {
+            // Exit the app
+            finish();
+            System.exit(0);
+        })
+        .setNegativeButton("No", (dialog, which) -> {
+            // Dismiss dialog and continue playing
+            dialog.dismiss();
+        })
+        .setCancelable(true)
+        .show();
+}
+
 private void setupMenuButton(Button button) {
     button.setOnTouchListener(new View.OnTouchListener() {
         @Override
