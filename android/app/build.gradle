@@ -31,14 +31,14 @@ android {
             }
         }
     }
-    ndkVersion "26.0.10792818"
-    compileSdkVersion 33
+    ndkVersion "28.2.12604990"
+    compileSdkVersion 36
     defaultConfig {
         if (buildAsApplication) {
             applicationId "com.starship.android"
         }
         minSdkVersion 24
-        targetSdkVersion 33
+        targetSdkVersion 36
         versionCode 6
         versionName "1.0.1"
         externalNativeBuild {
@@ -145,7 +145,7 @@ dependencies {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '8.3.2'
+    gradleVersion = '8.9'
 }
 
 task prepareKotlinBuildScriptModel {
