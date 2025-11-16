@@ -31,7 +31,7 @@ android {
             }
         }
     }
-    ndkVersion "28.0.12433566"
+    ndkVersion "29.0.14206865"
     compileSdkVersion 36
     defaultConfig {
         if (buildAsApplication) {
@@ -150,3 +150,4 @@ task wrapper(type: Wrapper) {
 
 task prepareKotlinBuildScriptModel {
 }
+
