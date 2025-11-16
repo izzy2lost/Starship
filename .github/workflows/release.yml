@@ -132,8 +132,10 @@ jobs:
           
           ### 📱 Android Release
 
-          > [!IMPORTANT]
-          > **🔥 Mods now working!** Put your mods in the `mods/` folder.
+          [!IMPORTANT]
+          **💾 Saves Now Loading!**
+          **🎥 Immersive View!**
+          **🔥 Mods now working!** Put your mods in the `mods/` folder.
           
           **What's New:**
           - Optimized release build with R8 code shrinking
