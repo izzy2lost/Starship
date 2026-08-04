@@ -154,7 +154,14 @@ android {
                     "-DUSE_OPENGLES=ON",
                     "-DSDL_SHARED=ON",
                     "-DSDL_STATIC=OFF",
-                    "-DHAVE_LD_VERSION_SCRIPT=OFF"
+                    "-DHAVE_LD_VERSION_SCRIPT=OFF",
+                    // Forced for every variant, debug included. The root
+                    // CMakeLists sets no -O at all for Debug, so the debug
+                    // variant compiled the game *and Torch* at -O0 — and Torch
+                    // now runs on the device. Extraction is heavy STL work over
+                    // a 12MB ROM; unoptimised it does not appear to finish,
+                    // which reads as a hang rather than as slowness.
+                    "-DCMAKE_BUILD_TYPE=Release"
                 )
                 targets += "Starship"
             }
@@ -184,7 +191,9 @@ android {
 
     buildTypes {
         debug {
-            isJniDebuggable = true
+            // No isJniDebuggable: the native side is built Release regardless
+            // (see the CMAKE_BUILD_TYPE argument above), so there would be
+            // nothing useful to attach to.
             applicationIdSuffix = ".debug"
         }
         release {
