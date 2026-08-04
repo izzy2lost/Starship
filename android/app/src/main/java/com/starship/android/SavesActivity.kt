@@ -75,7 +75,7 @@ class SavesActivity : ComponentActivity() {
         })
 
         root.addView(TextView(this).apply {
-            text = "Records, ghosts and Controller Pak data. The game rewrites these as you play, " +
+            text = "Medals, high scores and settings. The game rewrites these as you play, " +
                 "so restart after importing or it will save over what you restored."
             setTextColor(SUBTLE)
             textSize = 12f
@@ -111,6 +111,9 @@ class SavesActivity : ComponentActivity() {
         root.addView(actions)
 
         setContentView(root)
+        // Without this the action row runs under the navigation bar and the
+        // title sits under the status bar; see [ModsActivity].
+        root.padForSystemBars()
     }
 
     private fun refresh() {
@@ -154,7 +157,7 @@ class SavesActivity : ComponentActivity() {
     private fun confirmDelete(save: SaveStore.Save) {
         AlertDialog.Builder(this)
             .setTitle("Delete ${save.label}?")
-            .setMessage("Records and ghosts in this file are gone for good. Exporting first keeps a copy.")
+            .setMessage("Medals and high scores in this file are gone for good. Exporting first keeps a copy.")
             .setPositiveButton("Delete") { _, _ ->
                 val error = SaveStore.delete(save)
                 if (error != null) {

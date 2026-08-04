@@ -259,22 +259,28 @@ class MainActivity : SDLActivity() {
     }
 
     /**
-     * Escape opens libultraship's menu. While it is up the overlay stops
+     * F1 opens libultraship's menu bar. While it is up the overlay stops
      * feeding the virtual pad so taps land on the menu instead of the game.
+     *
+     * Not Escape. libultraship drives two separate things: Escape toggles a
+     * "Menu" and F1 toggles a "MenuBar" (see Gui::DrawMenu). Starship installs
+     * a menu bar — ImguiUI.cpp calls SetMenuBar() and never SetMenu() — so
+     * GetMenu() is null and Escape does nothing at all. F1 is also what the
+     * game's own on-screen hint tells the player to press.
      */
     @SuppressLint("ClickableViewAccessibility")
     private fun setupMenuButton(button: Button) {
         button.setOnTouchListener { _, event ->
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
-                    onNativeKeyDown(KeyEvent.KEYCODE_ESCAPE)
+                    onNativeKeyDown(KeyEvent.KEYCODE_F1)
                     button.isPressed = true
                     // Don't assume this opened or closed the menu — syncMenuState
                     // picks up whatever the engine actually did.
                     true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    onNativeKeyUp(KeyEvent.KEYCODE_ESCAPE)
+                    onNativeKeyUp(KeyEvent.KEYCODE_F1)
                     button.isPressed = false
                     true
                 }

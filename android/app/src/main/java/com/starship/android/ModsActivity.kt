@@ -116,6 +116,9 @@ class ModsActivity : ComponentActivity() {
         root.addView(actions)
 
         setContentView(root)
+        // Without this the action row runs under the navigation bar — "Done"
+        // ends up half behind it — and the title sits under the status bar.
+        root.padForSystemBars()
     }
 
     private fun refresh() {

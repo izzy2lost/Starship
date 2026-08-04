@@ -287,7 +287,17 @@ include_directories(
   ${dr_libs_SOURCE_DIR}
 )
 
-add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+# The binary dir is normally libultraship's own source dir, which puts its build
+# outputs (libImGui.a, libstb.a) in the source tree. On a single-architecture
+# build that is only untidy. Android builds every ABI from the same source tree,
+# so both would write those archives to the same path and clobber each other —
+# the arm64 link then fails on armeabi-v7a objects, or vice versa, depending on
+# which finished last. Give it a binary dir of its own here.
+if(ANDROID)
+    add_subdirectory(libultraship ${CMAKE_CURRENT_BINARY_DIR}/libultraship)
+else()
+    add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+endif()
 add_dependencies(${PROJECT_NAME} libultraship)
 target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
 
