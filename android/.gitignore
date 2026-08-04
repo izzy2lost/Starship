@@ -27,6 +27,10 @@ render.experimental.xml
 *.jks
 *.keystore
 
+# Release signing credentials (see app/build.gradle.kts)
+key.properties
+keystore.properties
+
 # Google Services (e.g. APIs or Firebase)
 google-services.json
 

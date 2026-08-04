@@ -212,6 +212,21 @@
         app:layout_constraintTop_toTopOf="parent"
         android:textColor="#25FFFFFF"
         android:textSize="12sp"/>
+
+    <!-- Only while the in-game menu is open; MainActivity flips its visibility -->
+    <Button
+        android:id="@+id/buttonMods"
+        android:layout_width="60dp"
+        android:layout_height="35dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/ic_rectangular_button"
+        android:text="@string/mods_button"
+        android:textColor="#25FFFFFF"
+        android:textSize="12sp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/buttonMenu"
+        app:layout_constraintStart_toEndOf="@id/buttonMenu"
+        app:layout_constraintTop_toTopOf="@id/buttonMenu" />
 </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Toggle Button -->

@@ -70,17 +70,15 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: starship.o2r
-        path: android/app/src/main/assets 
-        
-    - name: Update version in build.gradle
+        path: .
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install NDK
       run: |
-        sed -i "s/versionName \".*\"/versionName \"${{ github.event.inputs.version }}\"/" android/app/build.gradle
-        # Increment version code
-        CURRENT_CODE=$(grep "versionCode" android/app/build.gradle | sed 's/.*versionCode \([0-9]*\).*/\1/')
-        NEW_CODE=$((CURRENT_CODE + 1))
-        sed -i "s/versionCode $CURRENT_CODE/versionCode $NEW_CODE/" android/app/build.gradle
-        echo "Updated to version ${{ github.event.inputs.version }} with code $NEW_CODE"
-        
+        echo "y" | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --install "ndk;30.0.15729638"
+
     - name: Configure Gradle permissions
       run: chmod +x android/gradlew
       
@@ -90,27 +88,30 @@ jobs:
     - name: Setup signing keystore
       if: env.KEYSTORE_FILE != ''
       run: |
-        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/app/starship-release-key.keystore
-        echo "STARSHIP_STORE_FILE=starship-release-key.keystore" >> android/keystore.properties
-        echo "STARSHIP_STORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> android/keystore.properties
-        echo "STARSHIP_KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> android/keystore.properties
-        echo "STARSHIP_KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> android/keystore.properties
+        echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > android/app/release.keystore
+        test -s android/app/release.keystore || (echo "Failed to create keystore file" && exit 1)
       env:
         KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
-      
+
+    - name: Verify APK signing
+      run: |
+        if [ -s android/app/release.keystore ]; then
+          echo "✅ APK will be signed with release keystore"
+        else
+          echo "⚠️ No keystore secret configured; the release APK falls back to the debug key"
+        fi
+
     - name: Build Release
       run: |
         cd android/
-        ./gradlew clean
-        ./gradlew assembleRelease -P elfBuildType=RelWithDebInfo --no-daemon
-        
-    - name: Verify APK signing
-      run: |
-        if [ -f android/app/starship-release-key.keystore ]; then
-          echo "✅ APK will be signed with release keystore"
-        else
-          echo "⚠️ APK will be signed with debug keystore (unsigned release)"
-        fi
+        ./gradlew assembleRelease --no-daemon \
+          -PstarshipVersionName="${{ github.event.inputs.version }}" \
+          -PstarshipVersionCode="${{ github.run_number }}"
+      env:
+        KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE != '' && 'release.keystore' || '' }}
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         
     - name: Prepare release files
       run: |
@@ -133,14 +134,11 @@ jobs:
           ### 📱 Android Release
 
           [!IMPORTANT]
-          **💾 Saves Now Loading!**
-          **🎥 Immersive View!**
-          **🔥 Mods now working!** Put your mods in the `mods/` folder.
-          
-          **What's New:**
-          - Optimized release build with R8 code shrinking
-          - Improved performance and reduced APK size
-          - Enhanced file management with SAF integration
+          **🎮 No desktop setup needed!** The app converts your ROM on the device
+          itself — no more running Torch on a PC and copying `sf64.o2r` across.
+          **📂 No storage permission needed.** The ROM is read once through the
+          system file picker and nothing else on your device is touched.
+          **🔥 Mods and saves managers** are built into the in-game menu.
           
           ### 📦 Downloads
           - **APK**: `starship-v${{ github.event.inputs.version }}.apk` - Direct install for Android devices
@@ -149,13 +147,13 @@ jobs:
           1. Download the APK file
           2. Enable "Install from unknown sources" in Android settings
           3. Install the APK on your Android device
-          4. Use [Torch](https://github.com/izzy2lost/Torch/releases) to extract your Star Fox 64 ROM
-          5. Launch Starship and select your game folder
+          4. Launch Starship and pick your own Star Fox 64 (US) `.z64` ROM
+          5. Wait for the one-time extraction to finish — the game starts by itself
           
           ### ✅ Requirements
           - Android 7.0 (API 24) or higher
           - ARM64 or ARMv7 processor
-          - Star Fox 64 ROM (US 1.0 or 1.1)
+          - Star Fox 64 ROM (US 1.0 or 1.1), supplied by you
           
           ### 🔒 Security
           SHA256 checksums are provided in `checksums.txt`
@@ -168,3 +166,7 @@ jobs:
         prerelease: ${{ github.event.inputs.prerelease }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Clean up keystore
+      if: always()
+      run: rm -f android/app/release.keystore

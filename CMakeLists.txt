@@ -167,6 +167,14 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
+# Ahead of both the game target below and add_subdirectory(libultraship) further
+# down: the include_directories() it adds only reach targets declared after it,
+# and its OVERRIDE_FIND_PACKAGE declarations are what libultraship's
+# find_package(... REQUIRED) calls resolve against.
+if(ANDROID)
+    include(cmake/dependencies/android.cmake)
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(IOS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/ios)
 
@@ -645,14 +653,24 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
   endif()
 endif()
 
+# On Android these ride into the APK as assets and are unpacked to the app's
+# external files directory on first run, so there is nothing useful next to the
+# .so to copy them to (see android/app/build.gradle.kts and GameAssets.kt).
+if(NOT ANDROID)
 add_custom_command(
 	TARGET ${PROJECT_NAME} POST_BUILD
 	COMMENT "Copying asset yamls..."
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/config.yml" "$<TARGET_FILE_DIR:Starship>/config.yml"
 	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets/" "$<TARGET_FILE_DIR:Starship>/assets/"
 )
+endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+# Android has no host toolchain available inside the NDK build, so the Torch
+# executable these targets drive cannot be built here. starship.o2r is built on
+# the CI host and shipped as an APK asset instead, and sf64.o2r is generated
+# on-device by the Torch library that is linked into the game (see
+# src/port/android/AndroidBridge.cpp).
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch" AND NOT ANDROID)
 include(ExternalProject)
 ExternalProject_Add(TorchExternal
 	PREFIX TorchExternal
@@ -725,13 +743,17 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE "${CMAKE_SOUR
 set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_ICON_FILE "${CMAKE_SOURCE_DIR}/logo.png")
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(CPACK_GENERATOR "External")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
-    set(CPACK_GENERATOR "ZIP")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set(CPACK_GENERATOR "Bundle")
-endif()
+# Gradle packages the Android build into an APK; CPack has nothing to do there,
+# and none of the generators below apply to it.
+if(NOT ANDROID)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        set(CPACK_GENERATOR "External")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
+        set(CPACK_GENERATOR "ZIP")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set(CPACK_GENERATOR "Bundle")
+    endif()
 
-set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/configure-packaging.cmake)
-include(cmake/packaging.cmake)
+    set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/configure-packaging.cmake)
+    include(cmake/packaging.cmake)
+endif()
