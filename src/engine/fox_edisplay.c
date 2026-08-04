@@ -833,8 +833,7 @@ void ItemCheckpoint_Draw(ItemCheckpoint* this) {
     s32 i;
 
     if (((gGameFrameCount & 0x18) != 0) && (this->state == 0)) {
-        FrameInterpolation_RecordOpenChild(this, 0);
-        FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+        FrameInterpolation_RecordOpenChild("ItemCheckpoint", 0);
         Matrix_Push(&gGfxMatrix);
         RCP_SetupDL(&gMasterDisp, SETUPDL_64);
         gDPSetPrimColor(gMasterDisp++, 0x00, 0x00, 255, 255, 0, 255);
@@ -846,14 +845,14 @@ void ItemCheckpoint_Draw(ItemCheckpoint* this) {
         Matrix_Pop(&gGfxMatrix);
         FrameInterpolation_RecordCloseChild();
     }
-    FrameInterpolation_RecordOpenChild(this, 1);
-    FrameInterpolation_RecordMarker(__FILE__, __LINE__);
     RCP_SetupDL(&gMasterDisp, SETUPDL_29);
     gSPTexture(gMasterDisp++, 2000, 2000, 0, G_TX_RENDERTILE, G_ON);
     gSPSetGeometryMode(gMasterDisp++, G_TEXTURE_GEN);
     Matrix_RotateZ(gGfxMatrix, this->unk_58 * M_DTOR, MTXF_APPLY);
 
     for (i = 0; i < 8; i++) {
+        FrameInterpolation_RecordOpenChild("ItemCheckpoint", i + 1);
+
         Matrix_Push(&gGfxMatrix);
         Matrix_RotateZ(gGfxMatrix, i * 45.0f * M_DTOR, MTXF_APPLY);
         Matrix_Translate(gGfxMatrix, 2.0f * this->width, 0.0f, 0.0f, MTXF_APPLY);
@@ -861,9 +860,10 @@ void ItemCheckpoint_Draw(ItemCheckpoint* this) {
         Graphics_SetScaleMtx(2.0f * this->unk_50);
         gSPDisplayList(gMasterDisp++, D_101CAE0);
         Matrix_Pop(&gGfxMatrix);
+
+        FrameInterpolation_RecordCloseChild();
     }
     gSPClearGeometryMode(gMasterDisp++, G_TEXTURE_GEN);
-    FrameInterpolation_RecordCloseChild();
 }
 
 void ItemSilverRing_Draw(ItemSilverRing* this) {
@@ -1196,12 +1196,12 @@ void Actor_DrawAllRange(Actor* this) {
         }
 
         // @port draw no matter what
-        goto render;
+        // goto render;
 
         if ((var_fv0 > sViewPos.z) && (sViewPos.z > var_fv1)) {
-            if (fabsf(sViewPos.x) < (fabsf(sViewPos.z * 0.5f) + 500.0f)) {
+            if (fabsf(sViewPos.x) < (fabsf(sViewPos.z * 0.5f) + 500.0f) * 2.6f) {
                 if (fabsf(sViewPos.y) < (fabsf(sViewPos.z * 0.5f) + 500.0f)) {
-                render:
+                    // render:
                     Matrix_RotateY(gCalcMatrix, this->obj.rot.y * M_DTOR, MTXF_APPLY);
                     Matrix_RotateX(gCalcMatrix, this->obj.rot.x * M_DTOR, MTXF_APPLY);
                     Matrix_RotateZ(gCalcMatrix, this->obj.rot.z * M_DTOR, MTXF_APPLY);
@@ -1234,10 +1234,10 @@ void Actor_DrawAllRange(Actor* this) {
         }
 
         // @port draw no matter what
-        goto render2;
+        // goto render2;
 
         if ((var_fv0 > sViewPos.z) && (sViewPos.z > var_fv1)) {
-            if (fabsf(sViewPos.x) < (fabsf(sViewPos.z * var_fa1) + var_ft5)) {
+            if (fabsf(sViewPos.x) < (fabsf(sViewPos.z * var_fa1) + var_ft5) * 2.6f) {
                 if (fabsf(sViewPos.y) < (fabsf(sViewPos.z * var_fa1) + var_ft5)) {
                 render2:
                     if (this->info.draw != NULL) {
@@ -1325,15 +1325,15 @@ void Boss_Draw(Boss* this, s32 arg1) {
     sp3C = -1.0f;
 
     // @port draw no matter what
-    if ((gCurrentLevel != LEVEL_KATINA) &&
-        (gCurrentLevel != LEVEL_SECTOR_Y)) { // Excepting Katina because of KaSaucerer's bug
-        goto render;
-    }
+    // if ((gCurrentLevel != LEVEL_KATINA) &&
+    //     (gCurrentLevel != LEVEL_SECTOR_Y)) { // Excepting Katina because of KaSaucerer's bug
+    //     goto render;
+    // }
 
     if ((D_edisplay_801615D0.z < var_fv0) && (var_fv1 < D_edisplay_801615D0.z)) {
-        if (fabsf(D_edisplay_801615D0.x) < (fabsf(D_edisplay_801615D0.z * var_ft5) + var_fa1)) {
+        if (fabsf(D_edisplay_801615D0.x) < (fabsf(D_edisplay_801615D0.z * var_ft5) + var_fa1) * 1.77f) {
             if (fabsf(D_edisplay_801615D0.y) < (fabsf(D_edisplay_801615D0.z * var_ft5) + var_fa1)) {
-            render:
+                // render:
                 sp3C = 1.0f;
                 if (this->obj.id != OBJ_BOSS_BO_BASE) {
                     if (this->obj.id != OBJ_BOSS_KA_SAUCERER) {
@@ -1655,23 +1655,24 @@ void Scenery360_Draw(Scenery360* this) {
 
     Matrix_MultVec3f(gGfxMatrix, &src, &dest);
 
+#ifndef __SWITCH__
     if (gCurrentLevel == LEVEL_SECTOR_Z) {
         behindZdist = 6000.0f;
         frontZdist = -20000.0f * 2;
-        xyOffsetBounds = 6000.0f * 2;
-        xyObjDistBoundMod = 0.9f;
-        goto check;
+        // xyOffsetBounds = 6000.0f * 2;
+        // xyObjDistBoundMod = 0.9f;
     }
+#endif
 
-    if ((gCurrentLevel != LEVEL_SECTOR_Y) && (gCurrentLevel != LEVEL_VENOM_ANDROSS)) {
-        goto render;
-    }
+    // if ((gCurrentLevel != LEVEL_SECTOR_Y) && (gCurrentLevel != LEVEL_VENOM_ANDROSS)) {
+    //     goto render;
+    // }
 
-check:
+    // check:
     if ((dest.z < behindZdist) && (frontZdist < dest.z)) {
         if (fabsf(dest.y) < (fabsf(dest.z * xyObjDistBoundMod) + xyOffsetBounds)) {
-            if (fabsf(dest.x) < (fabsf(dest.z * xyObjDistBoundMod) + xyOffsetBounds)) {
-            render:
+            if (fabsf(dest.x) < (fabsf(dest.z * xyObjDistBoundMod) + xyOffsetBounds) * 2.6f) {
+                // render:
                 Display_SetSecondLight(&this->obj.pos);
                 if (this->obj.id == OBJ_SCENERY_AND_PASSAGE) {
                     Matrix_RotateY(gGfxMatrix, this->obj.rot.y * M_DTOR, MTXF_APPLY);
@@ -1796,7 +1797,7 @@ void Object_DrawAll(s32 cullDirection) {
 
         for (i = 0, scenery360 = gScenery360; i < 200; i++, scenery360++) {
             FrameInterpolation_RecordOpenChild(scenery360, i);
-            FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
             if ((scenery360->obj.status == OBJ_ACTIVE) && (scenery360->obj.id != OBJ_SCENERY_LEVEL_OBJECTS)) {
                 if (gCurrentLevel == LEVEL_BOLSE) {
                     spAC.x = scenery360->sfxSource[0];
@@ -1809,6 +1810,7 @@ void Object_DrawAll(s32 cullDirection) {
                 Scenery360_Draw(scenery360);
                 Matrix_Pop(&gGfxMatrix);
             }
+
             FrameInterpolation_RecordCloseChild();
         }
     } else {
@@ -1816,7 +1818,7 @@ void Object_DrawAll(s32 cullDirection) {
         for (i = 0, scenery = gScenery; i < ARRAY_COUNT(gScenery); i++, scenery++) {
             if (scenery->obj.status >= OBJ_ACTIVE) {
                 FrameInterpolation_RecordOpenChild(scenery, i);
-                FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
                 if (cullDirection > 0) {
                     Display_SetSecondLight(&scenery->obj.pos);
                 }
@@ -1824,6 +1826,7 @@ void Object_DrawAll(s32 cullDirection) {
                 Scenery_Draw(scenery, cullDirection);
                 Matrix_Pop(&gGfxMatrix);
                 Object_UpdateSfxSource(scenery->sfxSource);
+
                 FrameInterpolation_RecordCloseChild();
             }
         }
@@ -1832,7 +1835,7 @@ void Object_DrawAll(s32 cullDirection) {
     for (i = 0, boss = &gBosses[0]; i < ARRAY_COUNT(gBosses); i++, boss++) {
         if ((boss->obj.status >= OBJ_ACTIVE) && (boss->obj.id != OBJ_BOSS_BO_BASE_SHIELD)) {
             FrameInterpolation_RecordOpenChild(boss, i);
-            FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
             if ((boss->timer_05C % 2) == 0) {
                 RCP_SetupDL_29(gFogRed, gFogGreen, gFogBlue, gFogAlpha, gFogNear, gFogFar);
             } else {
@@ -1849,6 +1852,7 @@ void Object_DrawAll(s32 cullDirection) {
                 Object_DrawShadow(i, &boss->obj);
                 Matrix_Pop(&gGfxMatrix);
             }
+
             FrameInterpolation_RecordCloseChild();
         }
     }
@@ -1859,7 +1863,7 @@ void Object_DrawAll(s32 cullDirection) {
     for (i = 0, sprite = &gSprites[0]; i < ARRAY_COUNT(gSprites); i++, sprite++) {
         if ((sprite->obj.status >= OBJ_ACTIVE) && func_enmy_80060FE4(&sprite->obj.pos, -12000.0f)) {
             FrameInterpolation_RecordOpenChild(sprite, i);
-            FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
             Matrix_Push(&gGfxMatrix);
 
             if ((sprite->obj.id == OBJ_SPRITE_CO_RUIN1) || (sprite->obj.id == OBJ_SPRITE_CO_RUIN2)) {
@@ -1870,6 +1874,7 @@ void Object_DrawAll(s32 cullDirection) {
 
             Sprite_Draw(sprite, cullDirection);
             Matrix_Pop(&gGfxMatrix);
+
             FrameInterpolation_RecordCloseChild();
         }
     }
@@ -1877,7 +1882,7 @@ void Object_DrawAll(s32 cullDirection) {
     for (i = 0, actor = &gActors[0]; i < ARRAY_COUNT(gActors); i++, actor++) {
         if (actor->obj.status >= OBJ_ACTIVE) {
             FrameInterpolation_RecordOpenChild(actor, i);
-            FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
             if ((actor->timer_0C6 % 2) == 0) {
                 if (gCurrentLevel == LEVEL_UNK_15) {
                     RCP_SetupDL_23();
@@ -1939,12 +1944,13 @@ void Object_DrawAll(s32 cullDirection) {
     for (i = 0, item = &gItems[0]; i < ARRAY_COUNT(gItems); i++, item++) {
         if (item->obj.status >= OBJ_ACTIVE) {
             FrameInterpolation_RecordOpenChild(item, i);
-            FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
             Matrix_Push(&gGfxMatrix);
             RCP_SetupDL(&gMasterDisp, SETUPDL_29);
             Object_SetCullDirection(cullDirection);
             Item_Draw(item, cullDirection);
             Matrix_Pop(&gGfxMatrix);
+
             FrameInterpolation_RecordCloseChild();
         }
     }
@@ -1963,7 +1969,7 @@ void Effect_DrawAll(s32 arg0) {
     for (i = 0, effect = &gEffects[0]; i < ARRAY_COUNT(gEffects); i++, effect++) {
         if (effect->obj.status >= OBJ_ACTIVE) {
             FrameInterpolation_RecordOpenChild(effect, i);
-            FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
             if (effect->info.unk_14 == 1) {
                 effect->obj.rot.y = RAD_TO_DEG(-gPlayer[gPlayerNum].camYaw);
                 effect->obj.rot.x = RAD_TO_DEG(gPlayer[gPlayerNum].camPitch);
@@ -1984,6 +1990,7 @@ void Effect_DrawAll(s32 arg0) {
                     Matrix_Pop(&gGfxMatrix);
                 }
             }
+
             FrameInterpolation_RecordCloseChild();
         }
     }
@@ -1991,7 +1998,7 @@ void Effect_DrawAll(s32 arg0) {
     for (i = 0, boss = &gBosses[0]; i < ARRAY_COUNT(gBosses); i++, boss++) {
         if ((boss->obj.status >= OBJ_ACTIVE) && (boss->obj.id == OBJ_BOSS_BO_BASE_SHIELD)) {
             FrameInterpolation_RecordOpenChild(boss, i);
-            FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+
             if ((boss->timer_05C % 2) == 0) {
                 RCP_SetupDL_29(gFogRed, gFogGreen, gFogBlue, gFogAlpha, gFogNear, gFogFar);
             } else {
@@ -2001,6 +2008,7 @@ void Effect_DrawAll(s32 arg0) {
             Matrix_Push(&gGfxMatrix);
             Boss_Draw(boss, arg0);
             Matrix_Pop(&gGfxMatrix);
+
             FrameInterpolation_RecordCloseChild();
         }
     }
@@ -2064,7 +2072,6 @@ void TexturedLine_Draw(void) {
     for (i = 0; i < ARRAY_COUNT(gTexturedLines); i++) {
         TexturedLine* texLine = &gTexturedLines[i];
         FrameInterpolation_RecordOpenChild(texLine, i);
-        FrameInterpolation_RecordMarker(__FILE__, __LINE__);
 
         if (gTexturedLines[i].mode != 0) {
             Matrix_Push(&gGfxMatrix);

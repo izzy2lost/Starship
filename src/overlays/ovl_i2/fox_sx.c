@@ -1675,6 +1675,13 @@ void SectorX_LevelComplete_SetupTeam(ActorCutscene* this, s32 teamIdx) {
     srcA.x = D_i2_80195710[teamIdx];
     srcA.y = D_i2_80195720[teamIdx];
     srcA.z = D_i2_80195730[teamIdx];
+
+    // @port: Hide Falco's spawn behind Fox's Arwing so he doesn't look like he came out of nowhere on widescreen.
+    if ((GameEngine_GetAspectRatio() > 1.66f) && (teamIdx == 0)) {
+        srcA.y -= 100.0f;
+        srcA.z += 1000.0f;
+    }
+
     srcB.x = D_i2_80195740[teamIdx];
     srcB.y = D_i2_80195750[teamIdx];
     srcB.z = D_i2_80195760[teamIdx];

@@ -471,7 +471,7 @@ u8* AudioThread_GetFontsForSequence(s32 seqId, u32* outNumFonts) {
 
 bool AudioThread_ResetComplete(void) {
     s32 pad;
-    OSMesg sp18;
+    OSMesg sp18 = { 0 };
 
     if (!MQ_GET_MESG(gAudioResetQueue, &sp18)) {
         return false;

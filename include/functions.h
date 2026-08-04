@@ -505,7 +505,7 @@ void Ending_Main(void);
 void Ending_Draw(void);
 
 // sf_i5_5
-bool Ground_801B49D0(Actor* actor);
+bool Ground_List_Setup(Actor* actor);
 
 // libultra
 void gSPSegmentLoadRes(void* value, int segNum, uintptr_t target);
@@ -513,5 +513,6 @@ void gSPDisplayList(Gfx* pkt, Gfx* dl);
 void gSPDisplayListOffset(Gfx* pkt, Gfx* dl, int offset);
 void gSPVertex(Gfx* pkt, uintptr_t v, int n, int v0);
 void gSPInvalidateTexCache(Gfx* pkt, uintptr_t texAddr);
+bool should_interpolate_perspective(Vec3f* eye, Vec3f* at);
 
 #endif

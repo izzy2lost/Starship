@@ -34,11 +34,26 @@ void Load_RomFile(void* vRomAddress, void* dest, ptrdiff_t size) {
 
 u8 Load_SceneFiles(Scene* scene) {
 #if 1
-    // TODO: BUG! sCurrentScene and scene never change so this will never be true.
-    bool hasSceneChanged = memcmp(&sCurrentScene, scene, sizeof(Scene)) != 0;
-    sCurrentScene = *scene;
+    // @port:
+    static void* sCurrentScenePtr = NULL;
+
+    bool hasSceneChanged = (uintptr_t) sCurrentScenePtr != (uintptr_t) scene;
+    sCurrentScenePtr = scene;
+
+    if (sFillTimer != 0) {
+        sFillTimer--;
+    } else if (gStartNMI == 0) {
+        Lib_FillScreen(false);
+    }
+
+    if (hasSceneChanged) {
+        printf("Scene Changed!\n");
+    }
+
     return hasSceneChanged;
 #else
+    // Original code:
+
     u8* ramPtr = SEGMENT_VRAM_START(ovl_i1);
     u8 segment;
     u8 changeScene = false;
@@ -94,7 +109,8 @@ u8 Load_SceneSetup(u8 sceneId, u8 sceneSetup) {
         case SCENE_TITLE:
             changeScene = Load_SceneFiles(&sOvlmenu_Title[sceneSetup]);
             if (changeScene == true) {
-                AUDIO_SET_SPEC(SFXCHAN_0, AUDIOSPEC_22);
+               // Causes audio hang for a few seconds when going from the menu to the title
+               // AUDIO_SET_SPEC(SFXCHAN_0, AUDIOSPEC_22);
             }
             break;
         case SCENE_MENU:

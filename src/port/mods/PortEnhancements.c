@@ -99,8 +99,13 @@ void OnDisplayUpdatePost(IEvent* event) {
         }
 
         if (gControllerPress[0].button & L_TRIG) {
-            pl->state = PLAYERSTATE_LEVEL_COMPLETE;
             gMissionStatus = MISSION_ACCOMPLISHED;
+            if (gCurrentLevel == LEVEL_FORTUNA) {
+                gMissionStatus = MISSION_COMPLETE;
+                gAllRangeEventTimer = 9200;
+                return;
+            }
+            pl->state = PLAYERSTATE_LEVEL_COMPLETE;
         }
     }
 

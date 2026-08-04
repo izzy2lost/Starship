@@ -349,6 +349,6 @@ extern UNK_TYPE F_80178334;
 extern UNK_TYPE F_8017833C;
 extern UNK_TYPE F_80178344;
 extern UNK_TYPE F_8017834C;
-
+extern bool gCamera1Skipped;
 
 #endif

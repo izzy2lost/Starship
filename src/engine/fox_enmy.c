@@ -111,7 +111,8 @@ bool func_enmy_80060FE4(Vec3f* arg0, f32 arg1) {
 
     Matrix_MultVec3fNoTranslate(gCalcMatrix, &src, &dest);
 
-    if ((dest.z < 1000.0f) && (arg1 < dest.z) && (fabsf(dest.x) < (fabsf(dest.z * 0.5f) + 2000.0f))) {
+    // @port: Extend draw distance up to 32/9
+    if ((dest.z < 1000.0f) && (arg1 < dest.z) && (fabsf(dest.x) < (fabsf(dest.z * /* 0.5f */ 1.5f) + 2000.0f))) {
         return true;
     }
     return false;
@@ -596,6 +597,31 @@ void Object_LoadLevelObjects(void) {
     }
 
     gLastPathChange = 0;
+
+// Level Boss Tester
+#if 0
+    switch (gCurrentLevel) {
+    case LEVEL_AQUAS:
+        static ObjectInit bossaqInit[] = { { 100.6f, -4035, 0, 0, { 0, 0, 0 }, OBJ_BOSS_AQ_BACOON } };
+        gLevelObjects = bossaqInit;
+        break;
+
+    case LEVEL_TITANIA:
+        static ObjectInit aTiLevelObjects_Boss[] = { { 300.0f, -1000, 0, 0, { 0, 0, 0 }, OBJ_BOSS_TI_GORAS } };
+        gLevelObjects = aTiLevelObjects_Boss;
+        break;
+
+    case LEVEL_SECTOR_X:
+        static ObjectInit aSxLevelObjects_Boss[] = { { 100.0f, 4000, 0, 1103, { 0, 0, 0 }, OBJ_BOSS_SX_SPYBORG } };
+        gLevelObjects = aSxLevelObjects_Boss;
+        break;
+
+    case LEVEL_SOLAR:
+        static ObjectInit aSoLevelObjects_Boss[] = { { 100.0f, 0, 0, 0, { 0, 0, 0 }, OBJ_BOSS_SO_VULKAIN } };
+        gLevelObjects = aSoLevelObjects_Boss;
+        break;
+    }
+#endif
 
     for (i = 0, objInit = &gLevelObjects[gObjectLoadIndex]; i < 10000; i++, gObjectLoadIndex++, objInit++) {
         if (objInit->id <= OBJ_INVALID) {
@@ -1979,6 +2005,13 @@ void Sprite167_Update(Sprite167* this) {
 
 // World-aligned billboarding
 void SceneryRotateTowardsCamera(Scenery* this) {
+    bool isBuilding = (this->obj.id >= OBJ_SCENERY_CO_BUILDING_5 && this->obj.id <= OBJ_SCENERY_CO_BUILDING_8 ||
+                       this->obj.id == OBJ_SCENERY_CO_BUILDING_10);
+
+    if (isBuilding) {
+        return;
+    }
+
     this->obj.rot.y = 0.0f;
     if (gPlayer[0].cam.eye.x < this->obj.pos.x) {
         this->obj.rot.y = 271.0f;
