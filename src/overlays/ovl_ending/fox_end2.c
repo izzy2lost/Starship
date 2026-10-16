@@ -65,7 +65,8 @@ void Ending_8018CE20(u32 arg0) {
 
 void Ending_8018D250(u32 arg0, AssetInfo* asset) {
     gSceneSetup = asset->unk_08;
-    gVIsPerFrame = asset->unk_70;
+    // @port: avoid updating gVIsPerFrame since we're using a recording
+    //  gVIsPerFrame = asset->unk_70;
     gStarCount = asset->unk_14;
 }
 

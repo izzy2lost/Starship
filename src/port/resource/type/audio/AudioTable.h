@@ -12,7 +12,7 @@ struct AudioTableBase {
 };
 
 struct AudioTableEntry {
-    /* 0x04 */ uint64_t romAddr;
+    /* 0x00 */ uint64_t romAddr;
     /* 0x04 */ uint32_t size;
     /* 0x08 */ int8_t medium;
     /* 0x09 */ int8_t cachePolicy;

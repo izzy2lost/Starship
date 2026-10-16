@@ -1,1 +1,0 @@
-sdl2 libpng glew ninja libzip nlohmann-json tinyxml2 spdlog

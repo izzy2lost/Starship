@@ -1,15 +1,15 @@
 [comment]: <> (Todo: Make Light Mode Image)
 [comment]: <> (Todo: Make Dark Mode Image)
-
+ 
 # Starship
 
 Lead Developers: 
 * [SonicDcer](https://www.github.com/sonicdcer)
 * [Lywx](https://www.github.com/kiritodv)
 
-## Discord
+## Website & Discord
 
-Official Discord: https://discord.com/invite/shipofharkinian
+Official Website: https://www.harbourmasters.org/
 
 If you're having any trouble after reading through this `README`, feel free ask for help in the Starship Support text channels. Please keep in mind that we do not condone piracy.
 
@@ -83,7 +83,7 @@ If you want to manually compile Starship, please consult the [building instructi
 If you want to playtest a continuous integration build, you can find them at the links below. Keep in mind that these are for playtesting only, and you will likely encounter bugs and possibly crashes. 
 
 * [Windows](https://nightly.link/HarbourMasters/Starship/workflows/main/main/starship-windows.zip)
-* [macOS](https://nightly.link/HarbourMasters/Starship/workflows/main/main/starship-mac-x64.zip)
+* [macOS](https://nightly.link/HarbourMasters/Starship/workflows/main/main/Starship-mac.zip)
 * [Linux](https://nightly.link/HarbourMasters/Starship/workflows/main/main/Starship-linux.zip)
 * [Switch](https://nightly.link/HarbourMasters/Starship/workflows/main/main/Starship-switch.zip)
 

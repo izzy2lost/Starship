@@ -273,7 +273,23 @@ void Title_UpdateEntry(void) {
     Title_NextState_Check();
 }
 
+static bool sSkipInterpolation = false;
+
 void Title_Draw(void) {
+    static s32 camSkipTimes;
+
+    if (sSkipInterpolation) {
+        // @port Skip interpolation
+        FrameInterpolation_ShouldInterpolateFrame(false);
+        printf("CAMERA 1 SKIPED: %d\n", camSkipTimes++);
+        gCamera1Skipped = true;
+        sSkipInterpolation = false;
+    } else {
+        FrameInterpolation_RecordOpenChild("TitleCam", 0);
+        FrameInterpolation_RecordMarker(__FILE__, __LINE__);
+        gCamera1Skipped = false;
+    }
+
     switch (sCutsceneState) {
         case TITLE_RANKING:
             Title_Ranking_Draw();
@@ -353,6 +369,14 @@ void Title_Draw(void) {
         gFillScreenBlue = 0;
         Wipe_Draw(WIPE_VERTICAL, sWipeHeight);
     }
+
+    if (sSkipInterpolation) {
+        // @port Re-enable Interpolation if it was skipped
+        FrameInterpolation_ShouldInterpolateFrame(true);
+    } else {
+        FrameInterpolation_RecordCloseChild();
+    }
+
 #if 0
     // @decomp Debug:
     RCP_SetupDL(&gMasterDisp, SETUPDL_83);
@@ -1793,6 +1817,7 @@ void Title_CsTakeOff_Update(void) {
                 gAmbientB = 46;
 
                 sSceneState++;
+                sSkipInterpolation = true;
             }
             sTimer3++;
             break;
@@ -1893,6 +1918,7 @@ void Title_CsTakeOff_Update(void) {
                     Audio_SetEnvSfxReverb(0);
                     sSceneState = 0;
                     sCutsceneState = 5; // TITLE_TAKE_OFF_SPACE
+                    sSkipInterpolation = true;
                 }
                 sTimer3++;
             }

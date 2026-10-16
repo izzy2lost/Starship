@@ -51,11 +51,6 @@ set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
 
-if(NOT EXISTS ${CMAKE_BINARY_DIR}/config.yml)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/config.yml" "${CMAKE_BINARY_DIR}/config.yml")
-	execute_process(COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets/" "${CMAKE_BINARY_DIR}/assets/")
-endif()
-
 if (MSVC)
 set(CPP "${CMAKE_C_COMPILER}" "/EP")
 else()
@@ -172,6 +167,14 @@ list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_timer.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/sys/sys_fault.c")
 list(FILTER ALL_FILES EXCLUDE REGEX "src/mods/object_ram.c")
 
+# Ahead of both the game target below and add_subdirectory(libultraship) further
+# down: the include_directories() it adds only reach targets declared after it,
+# and its OVERRIDE_FIND_PACKAGE declarations are what libultraship's
+# find_package(... REQUIRED) calls resolve against.
+if(ANDROID)
+    include(cmake/dependencies/android.cmake)
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
     set(IOS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libultraship/ios)
 
@@ -284,7 +287,17 @@ include_directories(
   ${dr_libs_SOURCE_DIR}
 )
 
-add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+# The binary dir is normally libultraship's own source dir, which puts its build
+# outputs (libImGui.a, libstb.a) in the source tree. On a single-architecture
+# build that is only untidy. Android builds every ABI from the same source tree,
+# so both would write those archives to the same path and clobber each other —
+# the arm64 link then fails on armeabi-v7a objects, or vice versa, depending on
+# which finished last. Give it a binary dir of its own here.
+if(ANDROID)
+    add_subdirectory(libultraship ${CMAKE_CURRENT_BINARY_DIR}/libultraship)
+else()
+    add_subdirectory(libultraship ${CMAKE_CURRENT_SOURCE_DIR}/libultraship)
+endif()
 add_dependencies(${PROJECT_NAME} libultraship)
 target_link_libraries(${PROJECT_NAME} PRIVATE libultraship)
 
@@ -616,10 +629,12 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
             >
         )   
   else()
-      if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-        set(CPU_OPTION -msse2 -mfpmath=sse)
-      elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-        set(CPU_OPTION -mcpu=native)
+      if(NOT DEFINED CPU_OPTION)
+        if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+          set(CPU_OPTION -msse2 -mfpmath=sse)
+        elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+          set(CPU_OPTION -mcpu=native)
+        endif()
       endif()
 
       target_compile_options(${PROJECT_NAME} PRIVATE
@@ -650,7 +665,24 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
   endif()
 endif()
 
-if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+# On Android these ride into the APK as assets and are unpacked to the app's
+# external files directory on first run, so there is nothing useful next to the
+# .so to copy them to (see android/app/build.gradle.kts and GameAssets.kt).
+if(NOT ANDROID)
+add_custom_command(
+	TARGET ${PROJECT_NAME} POST_BUILD
+	COMMENT "Copying asset yamls..."
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/config.yml" "$<TARGET_FILE_DIR:Starship>/config.yml"
+	COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/assets/" "$<TARGET_FILE_DIR:Starship>/assets/"
+)
+endif()
+
+# Android has no host toolchain available inside the NDK build, so the Torch
+# executable these targets drive cannot be built here. starship.o2r is built on
+# the CI host and shipped as an APK asset instead, and sf64.o2r is generated
+# on-device by the Torch library that is linked into the game (see
+# src/port/android/AndroidBridge.cpp).
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch" AND NOT ANDROID)
 include(ExternalProject)
 ExternalProject_Add(TorchExternal
 	PREFIX TorchExternal
@@ -679,6 +711,9 @@ add_custom_target(
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_SOURCE_DIR}/starship.o2r" "${CMAKE_BINARY_DIR}/starship.o2r"
 )
 
+find_program(CURL NAMES curl DOC "Path to the curl program.  Used to download files.")
+execute_process(COMMAND ${CURL} -sSfL https://raw.githubusercontent.com/gabomdq/SDL_GameControllerDB/master/gamecontrollerdb.txt -o ${CMAKE_BINARY_DIR}/gamecontrollerdb.txt OUTPUT_VARIABLE RESULT)
+
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   install(FILES "${CMAKE_BINARY_DIR}/starship.o2r" DESTINATION . COMPONENT ${PROJECT_NAME})
 endif()
@@ -702,6 +737,17 @@ add_custom_target(CreateOSXIcons
     )
     add_dependencies(${PROJECT_NAME} CreateOSXIcons)
     configure_file("${CMAKE_SOURCE_DIR}/Info.plist" "${CMAKE_BINARY_DIR}/Info.plist" COPYONLY)
+    INSTALL(TARGETS ${PROJECT_NAME} DESTINATION ../MacOS COMPONENT Starship)
+    INSTALL(FILES ${CMAKE_BINARY_DIR}/gamecontrollerdb.txt DESTINATION ../MacOS COMPONENT Starship)
+    INSTALL(FILES ${CMAKE_BINARY_DIR}/starship.o2r DESTINATION ../Resources COMPONENT Starship)
+    INSTALL(FILES ${CMAKE_BINARY_DIR}/config.yml DESTINATION ../Resources COMPONENT Starship)
+    INSTALL(DIRECTORY ${CMAKE_BINARY_DIR}/assets/ DESTINATION ../Resources/assets COMPONENT Starship)
+
+    # Fix bundle to include and relink all dependencies
+    install(CODE "
+        include(BundleUtilities)
+        fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/../MacOS/Starship\" \"\" \"${dirs}\")
+    ")
 endif()
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)
@@ -709,13 +755,17 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_DESKTOP_FILE "${CMAKE_SOUR
 set_property(TARGET ${PROJECT_NAME} PROPERTY APPIMAGE_ICON_FILE "${CMAKE_SOURCE_DIR}/logo.png")
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(CPACK_GENERATOR "External")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
-    set(CPACK_GENERATOR "ZIP")
-elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set(CPACK_GENERATOR "Bundle")
-endif()
+# Gradle packages the Android build into an APK; CPack has nothing to do there,
+# and none of the generators below apply to it.
+if(NOT ANDROID)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+        set(CPACK_GENERATOR "External")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Windows|NintendoSwitch|CafeOS")
+        set(CPACK_GENERATOR "ZIP")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+        set(CPACK_GENERATOR "Bundle")
+    endif()
 
-set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/configure-packaging.cmake)
-include(cmake/packaging.cmake)
+    set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/configure-packaging.cmake)
+    include(cmake/packaging.cmake)
+endif()

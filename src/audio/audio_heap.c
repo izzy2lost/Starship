@@ -991,20 +991,28 @@ void AudioHeap_DiscardSampleCaches(void) {
     Instrument* instrument;
     SampleCacheEntry* entry;
 
-#ifdef AVOID_UB
-    entry = gPersistentSampleCache.entries;
-#endif
-
     for (fontId = 0; fontId < numFonts; fontId++) {
         sampleBankId1 = gSoundFontList[fontId].sampleBankId1;
         sampleBankId2 = gSoundFontList[fontId].sampleBankId2;
+#ifdef AVOID_UB
+        // F-Zero X newer version of this audio driver has this fix:
+        if ((sampleBankId1 != SAMPLES_NONE_U) || (sampleBankId2 != SAMPLES_NONE)) {
+#else
+        //! @bug: entry is uninitialized, reading from garbage memory.
         if (((sampleBankId1 != SAMPLES_NONE_U) && (entry->sampleBankId == sampleBankId1)) ||
             ((sampleBankId2 != SAMPLES_NONE) && (entry->sampleBankId == sampleBankId2)) ||
             (entry->sampleBankId == SAMPLES_SFX)) {
+#endif
             if (((void*) AudioHeap_SearchCaches(FONT_TABLE, CACHE_PERMANENT, fontId) != NULL) &&
                 ((gFontLoadStatus[fontId] > 1) != 0)) {
                 for (i = 0; i < gPersistentSampleCache.numEntries; i++) {
                     entry = &gPersistentSampleCache.entries[i];
+#ifdef AVOID_UB
+                    if ((sampleBankId1 != entry->sampleBankId) && (sampleBankId2 != entry->sampleBankId) &&
+                        (entry->sampleBankId != SAMPLES_SFX)) {
+                        break;
+                    }
+#endif
                     for (instId = 0; instId < gSoundFontList[fontId].numInstruments; instId++) {
                         instrument = Audio_GetInstrument(fontId, instId);
                         if (instrument != NULL) {

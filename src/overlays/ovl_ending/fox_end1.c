@@ -7,6 +7,7 @@
 #include "assets/ast_ending.h"
 #include "prevent_bss_reordering.h"
 #include "port/mods/PortEnhancements.h"
+#include "fox_record.h"
 
 void Ending_8018CE20(s32);
 void Ending_801926D4(void);
@@ -1106,6 +1107,9 @@ void Ending_Main(void) {
     Ending_8018A8FC();
     Ending_8018B3D8();
     Ending_8018ABE8();
+
+    // @Port: Vi recording
+    UpdateVisPerFrameFromRecording(gEndingCsRecord, ARRAY_COUNT(gEndingCsRecord), &gGameFrameCount);
 }
 
 void DrawBorders(void) {
@@ -1181,6 +1185,18 @@ void Ending_Draw(void) {
         Graphics_DisplaySmallText(10, 220, 1.0f, 1.0f, "CSFRM");
         Graphics_DisplaySmallNumber(80, 220, gCsFrameCount);
     }
+#endif
+
+// Recording debug
+#if 0
+    RCP_SetupDL(&gMasterDisp, SETUPDL_83);
+    gDPSetPrimColor(gMasterDisp++, 0, 0, 255, 255, 0, 255);
+    Graphics_DisplaySmallText(10 + 210, 180, 1.0f, 1.0f, "VIS:");
+    Graphics_DisplaySmallNumber(60 + 210, 180, (int) gVIsPerFrame);
+    Graphics_DisplaySmallText(10 + 210, 190, 1.0f, 1.0f, "GMFMS:");
+    Graphics_DisplaySmallNumber(60 + 210, 190, (int) gGameFrameCount);
+    Graphics_DisplaySmallText(10 + 210, 200, 1.0f, 1.0f, "ENDSTATE:");
+    Graphics_DisplaySmallNumber(60 + 220, 210, (int) D_ending_80196D00);
 #endif
 
     Matrix_Pop(&gGfxMatrix);

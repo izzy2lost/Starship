@@ -172,7 +172,7 @@ void AudioSeq_SequenceChannelDisable(SequenceChannel* channel) {
 SequenceChannel* AudioSeq_RequestFreeSeqChannel(void) {
     s32 i;
 
-    for (i = 0; i < 48; i++) {
+    for (i = 0; i < ARRAY_COUNT(gSeqChannels); i++) {
         if (gSeqChannels[i].seqPlayer == NULL) {
             return &gSeqChannels[i];
         }
@@ -1516,7 +1516,6 @@ void AudioSeq_SequencePlayerProcessSequence(SequencePlayer* seqPlayer) {
             }
         }
     }
-
     for (i = 0; i < SEQ_NUM_CHANNELS; i++) {
         if (IS_SEQUENCE_CHANNEL_VALID(seqPlayer->channels[i]) == 1) {
             AudioSeq_SequenceChannelProcessScript(seqPlayer->channels[i]);
@@ -1568,7 +1567,7 @@ void AudioSeq_InitSequencePlayers(void) {
 #ifdef AVOID_UB
         for (j = 0; j < ARRAY_COUNT(gSeqChannels->layers); j++) {
 #else
-        for (j = 0; j < 64;
+        for (j = 0; j < ARRAY_COUNT(gSeqLayers);
              j++) { // bug: this is ARRAY_COUNT(gSeqLayers) instead of ARRAY_COUNT(gSeqChannels[i].layers)
 #endif
             gSeqChannels[i].layers[j] = NULL;
@@ -1583,7 +1582,7 @@ void AudioSeq_InitSequencePlayers(void) {
     }
 
     for (i = 0; i < ARRAY_COUNT(gSeqPlayers); i++) {
-        for (j = 0; j < 16; j++) {
+        for (j = 0; j < SEQ_NUM_CHANNELS; j++) {
             gSeqPlayers[i].channels[j] = &gSeqChannelNone;
         }
         gSeqPlayers[i].unk_07[0] = -1;

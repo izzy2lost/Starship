@@ -713,7 +713,7 @@ void* AudioLoad_AsyncLoadInner(s32 tableType, s32 id, s32 nChunks, s32 retData, 
     u8* ramAddr;
     s32 medium;
     s32 cachePolicy;
-    u32 romAddr;
+    u64 romAddr;
     s32 loadStatus = LOAD_STATUS_COMPLETE;
 
     switch (tableType) {

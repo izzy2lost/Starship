@@ -1261,9 +1261,6 @@ s32 func_versus_800C1138(s32 max, s32 arg1) {
 void Versus_InitMatch(void) {
     s32 i;
 
-    // Until Load_SceneFiles gets fixed, this fixes most of the audio issues in versus
-    AUDIO_SET_SPEC_ALT(SFXCHAN_3, AUDIOSPEC_16);
-
     for (i = 0, sVsPlayerCount = 0; i < 4; i++) {
         if (!gPlayerInactive[i]) {
             sVsPlayerCount++;

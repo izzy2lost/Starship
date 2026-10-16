@@ -40,6 +40,9 @@ cmake-build-*/
 .idea/
 .vs
 build*
+# ...but not the Gradle build scripts, which "build*" would otherwise swallow.
+!build.gradle
+!build.gradle.kts
 logs/
 /mods/
 starship.cfg.json
